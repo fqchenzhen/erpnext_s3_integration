@@ -12,16 +12,18 @@ def get_file():
 
 	settings = frappe.get_single("S3 Integration Settings")
 
-	# Security: verify they have access to the File DOC
-	file_doc = frappe.db.get_value(
-		"File", {"file_url": f"/s3/{s3_key}"}, ["name", "is_private", "file_name"], as_dict=True
-	)
+	file_name = frappe.db.get_value("File", {"file_url": f"/s3/{s3_key}"}, "name")
 
-	if not file_doc:
+	if not file_name:
 		raise frappe.DoesNotExistError()
 
-	if file_doc.is_private and not frappe.session.user:
-		raise frappe.PermissionError()
+	file_doc = frappe.get_doc("File", file_name)
+
+	if file_doc.is_private:
+		if not frappe.session.user or frappe.session.user == "Guest":
+			raise frappe.PermissionError()
+		if not file_doc.has_permission("read"):
+			raise frappe.PermissionError()
 
 	# If stream_from_s3 is enabled, stream it directly, otherwise return presigned URL redirect
 	from erpnext_s3_integration.s3_client import S3Client
@@ -35,11 +37,7 @@ def get_file():
 
 			import mimetypes
 
-			mime_type = (
-				mimetypes.guess_type(file_doc.file_name)[0]
-				if file_doc.file_name
-				else "application/octet-stream"
-			)
+			mime_type = mimetypes.guess_type(file_doc.file_name or "")[0] or "application/octet-stream"
 			response.headers["Content-Type"] = mime_type
 			return response
 		except Exception as e:

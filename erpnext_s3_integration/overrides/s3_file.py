@@ -1,8 +1,7 @@
 import frappe
-from frappe.core.doctype.file.file import File
 
 
-class CustomFile(File):
+class S3FileMixin:
 	def get_content(self, encodings=None) -> bytes | str:
 		if self.file_url and self.file_url.startswith("/s3/"):
 			if self.get("content"):

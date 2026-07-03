@@ -8,6 +8,14 @@
  "engine": "InnoDB",
  "field_order": [
   "status",
+  "operation",
+  "source_path",
+  "s3_key",
+  "file_size",
+  "duration_ms",
+  "error_category",
+  "error_code",
+  "retryable",
   "message"
  ],
  "fields": [
@@ -17,6 +25,48 @@
    "in_list_view": 1,
    "label": "Status",
    "options": "Success\nFailed"
+  },
+  {
+   "fieldname": "operation",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Operation"
+  },
+  {
+   "fieldname": "source_path",
+   "fieldtype": "Data",
+   "label": "Source Path"
+  },
+  {
+   "fieldname": "s3_key",
+   "fieldtype": "Data",
+   "label": "S3 Key"
+  },
+  {
+   "fieldname": "file_size",
+   "fieldtype": "Int",
+   "label": "File Size"
+  },
+  {
+   "fieldname": "duration_ms",
+   "fieldtype": "Int",
+   "label": "Duration (ms)"
+  },
+  {
+   "fieldname": "error_category",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Error Category"
+  },
+  {
+   "fieldname": "error_code",
+   "fieldtype": "Data",
+   "label": "Error Code"
+  },
+  {
+   "fieldname": "retryable",
+   "fieldtype": "Check",
+   "label": "Retryable"
   },
   {
    "fieldname": "message",

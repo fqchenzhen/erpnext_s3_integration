@@ -1,4 +1,3 @@
-import unittest
 from unittest.mock import MagicMock, patch
 
 import frappe
@@ -18,6 +17,7 @@ class TestS3Integration(FrappeTestCase):
 		self.settings.region_name = "us-east-1"
 		self.settings.bucket_name = "test-bucket"
 		self.settings.folder_prefix = "test-prefix"
+		self.settings.addressing_style = "auto"
 		self.settings.enable_attachments_s3 = 1
 		self.settings.delete_from_s3_on_file_delete = 1
 
@@ -49,12 +49,16 @@ class TestS3Integration(FrappeTestCase):
 		self.assertEqual(kwargs["endpoint_url"], "http://localhost:9000")
 		self.assertTrue(kwargs["config"].s3["addressing_style"] == "path")
 
+		self.settings.use_path_style = 0
+		self.settings.addressing_style = "virtual"
+		self.settings.save(ignore_permissions=True)
+		S3Client()
+		kwargs = mock_boto_client.call_args[1]
+		self.assertTrue(kwargs["config"].s3["addressing_style"] == "virtual")
+
 	@patch("frappe.utils.redis_wrapper.RedisWrapper.lpush")
 	@patch("erpnext_s3_integration.s3_client.S3Client.upload_fileobj")
 	def test_file_upload_hook(self, mock_upload, mock_lpush):
-		# Create a dummy file doc via quick method directly to mimic upload behavior
-		import base64
-
 		# We use frappe.get_doc but ensure content is handled like an upload
 		file_doc = frappe.get_doc(
 			{
@@ -117,14 +121,14 @@ class TestS3Integration(FrappeTestCase):
 				"doctype": "File",
 				"file_name": "My test file 123.txt",
 				"attached_to_doctype": "Sales Invoice",
+				"content_hash": "a1b2c3d4e5f6",
 				"is_private": 0,
 			}
 		)
 
 		key = generate_s3_key(file_doc, self.settings)
-		self.assertTrue(key.startswith("test-prefix/attachments/public/"))
-		self.assertIn("/Sales_Invoice/", key)
-		self.assertTrue(key.endswith("My_test_file_123.txt"))
+		self.assertTrue(key.startswith("test-prefix/attachments/public/a1/b2/"))
+		self.assertTrue(key.endswith("a1b2c3d4e5f6-My_test_file_123.txt"))
 
 	@patch("erpnext_s3_integration.s3_client.S3Client.generate_presigned_url")
 	def test_existing_s3_file_access_still_works_when_uploads_disabled(self, mock_generate_presigned_url):

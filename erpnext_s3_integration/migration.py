@@ -82,7 +82,7 @@ def run_migration(only_unmigrated):
 				continue
 
 			# Generate S3 key
-			s3_key = generate_s3_key(doc, settings)
+			s3_key = generate_s3_key(doc, settings, preserve_existing_path=True)
 
 			# Upload to S3
 			is_public = not doc.is_private

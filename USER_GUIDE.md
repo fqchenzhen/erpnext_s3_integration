@@ -43,8 +43,16 @@ Fill in the following fields:
 - `Region Name`: AWS region or provider region
 - `Bucket Name`: Destination bucket name
 - `Endpoint URL`: Required for MinIO and some S3-compatible providers
-- `Use Path Style`: Enable this when your provider requires path-style bucket access
+- `Provider`: Optional guidance for AWS S3, Alibaba Cloud OSS, MinIO, or custom S3-compatible services
+- `Addressing Style`: Use `auto` for AWS S3, `virtual` for Alibaba Cloud OSS, and `path` for MinIO
+- `Use Path Style`: Legacy compatibility flag. Prefer `Addressing Style` for new configuration
 - `Folder Prefix`: Optional root prefix for all files stored by the app
+
+Common examples:
+
+- AWS S3: leave `Endpoint URL` blank, set `Addressing Style` to `auto`.
+- Alibaba Cloud OSS: set `Endpoint URL` to the OSS endpoint such as `https://oss-ap-southeast-1.aliyuncs.com`, set `Addressing Style` to `virtual`.
+- MinIO: set `Endpoint URL` to the MinIO endpoint such as `http://minio:9000`, set `Addressing Style` to `path`.
 
 After entering the values:
 

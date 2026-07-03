@@ -5,6 +5,9 @@ from frappe.model.document import Document
 
 class S3IntegrationSettings(Document):
 	def validate(self):
+		if self.get("addressing_style") and self.addressing_style not in {"auto", "virtual", "path"}:
+			frappe.throw(_("Addressing Style must be one of auto, virtual, or path."))
+
 		if self.enable_attachments_s3 or self.enable_backups_s3:
 			required_fields = ["aws_access_key_id", "region_name", "bucket_name"]
 			missing = []
@@ -52,17 +55,10 @@ def take_backup_and_sync():
 
 
 def run_backup_and_sync():
-	import frappe.utils.backups
-
-	from erpnext_s3_integration.backup_hooks import after_backup
+	from erpnext_s3_integration.backup_hooks import run_backup_and_sync as execute_backup_and_sync
 
 	try:
-		settings = frappe.get_single("S3 Integration Settings")
-
-		frappe.utils.backups.backup(with_files=settings.upload_files_backup)
-
-		# Call the after_backup hook to sync
-		after_backup()
+		execute_backup_and_sync(create_new_backup=True, update_last_sync=False)
 
 	except Exception:
 		frappe.log_error(message=frappe.get_traceback(), title="Manual S3 Backup Sync Failed")

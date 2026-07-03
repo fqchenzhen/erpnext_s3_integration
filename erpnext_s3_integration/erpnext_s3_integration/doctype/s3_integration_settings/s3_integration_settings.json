@@ -14,6 +14,8 @@
         "cb_advanced",
         "folder_prefix",
         "endpoint_url",
+        "provider",
+        "addressing_style",
         "use_path_style",
         "sb_actions",
         "status",
@@ -80,7 +82,24 @@
             "label": "Endpoint URL"
         },
         {
+            "default": "Custom S3 Compatible",
+            "description": "Used for configuration guidance only. AWS S3 usually uses auto, Alibaba Cloud OSS uses virtual, and MinIO usually uses path addressing.",
+            "fieldname": "provider",
+            "fieldtype": "Select",
+            "label": "Provider",
+            "options": "AWS S3\nAlibaba Cloud OSS\nMinIO\nCustom S3 Compatible"
+        },
+        {
+            "default": "auto",
+            "description": "AWS S3: auto. Alibaba Cloud OSS: virtual. MinIO: path.",
+            "fieldname": "addressing_style",
+            "fieldtype": "Select",
+            "label": "Addressing Style",
+            "options": "auto\nvirtual\npath"
+        },
+        {
             "default": "0",
+            "description": "Legacy compatibility flag. Prefer Addressing Style for new configuration.",
             "fieldname": "use_path_style",
             "fieldtype": "Check",
             "label": "Use Path Style"

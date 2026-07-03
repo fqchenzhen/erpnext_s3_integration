@@ -61,10 +61,16 @@ bench restart
    - `Region Name`
    - `Bucket Name`
    - `Endpoint URL` if you are using MinIO or another S3-compatible service
-   - `Use Path Style` if required by your storage provider
+   - `Addressing Style` for your provider
 3. Optionally set `Folder Prefix` to keep all objects under a dedicated root path.
 4. Save the document.
 5. Click `Test Connection`.
+
+Provider examples:
+
+- AWS S3: leave `Endpoint URL` blank and use `Addressing Style = auto`.
+- Alibaba Cloud OSS: set the OSS endpoint, for example `https://oss-ap-southeast-1.aliyuncs.com`, and use `Addressing Style = virtual`.
+- MinIO: set the MinIO endpoint, for example `http://minio:9000`, and use `Addressing Style = path`.
 
 ## Attachment Storage Setup
 

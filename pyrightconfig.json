@@ -1,0 +1,35 @@
+{
+    "include": [
+        "erpnext_s3_integration"
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__",
+        "**/.*",
+        ".git"
+    ],
+    "extraPaths": [
+        ".",
+        "..",
+        "../frappe",
+        "../erpnext"
+    ],
+    "venvPath": "../..",
+    "venv": "env",
+
+    "typeCheckingMode": "off",
+
+    "reportMissingImports": false,
+    "reportMissingModuleSource": false,
+
+    "reportOptionalMemberAccess": false,
+    "reportAttributeAccessIssue": false,
+
+    "reportUnknownArgumentType": "none",
+    "reportArgumentType": "none",
+    "reportCallIssue": "none",
+    "reportGeneralTypeIssues": "none",
+
+    "pythonVersion": "3.14",
+    "pythonPlatform": "Linux"
+}
