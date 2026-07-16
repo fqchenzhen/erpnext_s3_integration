@@ -6,6 +6,7 @@
 - Preserve ERPNext file access through `/s3/...` application routes.
 - Read S3-backed files without requiring a local file copy.
 - Support public and private file handling through the existing `File` workflow.
+- Keep storage objects private and enforce visibility through ERPNext.
 
 ## Delivery Options
 
@@ -33,6 +34,7 @@
 ## S3 Compatibility
 
 - Work with AWS S3.
+- Support Alibaba Cloud OSS through its boto3 S3 V2 compatibility mode.
 - Support S3-compatible providers such as MinIO.
 - Support custom endpoint URLs.
 - Support path-style addressing.
@@ -41,7 +43,7 @@
 ## Administration
 
 - Settings-driven configuration through ERPNext.
-- Connection test from the settings form.
+- Bucket access test and provider examples in the settings form.
 - Background processing for migration and backup operations.
 - Sync logging through the `S3 Sync Log` doctype.
 

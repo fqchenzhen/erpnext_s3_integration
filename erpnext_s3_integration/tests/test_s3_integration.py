@@ -1,12 +1,15 @@
+import io
 from unittest.mock import MagicMock, patch
+from urllib.parse import parse_qs, urlsplit
 
 import frappe
+from botocore.exceptions import ClientError
 from frappe.tests.utils import FrappeTestCase
 
 from erpnext_s3_integration import api
 from erpnext_s3_integration.backup_hooks import cleanup_old_backups
 from erpnext_s3_integration.file_hooks import generate_s3_key
-from erpnext_s3_integration.s3_client import S3Client
+from erpnext_s3_integration.s3_client import S3Client, classify_s3_exception
 
 
 class TestS3Integration(FrappeTestCase):
@@ -17,8 +20,13 @@ class TestS3Integration(FrappeTestCase):
 		self.settings.region_name = "us-east-1"
 		self.settings.bucket_name = "test-bucket"
 		self.settings.folder_prefix = "test-prefix"
+		self.settings.provider = "AWS S3"
 		self.settings.addressing_style = "auto"
+		self.settings.endpoint_url = ""
+		self.settings.use_path_style = 0
 		self.settings.enable_attachments_s3 = 1
+		self.settings.enable_backups_s3 = 0
+		self.settings.stream_from_s3 = 0
 		self.settings.delete_from_s3_on_file_delete = 1
 
 		# Save to DB so get_single works natively during tests
@@ -38,6 +46,8 @@ class TestS3Integration(FrappeTestCase):
 	def test_s3_client_init(self, mock_boto_client):
 		S3Client()
 		mock_boto_client.assert_called_once()
+		kwargs = mock_boto_client.call_args.kwargs
+		self.assertEqual(kwargs["config"].signature_version, "s3v4")
 
 		# Test path style config
 		self.settings.use_path_style = 1
@@ -55,6 +65,34 @@ class TestS3Integration(FrappeTestCase):
 		S3Client()
 		kwargs = mock_boto_client.call_args[1]
 		self.assertTrue(kwargs["config"].s3["addressing_style"] == "virtual")
+
+		self.settings.provider = "Alibaba Cloud OSS"
+		self.settings.region_name = "ap-southeast-5"
+		self.settings.endpoint_url = "https://s3.oss-ap-southeast-5.aliyuncs.com"
+		self.settings.addressing_style = "auto"
+		self.settings.save(ignore_permissions=True)
+		S3Client()
+		kwargs = mock_boto_client.call_args.kwargs
+		self.assertEqual(kwargs["config"].signature_version, "s3")
+		self.assertEqual(kwargs["config"].s3["addressing_style"], "virtual")
+
+	def test_alibaba_presigned_url_uses_virtual_host_and_s3_v2(self):
+		self.settings.provider = "Alibaba Cloud OSS"
+		self.settings.region_name = "ap-southeast-5"
+		self.settings.endpoint_url = "https://s3.oss-ap-southeast-5.aliyuncs.com"
+		self.settings.addressing_style = "auto"
+		self.settings.save(ignore_permissions=True)
+
+		url = S3Client().generate_presigned_url("attachments/private/test.txt")
+		parsed_url = urlsplit(url)
+		query = parse_qs(parsed_url.query)
+
+		self.assertEqual(
+			parsed_url.hostname,
+			"test-bucket.s3.oss-ap-southeast-5.aliyuncs.com",
+		)
+		self.assertNotIn("test-bucket", parsed_url.path)
+		self.assertIn("AWSAccessKeyId", query)
 
 	@patch("frappe.utils.redis_wrapper.RedisWrapper.lpush")
 	@patch("erpnext_s3_integration.s3_client.S3Client.upload_fileobj")
@@ -130,6 +168,81 @@ class TestS3Integration(FrappeTestCase):
 		self.assertTrue(key.startswith("test-prefix/attachments/public/a1/b2/"))
 		self.assertTrue(key.endswith("a1b2c3d4e5f6-My_test_file_123.txt"))
 
+	def test_new_file_cannot_reuse_supplied_s3_key(self):
+		file_doc = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": "replacement.txt",
+				"file_url": "/s3/protected/existing-key",
+				"content_hash": "a1b2c3d4e5f6",
+				"is_private": 0,
+			}
+		)
+
+		key = generate_s3_key(file_doc, self.settings)
+		self.assertNotEqual(key, "protected/existing-key")
+		self.assertEqual(
+			generate_s3_key(file_doc, self.settings, preserve_existing_s3_url=True),
+			"protected/existing-key",
+		)
+
+	def test_new_file_cannot_read_arbitrary_s3_url(self):
+		file_doc = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": "existing-key.txt",
+				"file_url": "/s3/backups/site/secret.sql.gz",
+				"is_private": 0,
+			}
+		)
+
+		with self.assertRaises(frappe.PermissionError):
+			file_doc.insert(ignore_permissions=True)
+
+	def test_uploads_use_private_object_acl(self):
+		s3_client = object.__new__(S3Client)
+		s3_client.bucket_name = "test-bucket"
+		s3_client._client = MagicMock()
+
+		s3_client.upload_fileobj(io.BytesIO(b"content"), "test.txt", "text/plain", is_public=True)
+
+		extra_args = s3_client._client.upload_fileobj.call_args.kwargs["ExtraArgs"]
+		self.assertEqual(extra_args, {"ACL": "private", "ContentType": "text/plain"})
+
+	def test_upload_retries_without_acl_when_provider_disables_acls(self):
+		s3_client = object.__new__(S3Client)
+		s3_client.bucket_name = "test-bucket"
+		s3_client._client = MagicMock()
+		s3_client._client.upload_fileobj.side_effect = [
+			ClientError(
+				{"Error": {"Code": "AccessControlListNotSupported"}},
+				"PutObject",
+			),
+			None,
+		]
+
+		s3_client.upload_fileobj(io.BytesIO(b"content"), "test.txt", "text/plain")
+
+		second_call = s3_client._client.upload_fileobj.call_args_list[1]
+		self.assertEqual(second_call.kwargs["ExtraArgs"], {"ContentType": "text/plain"})
+
+	def test_alibaba_error_code_is_classified_as_configuration(self):
+		error = ClientError(
+			{
+				"Error": {"Code": "InvalidArgument"},
+				"ResponseMetadata": {
+					"HTTPStatusCode": 400,
+					"HTTPHeaders": {"x-oss-ec": "0017-00000804"},
+				},
+			},
+			"PutObject",
+		)
+
+		details = classify_s3_exception(error)
+
+		self.assertEqual(details["category"], "provider_configuration")
+		self.assertEqual(details["error_code"], "0017-00000804")
+
 	@patch("erpnext_s3_integration.s3_client.S3Client.generate_presigned_url")
 	def test_existing_s3_file_access_still_works_when_uploads_disabled(self, mock_generate_presigned_url):
 		mock_generate_presigned_url.return_value = "https://example.com/test-file"
@@ -145,9 +258,11 @@ class TestS3Integration(FrappeTestCase):
 				"file_url": "/s3/test-prefix/existing_on_s3.txt",
 				"is_private": 0,
 			}
-		).insert(ignore_permissions=True)
+		)
+		file_doc.flags.copy_from_existing_file = True
+		file_doc.insert(ignore_permissions=True)
 
-		self.addCleanup(lambda: frappe.delete_doc("File", file_doc.name, force=1, ignore_permissions=True))
+		self.addCleanup(lambda: frappe.db.delete("File", {"name": file_doc.name}))
 
 		frappe.local.form_dict = frappe._dict({"key": "test-prefix/existing_on_s3.txt"})
 		frappe.local.response = frappe._dict()
@@ -156,6 +271,37 @@ class TestS3Integration(FrappeTestCase):
 
 		self.assertEqual(frappe.local.response["type"], "redirect")
 		self.assertEqual(frappe.local.response["location"], "https://example.com/test-file")
+
+	@patch("erpnext_s3_integration.s3_client.S3Client.download_as_stream")
+	def test_stream_forces_unsafe_content_to_download(self, mock_download_as_stream):
+		mock_download_as_stream.return_value = io.BytesIO(b"<script>alert(1)</script>")
+		self.settings.enable_attachments_s3 = 0
+		self.settings.stream_from_s3 = 1
+		self.settings.delete_from_s3_on_file_delete = 0
+		self.settings.save(ignore_permissions=True)
+
+		file_doc = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": "unsafe.html",
+				"file_url": "/s3/test-prefix/unsafe.html",
+				"is_private": 0,
+			}
+		)
+		file_doc.flags.copy_from_existing_file = True
+		file_doc.insert(ignore_permissions=True)
+		self.addCleanup(lambda: frappe.db.delete("File", {"name": file_doc.name}))
+
+		frappe.local.form_dict = frappe._dict({"key": "test-prefix/unsafe.html"})
+		frappe.local.response = frappe._dict()
+		frappe.local.request = frappe._dict(environ={})
+
+		response = api.get_file()
+
+		self.assertIn("attachment", response.headers["Content-Disposition"])
+		self.assertEqual(response.headers["X-Content-Type-Options"], "nosniff")
+		self.assertEqual(response.headers["Content-Security-Policy"], "sandbox")
+		response.close()
 
 	@patch("erpnext_s3_integration.backup_hooks.log_s3_sync")
 	def test_cleanup_old_backups_uses_public_client(self, mock_log_s3_sync):
@@ -177,5 +323,8 @@ class TestS3Integration(FrappeTestCase):
 		cleanup_old_backups(s3_client, "backups/site/", 7)
 
 		s3_client.client.get_paginator.assert_called_once_with("list_objects_v2")
-		s3_client.delete_object.assert_called_once_with("backups/site/old-file.sql.gz")
+		s3_client.delete_object.assert_called_once_with(
+			"backups/site/old-file.sql.gz",
+			raise_on_error=True,
+		)
 		self.assertTrue(mock_log_s3_sync.called)

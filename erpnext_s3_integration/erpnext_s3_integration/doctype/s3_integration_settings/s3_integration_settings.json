@@ -17,6 +17,8 @@
         "provider",
         "addressing_style",
         "use_path_style",
+        "configuration_examples_section",
+        "connection_examples",
         "sb_actions",
         "status",
         "feature_toggles_section",
@@ -43,27 +45,35 @@
         {
             "fieldname": "s3_credentials_section",
             "fieldtype": "Section Break",
-            "label": "S3 Credentials"
+            "label": "Object Storage Credentials"
         },
         {
+            "description": "AWS IAM, Alibaba Cloud RAM, or provider-specific access key.",
             "fieldname": "aws_access_key_id",
             "fieldtype": "Data",
-            "label": "AWS Access Key ID"
+            "label": "Access Key ID",
+            "mandatory_depends_on": "eval:doc.enable_attachments_s3 || doc.enable_backups_s3"
         },
         {
+            "description": "Stored encrypted by Frappe.",
             "fieldname": "aws_secret_access_key",
             "fieldtype": "Password",
-            "label": "AWS Secret Access Key"
+            "label": "Secret Access Key",
+            "mandatory_depends_on": "eval:doc.enable_attachments_s3 || doc.enable_backups_s3"
         },
         {
+            "description": "Provider region ID, for example ap-southeast-1 or ap-southeast-5. Do not include the oss- prefix.",
             "fieldname": "region_name",
             "fieldtype": "Data",
-            "label": "Region Name"
+            "label": "Region Name",
+            "mandatory_depends_on": "eval:doc.enable_attachments_s3 || doc.enable_backups_s3"
         },
         {
+            "description": "Bucket name only. Do not include a protocol, endpoint, or path.",
             "fieldname": "bucket_name",
             "fieldtype": "Data",
-            "label": "Bucket Name"
+            "label": "Bucket Name",
+            "mandatory_depends_on": "eval:doc.enable_attachments_s3 || doc.enable_backups_s3"
         },
         {
             "fieldname": "cb_advanced",
@@ -76,14 +86,16 @@
             "label": "Folder Prefix"
         },
         {
-            "description": "For MinIO or custom S3 endpoints",
+            "description": "Required for Alibaba OSS and MinIO. Include https:// but do not include the bucket name or an object path.",
             "fieldname": "endpoint_url",
             "fieldtype": "Data",
-            "label": "Endpoint URL"
+            "label": "Endpoint URL",
+            "mandatory_depends_on": "eval:(doc.enable_attachments_s3 || doc.enable_backups_s3) && (doc.provider=='Alibaba Cloud OSS' || doc.provider=='MinIO')",
+            "options": "URL"
         },
         {
             "default": "Custom S3 Compatible",
-            "description": "Used for configuration guidance only. AWS S3 usually uses auto, Alibaba Cloud OSS uses virtual, and MinIO usually uses path addressing.",
+            "description": "Controls provider-safe signing and addressing defaults. Select the actual storage provider.",
             "fieldname": "provider",
             "fieldtype": "Select",
             "label": "Provider",
@@ -91,7 +103,7 @@
         },
         {
             "default": "auto",
-            "description": "AWS S3: auto. Alibaba Cloud OSS: virtual. MinIO: path.",
+            "description": "AWS S3: auto. Alibaba Cloud OSS requires virtual. MinIO usually uses path.",
             "fieldname": "addressing_style",
             "fieldtype": "Select",
             "label": "Addressing Style",
@@ -99,10 +111,21 @@
         },
         {
             "default": "0",
+            "depends_on": "eval:doc.provider=='Custom S3 Compatible' && (!doc.addressing_style || doc.addressing_style=='auto')",
             "description": "Legacy compatibility flag. Prefer Addressing Style for new configuration.",
             "fieldname": "use_path_style",
             "fieldtype": "Check",
             "label": "Use Path Style"
+        },
+        {
+            "fieldname": "configuration_examples_section",
+            "fieldtype": "Section Break",
+            "label": "Configuration Examples"
+        },
+        {
+            "fieldname": "connection_examples",
+            "fieldtype": "HTML",
+            "options": "<div class=\"small text-muted\"><div class=\"table-responsive\"><table class=\"table table-bordered\"><thead><tr><th>Provider</th><th>Region Name</th><th>Endpoint URL</th><th>Addressing</th><th>Signing</th></tr></thead><tbody><tr><td>AWS S3</td><td><code>ap-southeast-1</code></td><td>Leave blank</td><td><code>auto</code></td><td><code>s3v4</code></td></tr><tr><td>Alibaba OSS (Jakarta)</td><td><code>ap-southeast-5</code></td><td><code>https://s3.oss-ap-southeast-5.aliyuncs.com</code><br><code>https://s3.oss-ap-southeast-5-internal.aliyuncs.com</code> (same-region Alibaba Cloud network)</td><td><code>virtual</code></td><td><code>s3</code> (S3 V2 compatibility)</td></tr><tr><td>MinIO</td><td><code>us-east-1</code></td><td><code>https://minio.example.com</code></td><td><code>path</code></td><td><code>s3v4</code></td></tr></tbody></table></div><p>Endpoint URL must not include the bucket name, an object path, query parameters, or credentials. Native OSS endpoints copied from the console are automatically converted to the boto3-compatible <code>s3.oss-...</code> format.</p><p><strong>Alibaba OSS:</strong> the current boto3 mode requires S3 V2 compatibility to be enabled. Jakarta is outside the Chinese mainland and is not affected by the Chinese-mainland default public endpoint restriction. Bucket-bound CNAME endpoints require a future native OSS client mode.</p></div>"
         },
         {
             "fieldname": "sb_actions",
@@ -110,6 +133,7 @@
             "label": "Actions"
         },
         {
+            "default": "Not Tested",
             "fieldname": "status",
             "fieldtype": "Data",
             "label": "Status",

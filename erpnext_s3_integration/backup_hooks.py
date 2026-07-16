@@ -247,7 +247,7 @@ def cleanup_old_backups(s3_client, prefix, retention_days):
 			if "Contents" in page:
 				for obj in page["Contents"]:
 					if _as_utc_datetime(obj["LastModified"]) < cutoff_date:
-						s3_client.delete_object(obj["Key"])
+						s3_client.delete_object(obj["Key"], raise_on_error=True)
 						deleted_count += 1
 
 		if deleted_count > 0:

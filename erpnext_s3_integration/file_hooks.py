@@ -14,8 +14,7 @@ def _with_trailing_slash(value):
 
 def _safe_file_name(file_name):
 	file_name = unidecode(file_name or "unnamed_file").strip() or "unnamed_file"
-	file_name = re.sub(r"[/\\%?#]", "_", file_name)
-	file_name = re.sub(r"\s+", "_", file_name)
+	file_name = re.sub(r"[^A-Za-z0-9._-]+", "_", file_name)
 	return file_name.strip("._") or "unnamed_file"
 
 
@@ -26,12 +25,17 @@ def _hash_for_key(content_hash=None):
 	return frappe.generate_hash(length=32)
 
 
-def generate_s3_key(file_doc, settings, preserve_existing_path=False):
+def generate_s3_key(
+	file_doc,
+	settings,
+	preserve_existing_path=False,
+	preserve_existing_s3_url=False,
+):
 	"""Generate an S3 key for a File document or file-like object."""
 	folder_prefix = _with_trailing_slash(settings.get("folder_prefix"))
 
 	file_url = getattr(file_doc, "file_url", None)
-	if file_url and file_url.startswith("/s3/"):
+	if preserve_existing_s3_url and file_url and file_url.startswith("/s3/"):
 		return file_url.replace("/s3/", "", 1)
 
 	if preserve_existing_path and file_url and file_url.startswith("/"):
@@ -41,8 +45,7 @@ def generate_s3_key(file_doc, settings, preserve_existing_path=False):
 		content_hash = _hash_for_key(getattr(file_doc, "content_hash", None))
 		visibility = "private" if cint(getattr(file_doc, "is_private", 0)) else "public"
 		base_path = (
-			f"attachments/{visibility}/{content_hash[:2]}/{content_hash[2:4]}/"
-			f"{content_hash}-{file_name}"
+			f"attachments/{visibility}/{content_hash[:2]}/{content_hash[2:4]}/{content_hash}-{file_name}"
 		)
 
 	return f"{folder_prefix}{base_path}"
@@ -58,6 +61,14 @@ def _get_file_doc_content(file_doc):
 	return content
 
 
+def _can_reuse_existing_s3_url(file_doc):
+	file_url = getattr(file_doc, "file_url", None)
+	if not file_url or not file_url.startswith("/s3/") or file_doc.is_new():
+		return False
+
+	return frappe.db.get_value("File", file_doc.name, "file_url") == file_url
+
+
 def _write_file_doc_to_s3(file_doc):
 	settings = frappe.get_single("S3 Integration Settings")
 	if not settings.enable_attachments_s3:
@@ -68,7 +79,11 @@ def _write_file_doc_to_s3(file_doc):
 		frappe.throw(_("File content is required before uploading to S3."))
 
 	file_doc.file_name = _safe_file_name(file_doc.file_name)
-	s3_key = generate_s3_key(file_doc, settings)
+	s3_key = generate_s3_key(
+		file_doc,
+		settings,
+		preserve_existing_s3_url=_can_reuse_existing_s3_url(file_doc),
+	)
 
 	from erpnext_s3_integration.s3_client import S3Client
 
@@ -129,18 +144,23 @@ def _is_s3_url(file_url):
 	return bool(file_url and file_url.startswith("/s3/"))
 
 
-def _delete_s3_url(file_url):
+def _delete_s3_url(file_url, force_cleanup=False):
 	if not _is_s3_url(file_url):
 		return False
 
 	settings = frappe.get_single("S3 Integration Settings")
-	if not settings.enable_attachments_s3 or not settings.delete_from_s3_on_file_delete:
+	if not force_cleanup and not settings.delete_from_s3_on_file_delete:
 		return True
 
 	from erpnext_s3_integration.s3_client import S3Client
 
 	s3_key = file_url.replace("/s3/", "", 1)
-	S3Client().delete_object(s3_key)
+	try:
+		S3Client().delete_object(s3_key, raise_on_error=True)
+	except Exception:
+		if not force_cleanup:
+			raise
+		frappe.logger("s3_rollback_cleanup").exception("Could not remove rolled-back S3 object %s", s3_key)
 	return True
 
 
@@ -155,13 +175,14 @@ def _delete_local_url(file_url):
 
 def delete_file_data_content(file_doc, only_thumbnail=False):
 	"""Frappe delete_file_data_content hook that only intercepts S3-backed URLs."""
+	force_cleanup = bool(file_doc.flags.new_file)
 	if only_thumbnail:
 		targets = [file_doc.thumbnail_url]
 	else:
 		targets = [file_doc.file_url, file_doc.thumbnail_url]
 
 	for file_url in targets:
-		if not _delete_s3_url(file_url):
+		if not _delete_s3_url(file_url, force_cleanup=force_cleanup):
 			_delete_local_url(file_url)
 
 

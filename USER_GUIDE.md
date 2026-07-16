@@ -2,7 +2,7 @@
 
 ## Overview
 
-ERPNext S3 Integration lets you store ERPNext attachments and backups in S3-compatible object storage such as AWS S3 or MinIO.
+ERPNext S3 Integration lets you store ERPNext attachments and backups in AWS S3, Alibaba Cloud OSS S3-compatible mode, MinIO, and other S3-compatible storage.
 
 This guide is written for system administrators and ERPNext users who manage storage, backups, and file migration.
 
@@ -26,7 +26,7 @@ Make sure you have:
   - Secret Access Key
   - Region Name
   - Bucket Name
-- An endpoint URL if you are using MinIO or another S3-compatible provider
+- An endpoint URL for Alibaba Cloud OSS, MinIO, or another custom endpoint
 
 ## Open S3 Integration Settings
 
@@ -38,12 +38,12 @@ Make sure you have:
 
 Fill in the following fields:
 
-- `AWS Access Key ID`: Access key for the target bucket
-- `AWS Secret Access Key`: Secret key for the target bucket
+- `Access Key ID`: AWS IAM, Alibaba Cloud RAM, or provider access key
+- `Secret Access Key`: Secret key for the target bucket
 - `Region Name`: AWS region or provider region
 - `Bucket Name`: Destination bucket name
-- `Endpoint URL`: Required for MinIO and some S3-compatible providers
-- `Provider`: Optional guidance for AWS S3, Alibaba Cloud OSS, MinIO, or custom S3-compatible services
+- `Endpoint URL`: Required for Alibaba Cloud OSS and MinIO
+- `Provider`: Selects provider-safe signing and addressing defaults
 - `Addressing Style`: Use `auto` for AWS S3, `virtual` for Alibaba Cloud OSS, and `path` for MinIO
 - `Use Path Style`: Legacy compatibility flag. Prefer `Addressing Style` for new configuration
 - `Folder Prefix`: Optional root prefix for all files stored by the app
@@ -51,14 +51,27 @@ Fill in the following fields:
 Common examples:
 
 - AWS S3: leave `Endpoint URL` blank, set `Addressing Style` to `auto`.
-- Alibaba Cloud OSS: set `Endpoint URL` to the OSS endpoint such as `https://oss-ap-southeast-1.aliyuncs.com`, set `Addressing Style` to `virtual`.
+- Alibaba Cloud OSS international site, Indonesia (Jakarta): use Region `ap-southeast-5`, Endpoint URL `https://s3.oss-ap-southeast-5.aliyuncs.com`, and `Addressing Style` `virtual`. If ERPNext also runs in Alibaba Cloud Jakarta, use `https://s3.oss-ap-southeast-5-internal.aliyuncs.com`.
 - MinIO: set `Endpoint URL` to the MinIO endpoint such as `http://minio:9000`, set `Addressing Style` to `path`.
+
+For every custom endpoint, include `http://` or `https://`, but do not include the bucket name, object path, credentials, query parameters, or fragments.
+
+### Alibaba Cloud OSS limitations
+
+- The boto3 client automatically uses S3 V2 signing and virtual-hosted addressing for the Alibaba provider. Alibaba Cloud must enable S3 V2 compatibility for the account.
+- The Region Name must match the bucket and endpoint region. Use an Alibaba Cloud RAM AccessKey, not an AWS key.
+- Jakarta is outside the Chinese mainland and is not affected by the Chinese-mainland default public endpoint restriction.
+- Native OSS endpoints copied from the console are automatically converted to the boto3-compatible `s3.oss-...` format.
+- Bucket-bound CNAME endpoints are not supported by the current boto3 client mode. They require a future native OSS client mode.
+- Keep the bucket private and block public access. ERPNext grants public access through its own route and temporary signed URLs rather than public object ACLs.
 
 After entering the values:
 
 1. Save the document.
-2. Click `Test Connection`.
-3. Confirm that the connection status changes to `Configured & Connected`.
+2. Click `Test Bucket Access`.
+3. Confirm that the connection status changes to `Bucket Access Verified`.
+
+This test only verifies bucket listing. Before production use, upload a small sample attachment, open it, and delete it to verify the full permission path.
 
 ## Attachment Storage
 
@@ -79,6 +92,7 @@ Use this section when you want new ERPNext attachments to be stored in S3 instea
 - New file uploads are stored in S3.
 - ERPNext stores the file path as a `/s3/...` URL in the `File` record.
 - Files remain accessible from ERPNext using the app route.
+- Storage objects remain private; the `File.is_private` value controls access at the ERPNext route.
 
 ## Existing File Migration
 
@@ -163,6 +177,7 @@ For most production sites:
 - Test file upload with one sample attachment
 - Enable backup sync after attachment storage is verified
 - Keep local backups enabled initially until backup uploads are confirmed
+- Use separate bucket prefixes or separate RAM credentials for attachments and backups
 
 ## Troubleshooting
 
@@ -176,6 +191,9 @@ Check:
 - Endpoint URL
 - Path-style setting for MinIO or custom S3 providers
 - Bucket permissions
+- For Alibaba OSS, S3 V2 compatibility and virtual addressing
+- For Alibaba OSS, matching Region Name and endpoint region
+- Server UTC clock synchronization
 
 ### File Does Not Open
 
@@ -209,7 +227,7 @@ Check:
 
 Use this checklist after setup:
 
-- `Test Connection` succeeds
+- `Test Bucket Access` succeeds
 - A new attachment is uploaded and stored with a `/s3/...` URL
 - An existing migrated file opens successfully
 - Manual backup sync uploads backup files to S3

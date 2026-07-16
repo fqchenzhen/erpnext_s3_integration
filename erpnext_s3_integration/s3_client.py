@@ -1,6 +1,8 @@
 import frappe
 from frappe import _
-from frappe.utils.password import get_decrypted_password
+
+ALIBABA_CLOUD_OSS = "Alibaba Cloud OSS"
+MINIO = "MinIO"
 
 AUTH_ERROR_CODES = {
 	"AccessDenied",
@@ -32,6 +34,13 @@ THROTTLING_ERROR_CODES = {
 }
 
 NETWORK_TIMEOUT_CODES = {"RequestTimeout", "RequestTimeoutException", "RequestExpired"}
+
+OSS_CONFIGURATION_ERROR_CODES = {
+	"0002-00000032",
+	"0017-00000804",
+	"PublicEndpointForbidden",
+	"SecondLevelDomainForbidden",
+}
 
 
 def _load_boto3():
@@ -121,8 +130,17 @@ def classify_s3_exception(exc):
 			response = exc.response or {}
 			error = response.get("Error") or {}
 			code = str(error.get("Code") or "ClientError")
-			status_code = (response.get("ResponseMetadata") or {}).get("HTTPStatusCode")
+			response_metadata = response.get("ResponseMetadata") or {}
+			response_headers = response_metadata.get("HTTPHeaders") or {}
+			oss_error_code = str(error.get("EC") or response_headers.get("x-oss-ec") or "")
+			status_code = response_metadata.get("HTTPStatusCode")
 
+			if code in OSS_CONFIGURATION_ERROR_CODES or oss_error_code in OSS_CONFIGURATION_ERROR_CODES:
+				return {
+					"category": "provider_configuration",
+					"error_code": oss_error_code or code,
+					"retryable": False,
+				}
 			if code in AUTH_ERROR_CODES or status_code in (401, 403):
 				return {"category": "auth_permission", "error_code": code, "retryable": False}
 			if code in BUCKET_OR_KEY_ERROR_CODES or status_code == 404:
@@ -151,17 +169,23 @@ class S3Client:
 		return self._client
 
 	def get_password(self, fieldname):
-		if not self.settings.get(fieldname):
-			return None
-		try:
-			return get_decrypted_password("S3 Integration Settings", "S3 Integration Settings", fieldname)
-		except frappe.exceptions.SecretNotFoundError:
-			return self.settings.get(fieldname)
-		except Exception:
-			return self.settings.get(fieldname)
+		return self.settings.get_password(fieldname, raise_exception=False)
+
+	def is_alibaba_oss(self):
+		return self.settings.get("provider") == ALIBABA_CLOUD_OSS
+
+	def get_signature_version(self):
+		if self.is_alibaba_oss():
+			return "s3"
+		return "s3v4"
 
 	def get_addressing_style(self):
+		if self.is_alibaba_oss():
+			return "virtual"
+
 		addressing_style = (self.settings.get("addressing_style") or "").strip().lower()
+		if self.settings.get("provider") == MINIO and addressing_style in {"", "auto"}:
+			return "path"
 		if self.settings.get("use_path_style") and addressing_style in {"", "auto"}:
 			return "path"
 		if addressing_style in {"auto", "virtual", "path"}:
@@ -170,21 +194,21 @@ class S3Client:
 		return "auto"
 
 	def setup_client(self):
-		boto3, _ = _load_boto3()
+		boto3 = _load_boto3()[0]
 		aws_access_key_id = self.settings.aws_access_key_id
 		aws_secret_access_key = self.get_password("aws_secret_access_key")
 		region_name = self.settings.region_name
 		endpoint_url = self.settings.endpoint_url
 
 		if not (aws_access_key_id and aws_secret_access_key):
-			frappe.throw(_("AWS Credentials are required to initialize the S3 client."))
+			frappe.throw(_("Access Key ID and Secret Access Key are required to initialize the S3 client."))
 
 		self.bucket_name = self.settings.bucket_name
 		if not self.bucket_name:
-			frappe.throw(_("AWS Bucket Name is required."))
+			frappe.throw(_("Bucket Name is required."))
 
 		config = boto3.session.Config(
-			signature_version="s3v4",
+			signature_version=self.get_signature_version(),
 			connect_timeout=10,
 			read_timeout=60,
 			retries={"mode": "standard", "total_max_attempts": 4},
@@ -225,7 +249,7 @@ class S3Client:
 	def test_connection(self):
 		try:
 			self._client.list_objects_v2(Bucket=self.bucket_name, MaxKeys=1)
-			return True, "Connection successful! Bucket is accessible."
+			return True, "Bucket list access succeeded. Upload and download permissions were not tested."
 		except Exception as e:
 			error = self._operation_error(e, "Test Connection")
 			frappe.log_error(message=frappe.get_traceback(), title="S3 Test Connection Failed")
@@ -236,11 +260,10 @@ class S3Client:
 
 	def upload_fileobj(self, fileobj, key, content_type=None, is_public=False):
 		_, botocore_exceptions = _load_boto3()
-		extra_args = {}
+		# File visibility is enforced by Frappe; storage objects stay private and use signed access.
+		extra_args = {"ACL": "private"}
 		if content_type:
 			extra_args["ContentType"] = content_type
-		if is_public:
-			extra_args["ACL"] = "public-read"
 
 		try:
 			self._client.upload_fileobj(fileobj, self.bucket_name, key, ExtraArgs=extra_args)
@@ -270,6 +293,20 @@ class S3Client:
 			if raise_on_error:
 				raise error
 			return False
+
+	def object_exists(self, key):
+		_, botocore_exceptions = _load_boto3()
+		try:
+			self._client.head_object(Bucket=self.bucket_name, Key=key)
+			return True
+		except botocore_exceptions.ClientError as e:
+			response = e.response or {}
+			error_code = str((response.get("Error") or {}).get("Code") or "")
+			if error_code in {"404", "NoSuchKey", "NotFound"}:
+				return False
+			self._raise_operation_error(e, "Check Object", key)
+		except Exception as e:
+			self._raise_operation_error(e, "Check Object", key)
 
 	def generate_presigned_url(self, key, expires_in=3600):
 		try:

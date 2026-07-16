@@ -2,7 +2,7 @@
 
 ERPNext S3 Integration is a Frappe app by Solufy that stores ERPNext attachments and backups in S3-compatible object storage.
 
-It supports AWS S3 and compatible providers such as MinIO, keeps existing S3-backed files accessible inside ERPNext, and provides a settings-driven workflow for file migration and backup sync.
+It supports AWS S3, Alibaba Cloud OSS in S3-compatible mode, and providers such as MinIO. It keeps existing S3-backed files accessible inside ERPNext and provides a settings-driven workflow for file migration and backup sync.
 
 ## Features
 
@@ -33,7 +33,8 @@ Run the following from your bench directory:
 ```bash
 bench get-app https://github.com/solufy/erpnext_s3_integration
 bench --site <your-site> install-app erpnext_s3_integration
-bench migrate && bench restart
+bench --site <your-site> migrate
+bench restart
 ```
 
 If you are installing from a local app path or a private repository, use your normal `bench get-app` flow and then install the app on the target site.
@@ -45,10 +46,10 @@ This app requires:
 - `boto3`
 - `croniter`
 
-If your environment does not install Python dependencies automatically, run:
+Bench normally installs these dependencies from `pyproject.toml`. To repair a local editable installation, run:
 
 ```bash
-bench pip install -r apps/erpnext_s3_integration/requirements.txt
+bench pip install -e apps/erpnext_s3_integration
 bench restart
 ```
 
@@ -56,29 +57,33 @@ bench restart
 
 1. Open **S3 Integration Settings** in ERPNext.
 2. Enter the S3 connection details:
-   - `AWS Access Key ID`
-   - `AWS Secret Access Key`
+   - `Access Key ID`
+   - `Secret Access Key`
    - `Region Name`
    - `Bucket Name`
-   - `Endpoint URL` if you are using MinIO or another S3-compatible service
+   - `Endpoint URL` for Alibaba Cloud OSS, MinIO, or another custom endpoint
    - `Addressing Style` for your provider
 3. Optionally set `Folder Prefix` to keep all objects under a dedicated root path.
 4. Save the document.
-5. Click `Test Connection`.
+5. Click `Test Bucket Access`.
 
 Provider examples:
 
 - AWS S3: leave `Endpoint URL` blank and use `Addressing Style = auto`.
-- Alibaba Cloud OSS: set the OSS endpoint, for example `https://oss-ap-southeast-1.aliyuncs.com`, and use `Addressing Style = virtual`.
+- Alibaba Cloud OSS international site, Indonesia (Jakarta): use Region `ap-southeast-5`, Endpoint URL `https://s3.oss-ap-southeast-5.aliyuncs.com`, and `Addressing Style = virtual`. If ERPNext also runs in Alibaba Cloud Jakarta, use `https://s3.oss-ap-southeast-5-internal.aliyuncs.com`.
 - MinIO: set the MinIO endpoint, for example `http://minio:9000`, and use `Addressing Style = path`.
+
+Alibaba OSS uses boto3 S3 V2 signing because Alibaba's current boto3 guidance does not support boto3 SigV4 uploads. S3 V2 compatibility must be enabled for the OSS account. Jakarta is outside the Chinese mainland and is not affected by the Chinese-mainland default public endpoint restriction. Bucket-bound CNAME endpoints are not supported by the current boto3 client mode and require a future native OSS client implementation.
+
+Use a private bucket with public access blocked. Objects are uploaded with a private ACL; ERPNext decides whether a `File` is public or private and serves it through an application stream or a temporary signed URL.
 
 ## Attachment Storage Setup
 
 To store new attachments in S3:
 
-1. Enable `Enable Attachments S3`.
-2. Choose whether files should be streamed through ERPNext or served with pre-signed URLs using `Stream From S3`.
-3. Optionally enable `Delete From S3 On File Delete`.
+1. Enable `Enable S3 for file attachments`.
+2. Choose whether files should be streamed through ERPNext or served with pre-signed URLs using `Stream file content from S3 when viewing/downloading`.
+3. Optionally enable `Delete from S3 when File is deleted`.
 4. Save the settings.
 
 From that point onward, newly uploaded ERPNext attachments are stored in S3.
@@ -116,6 +121,8 @@ You can also trigger an immediate manual sync from the settings form with `Take 
 - Existing files that already point to `/s3/...` remain accessible as long as the S3 credentials are still configured.
 - External file URLs such as `http://` and `https://` are skipped by the migration tool.
 - The app uses a `File` override so ERPNext can read S3-backed files without expecting them on local disk.
+- Changing an existing S3-backed File between public and private is blocked; re-upload it with the intended visibility.
+- `Test Bucket Access` checks bucket listing only. Verify a sample upload, open, and delete before enabling production traffic.
 
 ## Project Structure
 
@@ -128,7 +135,7 @@ You can also trigger an immediate manual sync from the settings form with `Take 
 
 ## Verification Checklist
 
-- `Test Connection` succeeds.
+- `Test Bucket Access` succeeds.
 - A newly uploaded attachment gets a `/s3/...` URL in the `File` record.
 - Opening an existing S3-backed file works from ERPNext.
 - Manual backup sync uploads the expected backup artifacts.
