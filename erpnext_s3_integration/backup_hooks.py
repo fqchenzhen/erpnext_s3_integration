@@ -37,7 +37,8 @@ def _backup_file_enabled(file_path, settings):
 
 def _backup_date(file_path):
 	try:
-		return datetime.datetime.fromtimestamp(os.path.getmtime(file_path)).strftime("%Y-%m-%d")
+		timezone = ZoneInfo(frappe.utils.get_system_timezone())
+		return datetime.datetime.fromtimestamp(os.path.getmtime(file_path), tz=timezone).strftime("%Y-%m-%d")
 	except OSError:
 		return frappe.utils.now_datetime().strftime("%Y-%m-%d")
 

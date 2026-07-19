@@ -1,3 +1,4 @@
+import datetime
 import io
 from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs, urlsplit
@@ -7,7 +8,7 @@ from botocore.exceptions import ClientError
 from frappe.tests.utils import FrappeTestCase
 
 from erpnext_s3_integration import api
-from erpnext_s3_integration.backup_hooks import cleanup_old_backups
+from erpnext_s3_integration.backup_hooks import _backup_date, cleanup_old_backups
 from erpnext_s3_integration.file_hooks import generate_s3_key
 from erpnext_s3_integration.s3_client import S3Client, classify_s3_exception
 
@@ -41,6 +42,21 @@ class TestS3Integration(FrappeTestCase):
 		)
 		self.mock_get_password = patcher.start()
 		self.addCleanup(patcher.stop)
+
+	@patch("erpnext_s3_integration.backup_hooks.frappe.utils.get_system_timezone", return_value="Asia/Jakarta")
+	@patch("erpnext_s3_integration.backup_hooks.os.path.getmtime")
+	def test_backup_date_uses_frappe_system_timezone(self, mock_getmtime, _mock_get_system_timezone):
+		mock_getmtime.return_value = datetime.datetime(
+			2026,
+			7,
+			18,
+			19,
+			0,
+			3,
+			tzinfo=datetime.UTC,
+		).timestamp()
+
+		self.assertEqual(_backup_date("backup.sql.gz"), "2026-07-19")
 
 	@patch("boto3.client")
 	def test_s3_client_init(self, mock_boto_client):
