@@ -1,0 +1,26 @@
+{
+ "app": "erpnext_s3_integration",
+ "creation": "2026-08-10 00:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon": "database",
+ "icon_type": "Link",
+ "idx": 0,
+ "label": "ERPNext S3 Integration",
+ "link_to": "ERPNext S3 Integration",
+ "link_type": "Workspace Sidebar",
+ "logo_url": "/assets/erpnext_s3_integration/images/object-storage.svg",
+ "modified": "2026-08-10 00:00:00.000000",
+ "modified_by": "Administrator",
+ "name": "ERPNext S3 Integration",
+ "owner": "Administrator",
+ "parent_icon": "",
+ "restrict_removal": 0,
+ "roles": [
+  {
+   "role": "System Manager"
+  }
+ ],
+ "standard": 1
+}

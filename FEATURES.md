@@ -1,51 +1,59 @@
-# Feature List
+# Feature Summary
 
-## Core Storage
+## Single-screen administration
 
-- Upload new ERPNext attachments directly to S3-compatible storage.
-- Preserve ERPNext file access through `/s3/...` application routes.
-- Read S3-backed files without requiring a local file copy.
-- Support public and private file handling through the existing `File` workflow.
-- Keep storage objects private and enforce visibility through ERPNext.
+- Fixed four-tab **Object Storage Settings** interface with no Guided/Advanced mode or hidden global view state.
+- Common status and recommendations stay visible; technical fields expand only inside their related section.
+- System Manager-only Apps screen entry; no separate Workspace is required.
+- Chinese and English UI based on the Frappe user language.
+- Direct links to OSS Console, RAM Console, and ECS Console.
+- Environment-aware Jakarta recommendations: public Endpoint for Development/Staging and internal Endpoint plus ECS RAM Role for Production.
+- One-click save, Full Test, profile enablement, Settings linking, and feature enablement.
+- Exact blockers for missing fields, Endpoint mismatch, stale tests, wrong Purpose, and provider permissions.
+- Production enablement is blocked until bucket safety and the full profile test pass.
 
-## Delivery Options
+## Attachments
 
-- Stream files through ERPNext.
-- Generate pre-signed S3 URLs for direct object access.
-- Keep existing S3-backed files accessible even after new S3 uploads are disabled.
+- Official Alibaba OSS SDK V2 or boto3 provider adapters.
+- Private server-side uploads and Frappe-authorized downloads.
+- HTTP single-range support and `206` responses.
+- Original Unicode `File.file_name` retained; object key uses only content hash and visibility.
+- Shared object uses the hottest effective retention policy.
+- Delete only after the last reference and database commit, with background retry.
+- Versioned-bucket deletes create normal delete markers; no permanent version purge.
 
-## Migration
+## Classification and lifecycle
 
-- Migrate existing local attachments to S3 in the background.
-- Skip already migrated files.
-- Skip external web URLs during migration.
-- Preserve deterministic S3 object keys based on ERPNext file metadata.
+- Precedence: manual File override, DocType + field, DocType, MIME/extension, default.
+- Policies: `permanent-hot`, `business-online`, `business-archive`, and `unclassified`.
+- Tags: retention, category, application, environment, and site.
+- No automatic provider lifecycle, ACL, versioning, or bucket-policy mutation.
 
-## Backup Sync
+## Attachment long-term cold storage
 
-- Upload database backups to S3.
-- Upload public and private file backups to S3.
-- Trigger manual backup creation and sync from settings.
-- Run scheduled sync using a CRON expression.
-- Organize backups by site and date prefix in the bucket.
-- Optionally remove local backup files after successful upload.
-- Optionally delete older S3 backups based on retention days.
+- Safe unmatched default is `unclassified`; only deterministic rules or an authorized override assign `business-archive`.
+- Read-only Attachment Bucket lifecycle check for the rule filtered by `retention=business-archive`.
+- Default 30-day IA and 365-day Archive transitions; Cold Archive and deletion are disabled.
+- Attachment and backup lifecycle confirmations are independent and cannot be applied to the wrong bucket by the app.
+- Preview, background Recalculate, Unclassified list, and non-destructive Reset to Default Rules actions.
 
-## S3 Compatibility
+## Backups
 
-- Work with AWS S3.
-- Support Alibaba Cloud OSS through its boto3 S3 V2 compatibility mode.
-- Support S3-compatible providers such as MinIO.
-- Support custom endpoint URLs.
-- Support path-style addressing.
-- Support configurable folder prefixes for attachments and backups.
+- Dedicated backup profile and bucket.
+- Database backup is enabled by default; local public/private files-folder archives are separate, disabled-by-default choices.
+- Object-backed attachments are not duplicated into local files-folder archives.
+- Manual and cron-triggered backup creation/upload.
+- Local temporary files are deleted only after successful upload by default.
+- Daily 02:00 schedule, date-organized keys, and the latest 30 successful daily restore points by default.
+- Cleanup runs only after a complete successful upload and never removes the last successful restore point.
+- Size, generation-time, last-success, estimated usage, and local-space health indicators.
+- OSS backup lifecycle is an optional folded section and does not block backup enablement.
 
-## Administration
+## Archive restore
 
-- Settings-driven configuration through ERPNext.
-- Bucket access test and provider examples in the settings form.
-- Background processing for migration and backup operations.
-- Sync logging through the `S3 Sync Log` doctype.
-
-Maintained by Solufy  
-Contact: sahil@solufy.in
+- States: Requested, Restoring, Ready, Expired, Failed, and Cancelled.
+- One active request per object.
+- Original File read permission plus an allowed restore role.
+- Provider submission can no longer be cancelled.
+- Failed requests can retry up to the configured limit.
+- 15-minute active-request polling, system notifications by default, optional email.

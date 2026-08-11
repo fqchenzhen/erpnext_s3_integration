@@ -1,196 +1,213 @@
 import io
-import re
+import mimetypes
 
 import frappe
 from frappe import _
+from frappe.core.doctype.file.utils import get_content_hash
 from frappe.utils import cint
-from unidecode import unidecode
+
+from erpnext_s3_integration.object_storage.service import ObjectStorageService
 
 
-def _with_trailing_slash(value):
-	value = (value or "").strip().strip("/")
-	return f"{value}/" if value else ""
+def attachment_storage_enabled() -> bool:
+	return bool(
+		frappe.db.exists("DocType", "Object Storage Settings")
+		and frappe.db.get_single_value("Object Storage Settings", "enable_attachment_storage")
+	)
 
 
-def _safe_file_name(file_name):
-	file_name = unidecode(file_name or "unnamed_file").strip() or "unnamed_file"
-	file_name = re.sub(r"[^A-Za-z0-9._-]+", "_", file_name)
-	return file_name.strip("._") or "unnamed_file"
+def generate_object_key(content_hash: str, is_private: bool, prefix: str = "") -> str:
+	content_hash = (content_hash or "").strip().lower()
+	if len(content_hash) < 4:
+		raise ValueError("A content hash is required to generate an object key")
+	visibility = "private" if is_private else "public"
+	relative = f"attachments/{visibility}/{content_hash[:2]}/{content_hash[2:4]}/{content_hash}"
+	return "/".join(part for part in (prefix.strip("/"), relative) if part)
 
 
-def _hash_for_key(content_hash=None):
-	content_hash = re.sub(r"[^A-Za-z0-9]", "", content_hash or "")
-	if len(content_hash) >= 4:
-		return content_hash
-	return frappe.generate_hash(length=32)
+def _content(file_doc) -> bytes | None:
+	content = getattr(file_doc, "_content", None) or file_doc.get("content")
+	return content.encode() if isinstance(content, str) else content
 
 
-def generate_s3_key(
-	file_doc,
-	settings,
-	preserve_existing_path=False,
-	preserve_existing_s3_url=False,
-):
-	"""Generate an S3 key for a File document or file-like object."""
-	folder_prefix = _with_trailing_slash(settings.get("folder_prefix"))
-
-	file_url = getattr(file_doc, "file_url", None)
-	if preserve_existing_s3_url and file_url and file_url.startswith("/s3/"):
-		return file_url.replace("/s3/", "", 1)
-
-	if preserve_existing_path and file_url and file_url.startswith("/"):
-		base_path = file_url.lstrip("/")
-	else:
-		file_name = _safe_file_name(getattr(file_doc, "file_name", None))
-		content_hash = _hash_for_key(getattr(file_doc, "content_hash", None))
-		visibility = "private" if cint(getattr(file_doc, "is_private", 0)) else "public"
-		base_path = (
-			f"attachments/{visibility}/{content_hash[:2]}/{content_hash[2:4]}/{content_hash}-{file_name}"
-		)
-
-	return f"{folder_prefix}{base_path}"
-
-
-def _get_file_doc_content(file_doc):
-	content = getattr(file_doc, "_content", None)
-	if content is None:
-		content = file_doc.get("content")
-
-	if isinstance(content, str):
-		return content.encode()
-	return content
-
-
-def _can_reuse_existing_s3_url(file_doc):
-	file_url = getattr(file_doc, "file_url", None)
-	if not file_url or not file_url.startswith("/s3/") or file_doc.is_new():
-		return False
-
-	return frappe.db.get_value("File", file_doc.name, "file_url") == file_url
-
-
-def _write_file_doc_to_s3(file_doc):
-	settings = frappe.get_single("S3 Integration Settings")
-	if not settings.enable_attachments_s3:
+def _write_file_doc(file_doc):
+	if not attachment_storage_enabled():
 		return file_doc.save_file_on_filesystem()
 
-	content = _get_file_doc_content(file_doc)
+	settings = frappe.get_single("Object Storage Settings")
+	profile_name = settings.attachment_storage_profile
+	service = ObjectStorageService(profile_name)
+	content = _content(file_doc)
 	if not content:
-		frappe.throw(_("File content is required before uploading to S3."))
+		frappe.throw(_("File content is required before uploading to object storage."))
 
-	file_doc.file_name = _safe_file_name(file_doc.file_name)
-	s3_key = generate_s3_key(
-		file_doc,
-		settings,
-		preserve_existing_s3_url=_can_reuse_existing_s3_url(file_doc),
+	key = generate_object_key(file_doc.content_hash, cint(file_doc.is_private), service.profile.prefix)
+	content_type = file_doc.get("content_type") or mimetypes.guess_type(file_doc.file_name or "")[0]
+	service.put(
+		key,
+		io.BytesIO(content),
+		content_type=content_type,
+		content_length=len(content),
+		metadata={"content-hash": file_doc.content_hash},
 	)
-
-	from erpnext_s3_integration.s3_client import S3Client
-
-	content_stream = io.BytesIO(content)
-	content_type = file_doc.get("content_type") or file_doc.get("mime_type")
-	S3Client().upload_fileobj(content_stream, s3_key, content_type, not cint(file_doc.is_private))
-
-	file_doc.file_url = f"/s3/{s3_key}"
+	file_doc.object_storage_profile = profile_name
+	file_doc.object_storage_key = key
+	_allow_storage_fields(file_doc)
+	file_doc.file_url = f"/s3/{key}"
 	file_doc.content = None
+	return {
+		"file_name": file_doc.file_name,
+		"file_url": file_doc.file_url,
+		"object_storage_profile": profile_name,
+		"object_storage_key": key,
+	}
 
-	return {"file_name": file_doc.file_name, "file_url": file_doc.file_url}
 
+def write_file_to_object_storage(file_or_name, content=None, content_type=None, is_private=0):
+	"""Store File content using the active attachment profile."""
+	if getattr(file_or_name, "doctype", None) == "File":
+		return _write_file_doc(file_or_name)
 
-def _write_legacy_file_to_s3(fname, content, content_type=None, is_private=0):
-	settings = frappe.get_single("S3 Integration Settings")
-	if not settings.enable_attachments_s3:
+	if not attachment_storage_enabled():
 		from frappe.utils.file_manager import save_file_on_filesystem
 
-		return save_file_on_filesystem(fname, content, content_type=content_type, is_private=is_private)
+		return save_file_on_filesystem(
+			file_or_name, content, content_type=content_type, is_private=is_private
+		)
+	return _write_legacy_file(file_or_name, content, content_type, is_private)
 
-	if isinstance(content, str):
-		content = content.encode()
-	if not content:
-		frappe.throw(_("File content is required before uploading to S3."))
 
-	from frappe.utils.file_manager import get_content_hash
-
-	file_name = _safe_file_name(fname)
-	file_doc = frappe._dict(
-		{
-			"file_name": file_name,
-			"content_hash": get_content_hash(content),
-			"is_private": is_private,
-		}
+def _write_legacy_file(file_name, content, content_type, is_private) -> dict:
+	content = content.encode() if isinstance(content, str) else content
+	if content is None:
+		frappe.throw(_("File content is required before uploading to object storage."))
+	settings = frappe.get_single("Object Storage Settings")
+	service = ObjectStorageService(settings.attachment_storage_profile)
+	content_hash = get_content_hash(content)
+	key = generate_object_key(content_hash, cint(is_private), service.profile.prefix)
+	service.put(
+		key,
+		io.BytesIO(content),
+		content_type=content_type or mimetypes.guess_type(file_name or "")[0],
+		content_length=len(content),
+		metadata={"content-hash": content_hash},
 	)
-	s3_key = generate_s3_key(file_doc, settings)
-
-	from erpnext_s3_integration.s3_client import S3Client
-
-	S3Client().upload_fileobj(io.BytesIO(content), s3_key, content_type, not cint(is_private))
-	return {"file_name": file_name, "file_url": f"/s3/{s3_key}"}
-
-
-def write_file_to_s3(file_or_name, content=None, content_type=None, is_private=0):
-	"""Frappe write_file hook that stores new file content in S3-compatible storage."""
-	if getattr(file_or_name, "doctype", None) == "File":
-		return _write_file_doc_to_s3(file_or_name)
-
-	return _write_legacy_file_to_s3(
-		file_or_name,
-		content,
-		content_type=content_type,
-		is_private=is_private,
-	)
+	profile_name = service.profile.name
+	_register_rollback_cleanup(profile_name, key)
+	return {
+		"file_name": file_name,
+		"file_url": f"/s3/{key}",
+		"object_storage_profile": profile_name,
+		"object_storage_key": key,
+	}
 
 
-def _is_s3_url(file_url):
-	return bool(file_url and file_url.startswith("/s3/"))
-
-
-def _delete_s3_url(file_url, force_cleanup=False):
-	if not _is_s3_url(file_url):
-		return False
-
-	settings = frappe.get_single("S3 Integration Settings")
-	if not force_cleanup and not settings.delete_from_s3_on_file_delete:
-		return True
-
-	from erpnext_s3_integration.s3_client import S3Client
-
-	s3_key = file_url.replace("/s3/", "", 1)
-	try:
-		S3Client().delete_object(s3_key, raise_on_error=True)
-	except Exception:
-		if not force_cleanup:
-			raise
-		frappe.logger("s3_rollback_cleanup").exception("Could not remove rolled-back S3 object %s", s3_key)
-	return True
-
-
-def _delete_local_url(file_url):
-	if not file_url or _is_s3_url(file_url) or file_url.startswith(("http://", "https://")):
+def copy_object_reference(file_doc, method=None):
+	if not file_doc.file_url or not file_doc.file_url.startswith("/s3/"):
 		return
+	_allow_storage_fields(file_doc)
+	if file_doc.object_storage_key:
+		return
+	existing = frappe.db.get_value(
+		"File",
+		{"file_url": file_doc.file_url},
+		["object_storage_profile", "object_storage_key"],
+		as_dict=True,
+	)
+	if existing:
+		file_doc.object_storage_profile = existing.object_storage_profile
+		file_doc.object_storage_key = existing.object_storage_key
 
-	from frappe.utils.file_manager import delete_file
 
-	delete_file(file_url)
+def _allow_storage_fields(file_doc) -> None:
+	if not getattr(file_doc, "flags", None):
+		file_doc.flags = frappe._dict()
+	fields = file_doc.flags.get("ignore_permlevel_for_fields", [])
+	file_doc.flags.ignore_permlevel_for_fields = list(
+		dict.fromkeys([*fields, "object_storage_profile", "object_storage_key"])
+	)
+
+
+def _register_rollback_cleanup(profile_name: str, key: str) -> None:
+	frappe.db.after_rollback.add(lambda: _cleanup_rolled_back_upload(profile_name, key))
 
 
 def delete_file_data_content(file_doc, only_thumbnail=False):
-	"""Frappe delete_file_data_content hook that only intercepts S3-backed URLs."""
-	force_cleanup = bool(file_doc.flags.new_file)
+	"""Schedule object deletion only after the surrounding database transaction commits."""
+	if not file_doc.file_url or not file_doc.file_url.startswith("/s3/"):
+		return _delete_local(file_doc, only_thumbnail)
+	_delete_local_thumbnail(file_doc)
 	if only_thumbnail:
-		targets = [file_doc.thumbnail_url]
-	else:
-		targets = [file_doc.file_url, file_doc.thumbnail_url]
+		return
+	if not file_doc.object_storage_profile or not file_doc.object_storage_key:
+		frappe.log_error("Object-backed File is missing profile or key", "Object Storage Delete")
+		return
 
-	for file_url in targets:
-		if not _delete_s3_url(file_url, force_cleanup=force_cleanup):
-			_delete_local_url(file_url)
+	profile_name = file_doc.object_storage_profile
+	key = file_doc.object_storage_key
+	if file_doc.flags.new_file:
+		try:
+			_delete_if_unreferenced(profile_name, key)
+		except Exception:
+			frappe.log_error(title="Object Storage Rollback Cleanup", message=frappe.get_traceback())
+		return
+	if not frappe.db.get_single_value("Object Storage Settings", "delete_on_last_reference"):
+		return
+
+	def enqueue_delete():
+		frappe.enqueue(
+			"erpnext_s3_integration.file_hooks.delete_object_if_unreferenced",
+			queue="short",
+			deduplicate=True,
+			job_id=f"object-delete-{frappe.generate_hash(key, 16)}",
+			profile_name=profile_name,
+			key=key,
+		)
+
+	frappe.db.after_commit.add(enqueue_delete)
 
 
-def before_insert(file_doc, method):
-	"""Deprecated compatibility hook. Uploads are handled by write_file_to_s3."""
-	return
+def delete_object_if_unreferenced(profile_name: str, key: str, attempt: int = 0) -> None:
+	try:
+		_delete_if_unreferenced(profile_name, key)
+	except Exception:
+		if attempt < 2:
+			frappe.enqueue(
+				"erpnext_s3_integration.file_hooks.delete_object_if_unreferenced",
+				queue="short",
+				profile_name=profile_name,
+				key=key,
+				attempt=attempt + 1,
+			)
+		else:
+			frappe.log_error(title="Object Storage Delete", message=frappe.get_traceback())
 
 
-def on_trash(file_doc, method):
-	"""Deprecated compatibility hook. Deletes are handled by delete_file_data_content."""
-	return
+def _delete_if_unreferenced(profile_name: str, key: str) -> None:
+	if frappe.db.exists("File", {"object_storage_profile": profile_name, "object_storage_key": key}):
+		return
+	ObjectStorageService(profile_name, require_enabled=False).backend.delete(key)
+
+
+def _cleanup_rolled_back_upload(profile_name: str, key: str) -> None:
+	try:
+		_delete_if_unreferenced(profile_name, key)
+	except Exception:
+		frappe.log_error(title="Object Storage Rollback Cleanup", message=frappe.get_traceback())
+
+
+def _delete_local_thumbnail(file_doc) -> None:
+	thumbnail_url = file_doc.thumbnail_url
+	if thumbnail_url and not thumbnail_url.startswith(("http://", "https://", "/s3/")):
+		from frappe.utils.file_manager import delete_file
+
+		delete_file(thumbnail_url)
+
+
+def _delete_local(file_doc, only_thumbnail: bool):
+	from frappe.utils.file_manager import delete_file
+
+	urls = [file_doc.thumbnail_url] if only_thumbnail else [file_doc.file_url, file_doc.thumbnail_url]
+	for file_url in urls:
+		if file_url and not file_url.startswith(("http://", "https://", "/s3/")):
+			delete_file(file_url)

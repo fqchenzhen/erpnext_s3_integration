@@ -1,0 +1,7 @@
+{
+ "actions": [], "creation": "2026-08-09 00:00:00.000000", "doctype": "DocType", "editable_grid": 1,
+ "engine": "InnoDB", "istable": 1, "field_order": ["role"],
+ "fields": [{"fieldname":"role","fieldtype":"Link","in_list_view":1,"label":"Role","options":"Role","reqd":1}],
+ "modified": "2026-08-09 00:00:00.000000", "modified_by": "Administrator", "module": "ERPNext S3 Integration",
+ "name": "Object Storage Restore Role", "owner": "Administrator", "permissions": [], "sort_field": "modified", "sort_order": "DESC", "states": []
+}

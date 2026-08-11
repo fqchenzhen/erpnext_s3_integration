@@ -1,0 +1,130 @@
+.object-storage-assistant,
+.object-storage-subsection {
+	border: 1px solid var(--border-color);
+	border-radius: var(--border-radius-md);
+	background: var(--card-bg);
+}
+
+.object-storage-summary,
+.object-storage-primary-action {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.object-storage-summary {
+	padding: 1.25rem;
+	border-bottom: 1px solid var(--border-color);
+}
+
+.object-storage-title {
+	font-size: 1.25rem;
+	font-weight: 600;
+}
+
+.object-storage-heading {
+	font-weight: 600;
+	margin-bottom: 0.25rem;
+}
+
+.object-storage-row {
+	display: grid;
+	grid-template-columns: 2rem minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 1rem 1.25rem;
+	border-bottom: 1px solid var(--border-color);
+}
+
+.object-storage-row:last-child {
+	border-bottom: 0;
+}
+
+.object-storage-row-icon {
+	font-size: 1.15rem;
+	font-weight: 700;
+}
+
+.object-storage-row-action {
+	min-width: 8rem;
+	text-align: right;
+}
+
+.object-storage-subsection {
+	padding: 1rem 1.25rem;
+}
+
+.object-storage-primary-action {
+	padding: 0.75rem 0;
+}
+
+.object-storage-secondary-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	padding: 0.5rem 0;
+}
+
+.object-storage-policy-table {
+	margin: 1rem 0 0;
+}
+
+.object-storage-policy-table td:first-child {
+	width: 58%;
+}
+
+.object-storage-timeline,
+.object-storage-capacity-grid {
+	display: grid;
+	gap: 0.75rem;
+	margin: 1rem 0;
+}
+
+.object-storage-timeline {
+	grid-template-columns: repeat(5, minmax(7rem, 1fr));
+}
+
+.object-storage-timeline > div,
+.object-storage-metric {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	padding: 0.75rem;
+	border-radius: var(--border-radius-sm);
+	background: var(--subtle-fg);
+}
+
+.object-storage-capacity-grid {
+	grid-template-columns: repeat(4, minmax(8rem, 1fr));
+}
+
+@media (max-width: 900px) {
+	.object-storage-summary,
+	.object-storage-primary-action {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.object-storage-timeline,
+	.object-storage-capacity-grid {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+@media (max-width: 560px) {
+	.object-storage-row {
+		grid-template-columns: 1.5rem minmax(0, 1fr);
+	}
+
+	.object-storage-row-action {
+		grid-column: 2;
+		min-width: 0;
+		text-align: left;
+	}
+
+	.object-storage-timeline,
+	.object-storage-capacity-grid {
+		grid-template-columns: 1fr;
+	}
+}

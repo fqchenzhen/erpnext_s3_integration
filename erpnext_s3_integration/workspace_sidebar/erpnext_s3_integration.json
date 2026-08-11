@@ -1,0 +1,29 @@
+{
+ "app": "erpnext_s3_integration",
+ "creation": "2026-08-10 00:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Workspace Sidebar",
+ "header_icon": "database",
+ "idx": 0,
+ "items": [
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "setting",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Object Storage Settings",
+   "link_to": "Object Storage Settings",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-08-10 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "ERPNext S3 Integration",
+ "name": "ERPNext S3 Integration",
+ "owner": "Administrator",
+ "standard": 1,
+ "title": "ERPNext S3 Integration"
+}
