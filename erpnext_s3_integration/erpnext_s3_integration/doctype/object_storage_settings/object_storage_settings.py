@@ -56,7 +56,7 @@ class ObjectStorageSettings(Document):
 	def _validate_schedule(self):
 		if self.backup_cron and not croniter.is_valid(self.backup_cron):
 			frappe.throw(_("Backup Schedule must be a valid five-part cron expression."))
-		if cint(self.backup_retention_days) < 1:
+		if self.enable_backup_storage and cint(self.backup_retention_days) < 1:
 			frappe.throw(_("Keep at least one successful daily OSS restore point."))
 
 	def _validate_attachment_lifecycle(self):
