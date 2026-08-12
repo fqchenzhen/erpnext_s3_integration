@@ -224,6 +224,33 @@ class TestRamPolicy(UnitTestCase):
 
 
 class TestSetupDefaults(UnitTestCase):
+	@patch("erpnext_s3_integration.setup.frappe.db.set_single_value")
+	@patch("erpnext_s3_integration.setup.frappe.get_meta")
+	@patch("erpnext_s3_integration.setup.frappe.db.get_singles_dict")
+	def test_missing_single_settings_receive_defaults(
+		self, get_singles_dict, get_meta, set_single_value
+	):
+		from erpnext_s3_integration.setup import _seed_missing_settings_defaults
+
+		get_singles_dict.return_value = {"restore_days": "7"}
+		get_meta.return_value.fields = [
+			frappe._dict(fieldname="restore_days", default="1"),
+			frappe._dict(fieldname="restore_check_interval_minutes", default="15"),
+			frappe._dict(fieldname="restore_retry_limit", default="3"),
+			frappe._dict(fieldname="last_backup_sync", default=None),
+		]
+
+		_seed_missing_settings_defaults()
+
+		set_single_value.assert_called_once_with(
+			"Object Storage Settings",
+			{
+				"restore_check_interval_minutes": "15",
+				"restore_retry_limit": "3",
+			},
+			update_modified=False,
+		)
+
 	def test_historical_defaults_migrate_to_30_90_without_deletion(self):
 		from erpnext_s3_integration.setup import _recommended_attachment_lifecycle_update
 

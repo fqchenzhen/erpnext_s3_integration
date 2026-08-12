@@ -18,10 +18,27 @@ def after_migrate() -> None:
 	_create_roles()
 	create_custom_fields(_custom_fields(), update=True)
 	_ensure_file_field_permissions()
+	_seed_missing_settings_defaults()
 	_enforce_security_defaults()
 	_migrate_recommended_retention_defaults()
 	_seed_default_rules()
 	_seed_restore_role()
+
+
+def _seed_missing_settings_defaults() -> None:
+	stored_values = frappe.db.get_singles_dict("Object Storage Settings")
+	# Existing Single DocTypes do not inherit defaults for fields added in later migrations.
+	missing_defaults = {
+		field.fieldname: field.default
+		for field in frappe.get_meta("Object Storage Settings").fields
+		if field.default is not None and field.fieldname not in stored_values
+	}
+	if missing_defaults:
+		frappe.db.set_single_value(
+			"Object Storage Settings",
+			missing_defaults,
+			update_modified=False,
+		)
 
 
 def _enforce_security_defaults() -> None:

@@ -3,7 +3,7 @@
  "creation": "2026-08-10 00:00:00.000000",
  "docstatus": 0,
  "doctype": "Desktop Icon",
- "hidden": 0,
+ "hidden": 1,
  "icon": "database",
  "icon_type": "Link",
  "idx": 0,

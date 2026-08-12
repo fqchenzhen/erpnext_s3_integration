@@ -26,6 +26,7 @@ class IntegrationTestObjectStorageSettings(IntegrationTestCase):
 		self.assertIn("erpnext s3 integration", get_sidebar_items([]))
 
 		desktop_icon = frappe.get_doc("Desktop Icon", "ERPNext S3 Integration")
+		self.assertTrue(desktop_icon.hidden)
 		self.assertEqual(desktop_icon.link_type, "Workspace Sidebar")
 		self.assertEqual(desktop_icon.link_to, sidebar.name)
 		self.assertEqual([row.role for row in desktop_icon.roles], ["System Manager"])
