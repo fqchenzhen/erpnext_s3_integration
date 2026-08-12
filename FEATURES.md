@@ -40,12 +40,13 @@
 ## Backups
 
 - Dedicated backup profile and bucket.
-- Database backup is enabled by default; local public/private files-folder archives are separate, disabled-by-default choices.
+- Database and matching `site_config_backup.json` are enabled as one backup choice; local public/private files-folder archives are separate, disabled-by-default choices.
 - Object-backed attachments are not duplicated into local files-folder archives.
 - Manual and cron-triggered backup creation/upload.
-- Local temporary files are deleted only after successful upload by default.
-- Daily 02:00 schedule, date-organized keys, and the latest 30 successful daily restore points by default.
-- Cleanup runs only after a complete successful upload and never removes the last successful restore point.
+- Local complete groups follow `System Settings.backup_limit`; successful upload does not delete them immediately.
+- Daily 02:00 schedule, date-organized keys, and an independent latest 30 successful OSS dates by default.
+- Same-day runs are kept as complete groups, with only the latest successful group retained.
+- OSS cleanup runs only after a complete successful upload; cleanup errors do not fail the new restore point.
 - Size, generation-time, last-success, estimated usage, and local-space health indicators.
 - OSS backup lifecycle is an optional folded section and does not block backup enablement.
 

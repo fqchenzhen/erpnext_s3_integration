@@ -29,7 +29,7 @@ context("Object Storage Setup Assistant", () => {
 
 	it("uses clear backup names without a duplicate bucket field", () => {
 		cy.findByText("Backups").click();
-		cy.findByText("Database Backup");
+		cy.findByText("Database and Site Configuration Backup");
 		cy.findByText("Local Public Files Folder Backup");
 		cy.findByText("Local Private Files Folder Backup");
 		cy.get("[data-fieldname=backup_bucket]").should("not.exist");

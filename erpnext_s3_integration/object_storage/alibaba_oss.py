@@ -80,8 +80,11 @@ class _AlibabaResponseBody:
 class AlibabaOSSBackend(ObjectStorageBackend):
 	def __init__(self, profile):
 		self.bucket = profile.bucket
+		configured_encryption = profile.server_side_encryption
+		if configured_encryption == "Bucket Default" and profile.purpose == "Backups":
+			configured_encryption = "AES256"
 		self.server_side_encryption = (
-			profile.server_side_encryption if profile.server_side_encryption != "Bucket Default" else None
+			configured_encryption if configured_encryption != "Bucket Default" else None
 		)
 		config = oss.Config(
 			region=profile.region,

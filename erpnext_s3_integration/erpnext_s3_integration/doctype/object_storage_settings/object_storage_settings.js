@@ -17,6 +17,15 @@ frappe.ui.form.on("Object Storage Settings", {
 	backup_storage_profile(frm) {
 		render_backup_status(frm);
 	},
+	backup_cron(frm) {
+		render_backup_status(frm);
+	},
+	backup_retention_days(frm) {
+		render_backup_status(frm);
+	},
+	upload_database_backup(frm) {
+		render_backup_status(frm);
+	},
 	enable_attachment_storage(frm) {
 		render_attachment_status(frm);
 		render_backup_status(frm);
@@ -150,6 +159,7 @@ function show_profile_setup_dialog(frm, purpose) {
 					access_key_secret: values.access_key_secret,
 					ram_role_name: values.ram_role_name,
 					region: "ap-southeast-5",
+					server_side_encryption: "AES256",
 					use_internal_endpoint: production ? 1 : 0,
 					endpoint_url: production ? "https://oss-ap-southeast-5-internal.aliyuncs.com" : "https://oss-ap-southeast-5.aliyuncs.com",
 					bucket: values.bucket,
@@ -264,11 +274,15 @@ function render_attachment_lifecycle(frm) {
 
 async function render_backup_status(frm) {
 	const object_backed = Boolean(frm.doc.enable_attachment_storage);
+	const schedule = frm.doc.backup_cron || __("Not scheduled");
+	const contents = frm.doc.upload_database_backup
+		? __("Includes database and site configuration")
+		: __("Database and site configuration are not selected");
 	const folder_help = object_backed
 		? __("Local folder backups include only files still stored on this server; they do not duplicate Attachment Bucket objects.")
 		: __("Local files folders may contain ordinary attachments and can produce larger archives.");
-	frm.get_field("backup_setup_help").$wrapper.html(status_surface(__("Daily Full Database Backup"), frm.doc.enable_backup_storage ? __("Available") : __("Not configured"),
-		`${escape_html(__("Schedule: daily at 02:00 · Keep 30 successful daily restore points"))}<br>${escape_html(folder_help)}`,
+	frm.get_field("backup_setup_help").$wrapper.html(status_surface(__("Daily Complete Backup"), frm.doc.enable_backup_storage ? __("Available") : __("Not configured"),
+		`${escape_html(__("Schedule: {0}", [schedule]))}<br>${escape_html(contents)}<br>${escape_html(folder_help)}`,
 		frm.doc.enable_backup_storage ? "green" : "gray"));
 	const wrapper = frm.get_field("backup_actions_html").$wrapper;
 	const label = frm.doc.enable_backup_storage ? __("Back Up Now and Verify") : frm.doc.backup_storage_profile ? __("Save and Check") : __("Start Backup Setup");
@@ -287,11 +301,19 @@ async function render_backup_capacity(frm) {
 		const { message } = await frappe.call({ method: "erpnext_s3_integration.backup_hooks.get_backup_capacity_summary", type: "GET" });
 		if (!message) return;
 		const indicator = message.status === "Critical" ? "red" : message.status === "Warning" ? "orange" : "green";
+		const local_limit = Number(message.local_backup_limit || 0);
+		const restore_points = Number(message.restore_points || 0);
 		wrapper.html(`<div class="object-storage-capacity-grid">
 			${metric(__("Latest success"), message.last_success_display || __("No successful backup yet"), indicator)}
 			${metric(__("Latest size"), message.latest_size_display || "—")}
 			${metric(__("Estimated OSS usage"), message.estimated_usage_display || __("Collecting data"))}
 			${metric(__("Recovery point objective"), __("Up to approximately 24 hours"))}
+		</div>
+		<div class="object-storage-subsection small">
+			<div>${escape_html(__("Local backup groups: {0} — controlled by System Settings", [local_limit]))}</div>
+			<div>${escape_html(__("OSS successful daily restore points: {0}", [restore_points]))}</div>
+			<div>${escape_html(__("Includes database and site configuration"))}</div>
+			<a href="/app/system-settings">${escape_html(__("Open System Settings"))}</a>
 		</div>${message.message ? `<div class="text-${indicator} small">${escape_html(message.message)}</div>` : ""}`);
 	} catch (error) {
 		wrapper.html(`<div class="text-muted">${escape_html(__("Backup capacity data is not available yet."))}</div>`);

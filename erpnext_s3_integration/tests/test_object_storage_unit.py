@@ -1,5 +1,7 @@
 import datetime
 import io
+import tempfile
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import frappe
@@ -477,6 +479,19 @@ class TestProviderAdapters(UnitTestCase):
 		self.assertEqual(request.server_side_encryption, "AES256")
 
 	@patch("erpnext_s3_integration.object_storage.alibaba_oss.oss.Client")
+	def test_alibaba_backup_objects_force_sse_when_bucket_default_is_selected(self, oss_client):
+		from erpnext_s3_integration.object_storage.alibaba_oss import AlibabaOSSBackend
+
+		profile = _profile(
+			provider="Alibaba Cloud OSS",
+			purpose="Backups",
+			credential_mode="AccessKey",
+			server_side_encryption="Bucket Default",
+		)
+		backend = AlibabaOSSBackend(profile)
+		self.assertEqual(backend.server_side_encryption, "AES256")
+
+	@patch("erpnext_s3_integration.object_storage.alibaba_oss.oss.Client")
 	def test_alibaba_get_adapts_no_size_reader(self, oss_client):
 		from erpnext_s3_integration.object_storage.alibaba_oss import AlibabaOSSBackend
 
@@ -795,18 +810,163 @@ class TestBackupRetention(UnitTestCase):
 		now = datetime.datetime.now(datetime.UTC)
 		service.backend.list.return_value = [
 			ObjectInfo("prefix/2026-08-09/0900-database.sql.gz", last_modified=now),
+			ObjectInfo("prefix/2026-08-09/0900-site_config_backup.json", last_modified=now),
 			ObjectInfo("prefix/2026-08-10/0900-database.sql.gz", last_modified=now),
+			ObjectInfo("prefix/2026-08-10/0900-site_config_backup.json", last_modified=now),
 			ObjectInfo("prefix/2026-08-11/0800-database.sql.gz", last_modified=now),
+			ObjectInfo("prefix/2026-08-11/0800-site_config_backup.json", last_modified=now),
 			ObjectInfo("prefix/2026-08-11/0900-database.sql.gz", last_modified=now + datetime.timedelta(seconds=1)),
+			ObjectInfo(
+				"prefix/2026-08-11/0900-site_config_backup.json",
+				last_modified=now + datetime.timedelta(seconds=1),
+			),
 		]
-		self.assertEqual(cleanup_old_backups(service, "prefix", 2), 2)
+		self.assertEqual(
+			cleanup_old_backups(service, "prefix", 2, {"database", "site-config"}), 4
+		)
 		self.assertEqual(
 			{call.args[0] for call in service.backend.delete.call_args_list},
 			{
 				"prefix/2026-08-09/0900-database.sql.gz",
+				"prefix/2026-08-09/0900-site_config_backup.json",
 				"prefix/2026-08-11/0800-database.sql.gz",
+				"prefix/2026-08-11/0800-site_config_backup.json",
 			},
 		)
+
+	def test_failed_date_does_not_count_as_restore_point(self):
+		from erpnext_s3_integration.backup_hooks import cleanup_old_backups
+
+		service = MagicMock()
+		now = datetime.datetime.now(datetime.UTC)
+		service.backend.list.return_value = [
+			ObjectInfo("prefix/2026-08-09/0900-database.sql.gz", last_modified=now),
+			ObjectInfo("prefix/2026-08-09/0900-site_config_backup.json", last_modified=now),
+			ObjectInfo("prefix/2026-08-09/0900-backup_complete.json", last_modified=now),
+			ObjectInfo("prefix/2026-08-10/0900-database.sql.gz", last_modified=now),
+			ObjectInfo("prefix/2026-08-11/0900-database.sql.gz", last_modified=now),
+			ObjectInfo("prefix/2026-08-11/0900-site_config_backup.json", last_modified=now),
+			ObjectInfo("prefix/2026-08-11/0900-backup_complete.json", last_modified=now),
+		]
+		self.assertEqual(
+			cleanup_old_backups(service, "prefix", 2, {"database", "site-config"}), 1
+		)
+		service.backend.delete.assert_called_once_with(
+			"prefix/2026-08-10/0900-database.sql.gz"
+		)
+
+	def test_database_backup_includes_matching_site_configuration(self):
+		from erpnext_s3_integration.backup_hooks import _paths_from_result
+
+		settings = frappe._dict(
+			upload_database_backup=1,
+			upload_public_files_backup=0,
+			upload_private_files_backup=0,
+		)
+		paths = _paths_from_result(
+			{
+				"backup_path_db": "/tmp/20260811_020000-site-database.sql.gz",
+				"backup_path_conf": "/tmp/20260811_020000-site-site_config_backup.json",
+			},
+			settings,
+		)
+		self.assertEqual(
+			paths,
+			[
+				"/tmp/20260811_020000-site-database.sql.gz",
+				"/tmp/20260811_020000-site-site_config_backup.json",
+			],
+		)
+
+	@patch("frappe.utils.backups.BackupGenerator")
+	def test_backup_generator_returns_site_configuration_without_temp_cleanup(self, generator_class):
+		from erpnext_s3_integration.backup_hooks import _create_backup
+
+		generator = generator_class.return_value
+		generator.backup_path_db = "/tmp/run-database.sql.gz"
+		generator.backup_path_conf = "/tmp/run-site_config_backup.json"
+		generator.backup_path_files = "/tmp/run-files.tar"
+		generator.backup_path_private_files = "/tmp/run-private-files.tar"
+		result = _create_backup(include_files=False)
+		generator.get_backup.assert_called_once_with(older_than=6, ignore_files=True, force=True)
+		self.assertEqual(result["backup_path_conf"], generator.backup_path_conf)
+
+	@patch("frappe.desk.page.backups.backups.delete_downloadable_backups")
+	def test_local_cleanup_uses_frappe_backup_limit_logic(self, delete_downloadable_backups):
+		from erpnext_s3_integration.backup_hooks import _cleanup_local_backups
+
+		self.assertTrue(_cleanup_local_backups())
+		delete_downloadable_backups.assert_called_once_with()
+
+	def test_frappe_local_cleanup_deletes_only_the_oldest_complete_group(self):
+		from frappe.desk.page.backups import backups
+
+		site_slug = frappe.local.site.replace(".", "_")
+		with tempfile.TemporaryDirectory() as backup_dir:
+			for day in range(1, 5):
+				prefix = f"202608{day:02d}_020000-{site_slug}"
+				Path(backup_dir, f"{prefix}-database.sql.gz").touch()
+				Path(backup_dir, f"{prefix}-site_config_backup.json").touch()
+			with (
+				patch.object(backups, "get_site_path", return_value=backup_dir),
+				patch.object(backups.frappe, "get_system_settings", return_value=3),
+			):
+				backups.delete_downloadable_backups()
+			remaining = {path.name for path in Path(backup_dir).iterdir()}
+			self.assertEqual(len(remaining), 6)
+			self.assertFalse(any(name.startswith("20260801_020000") for name in remaining))
+			for day in range(2, 5):
+				self.assertEqual(
+					len([name for name in remaining if name.startswith(f"202608{day:02d}_020000")]),
+					2,
+				)
+
+	@patch("erpnext_s3_integration.backup_hooks.log_storage_sync")
+	@patch("erpnext_s3_integration.backup_hooks._cleanup_remote_backups")
+	@patch("erpnext_s3_integration.backup_hooks._upload_backup", side_effect=[True, False])
+	@patch("erpnext_s3_integration.backup_hooks.ObjectStorageService")
+	@patch("erpnext_s3_integration.backup_hooks.frappe.get_single")
+	def test_upload_failure_skips_oss_cleanup(
+		self, get_single, _service_class, _upload, cleanup, _log
+	):
+		from erpnext_s3_integration.backup_hooks import sync_backup_files
+
+		get_single.return_value = self._backup_settings()
+		self.assertFalse(sync_backup_files(self._complete_backup_result()))
+		cleanup.assert_not_called()
+
+	@patch("erpnext_s3_integration.backup_hooks.log_storage_sync")
+	@patch("erpnext_s3_integration.backup_hooks._cleanup_remote_backups", return_value=False)
+	@patch("erpnext_s3_integration.backup_hooks._upload_completion_marker", return_value=True)
+	@patch("erpnext_s3_integration.backup_hooks._upload_backup", return_value=True)
+	@patch("erpnext_s3_integration.backup_hooks.ObjectStorageService")
+	@patch("erpnext_s3_integration.backup_hooks.frappe.get_single")
+	def test_oss_cleanup_failure_does_not_fail_new_restore_point(
+		self, get_single, _service_class, _upload, _marker, cleanup, _log
+	):
+		from erpnext_s3_integration.backup_hooks import sync_backup_files
+
+		get_single.return_value = self._backup_settings()
+		self.assertTrue(sync_backup_files(self._complete_backup_result()))
+		cleanup.assert_called_once()
+
+	@staticmethod
+	def _backup_settings():
+		return frappe._dict(
+			enable_backup_storage=1,
+			backup_storage_profile="Backups",
+			backup_retention_days=30,
+			upload_database_backup=1,
+			upload_public_files_backup=0,
+			upload_private_files_backup=0,
+		)
+
+	@staticmethod
+	def _complete_backup_result():
+		return {
+			"backup_path_db": "/tmp/20260811_020000-site-database.sql.gz",
+			"backup_path_conf": "/tmp/20260811_020000-site-site_config_backup.json",
+		}
 
 	def test_private_folder_archive_is_separate_from_object_backed_attachments(self):
 		from erpnext_s3_integration.backup_hooks import _paths_from_result

@@ -8,7 +8,7 @@
 - 正式环境部署到 Indonesia (Jakarta) ECS 时选择 `Production`，Region ID 为 `ap-southeast-5`，并使用内网 Endpoint `https://oss-ap-southeast-5-internal.aliyuncs.com`。
 - 生产 ECS 使用 ECS Instance RAM Role，不在 ERPNext 中保存长期 AccessKey。Docker Compose 容器通过宿主 ECS 的实例元数据服务获取临时凭证，因此容器网络必须能访问 `100.100.100.200`。
 - 附件 Bucket 与备份 Bucket 必须分开。
-- 两个 Bucket 都是 Private，并开启 Block Public Access。
+- 两个 Bucket 都是 Private，并开启 Block Public Access；向导创建的 Profile 使用 AES256 服务端加密。
 - 所有下载通过 Frappe `/s3/{key}`，不启用 OSS 公网直链、预签名跳转、CDN 或浏览器直传。
 
 ## 二、进入应用向导
@@ -148,15 +148,21 @@ OSS 生命周期按对象的最后修改时间计算天数，不是按 ERPNext F
 
 Backups 页签有三个互相独立的内容选项：
 
-1. **Database Backup**：数据库 SQL 压缩备份，默认开启；每天站点时区 02:00 创建并上传。
+1. **Database and Site Configuration Backup**：数据库 SQL 压缩备份及同一运行组的 `site_config_backup.json`，默认开启；每天站点时区 02:00 创建并上传。站点配置跟随数据库选项，不设单独开关。
 2. **Local Public Files Folder Backup**：`sites/<site>/public/files` 的本地目录压缩包，默认关闭。
 3. **Local Private Files Folder Backup**：`sites/<site>/private/files` 的本地目录压缩包，默认关闭。
 
 当 Attachment Storage 已启用时，新附件直接进入 Attachment Bucket，不写入本地 `private/files` 或 `public/files`。因此 Local Private Files Folder Backup 只备份仍留在服务器本地目录中的文件，不会再复制 Attachment Bucket 里的对象，也不是附件灾备副本。附件灾难保护应另行使用 OSS Versioning、跨地域复制或第二份独立复制。
 
-默认每次成功上传后删除本地临时备份，并在整次上传成功后保留最近 30 个成功的每日恢复点。失败的备份不会触发清理，也不会删除最后一个成功恢复点。
+本地与 OSS 使用独立保留策略：
 
-30 个每日恢复点默认保持 Standard，不需要 Backup Lifecycle。若合规要求长期保留，可展开 **Optional OSS Backup Lifecycle** 并手工在 Backup Bucket 创建只匹配备份 Prefix 的规则。应用不会创建或修改 OSS Lifecycle。Backups 页面会显示最近成功时间、大小、预计占用和健康阈值。
+- 本地完整备份组遵循 **System Settings > Number of Backups**（字段名 `backup_limit`）。上传成功后不会立即删除本地文件；备份生成后由 Frappe 原生整组清理逻辑执行当前系统值。OSS 上传失败时，新生成的本地组仍会保留并计入此上限。
+- OSS 默认保留最近 30 个成功备份日期。只有同一运行中所有已选择内容都上传成功，该日期才参与清理；同一天执行多次时只保留最新完整组。
+- 任一上传失败时不执行 OSS 历史清理。OSS 清理失败只记录错误，不影响新恢复点和本地备份。
+
+30 个每日恢复点默认保持 Standard，不需要 Backup Lifecycle。超出应用保留范围的对象通过存储后端删除，阿里云 OSS 最终调用 `DeleteObject`。应用不会创建或修改 OSS Versioning、Lifecycle 或 Bucket 策略；若 Bucket 已开启版本控制，OSS 自身的版本语义保持不变。
+
+Backups 页面动态显示本地备份组上限、OSS 成功日期数量、最近成功时间、大小、预计占用和健康阈值。数据库单份达到 10 GB 或生成超过 45 分钟时 Warning，达到 25 GB 或超过 90 分钟时 Critical；告警只提示重新评估备份架构，不自动减少 OSS 保留数量。
 
 ## 九、Retention Rules 的判断顺序
 
@@ -215,7 +221,7 @@ Backups 页签有三个互相独立的内容选项：
 - 相同内容共享对象，删除一个 File 不删除对象；删除最后引用才异步删除。
 - 标签分类符合优先级，共享对象采用最热策略。
 - 未命中规则的附件为 `unclassified` 并保持 Standard。
-- 数据库备份默认每天 02:00 上传并保留最近 30 个成功每日恢复点；本地公共/私有 files 目录按独立开关上传到 Backup Bucket。
+- 数据库和同组 `site_config_backup.json` 默认每天 02:00 上传；本地组数遵循 System Settings，OSS 独立保留最近 30 个成功日期。
 - 已进入 Attachment Bucket 的实时附件不会被 Local Private Files Folder Backup 重复打包。
 - 附件标签为 `business-archive` 的对象在 30 天进入 IA、365 天进入 Archive；Cold Archive 与自动删除默认关闭。
 - Backup Lifecycle 默认为关闭；如启用，只作用于 Backup Bucket 的备份 prefix，不影响 Attachment Bucket。

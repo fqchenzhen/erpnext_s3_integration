@@ -71,6 +71,11 @@ class IntegrationTestObjectStorageSettings(IntegrationTestCase):
 		self.assertFalse(meta.has_field("attachment_bucket"))
 		self.assertFalse(meta.has_field("backup_bucket"))
 		self.assertEqual(meta.get_field("backup_retention_days").default, "30")
+		self.assertEqual(
+			meta.get_field("backup_retention_days").label,
+			"OSS Successful Daily Restore Points to Keep",
+		)
+		self.assertTrue(meta.get_field("delete_local_backup_after_upload").hidden)
 		self.assertEqual(meta.get_field("attachment_lifecycle_archive_days").default, "90")
 		self.assertEqual(meta.get_field("upload_database_backup").default, "1")
 
@@ -112,6 +117,7 @@ class IntegrationTestObjectStorageSettings(IntegrationTestCase):
 		settings = frappe.get_single("Object Storage Settings")
 		settings.enable_attachment_storage = 0
 		settings.attachment_lifecycle_reviewed = 1
+		settings.attachment_lifecycle_cold_archive_days = 365
 		settings.attachment_lifecycle_delete_days = 365
 		with self.assertRaises(frappe.ValidationError):
 			settings.validate()

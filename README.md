@@ -59,7 +59,7 @@ The detailed Chinese runbook is in [USER_GUIDE.md](USER_GUIDE.md).
 
 ## Security invariants
 
-- Buckets must remain Private with Block Public Access enabled.
+- Buckets must remain Private with Block Public Access enabled, and new guided profiles request AES256 server-side encryption for every object.
 - The application never modifies bucket ACL, Block Public Access, versioning, lifecycle, or bucket policy.
 - Production OSS access stays on `https://oss-ap-southeast-5-internal.aliyuncs.com` from Jakarta ECS.
 - AccessKey is intended for isolated development profiles; production uses ECS RAM Role or an approved credential chain.
@@ -82,9 +82,17 @@ Alibaba Cloud OSS evaluates lifecycle age from the object's last modified time, 
 
 ## Default backup lifecycle
 
-The app uploads a database backup daily at 02:00 and, only after a completely successful upload, retains the latest 30 successful daily restore points. Successful uploads also remove their local temporary files by default. Failed runs never trigger cleanup.
+At 02:00 in the site time zone, the app creates one complete backup group containing the database and matching `site_config_backup.json`, plus the optional local public/private files-folder archives. Site configuration follows the database option and has no separate switch.
 
-The default 30-restore-point policy stays in Standard storage. An OSS lifecycle rule is an optional folded setting for longer retention and is never created or modified by the app.
+Local and OSS retention are independent:
+
+- Local complete groups follow **System Settings > Number of Backups**. Upload success no longer deletes local files, and Frappe's native group cleanup enforces the current system value.
+- OSS keeps the latest 30 successful backup dates by default. A date counts only when every selected member was uploaded; if a date has multiple successful runs, only its latest complete group remains.
+- Upload failure skips OSS cleanup. Cleanup failure is logged without invalidating the newly uploaded restore point or deleting the local group.
+
+The default 30-restore-point policy stays in Standard storage. The app deletes expired objects through the configured storage backend (Alibaba Cloud OSS uses `DeleteObject`) and does not change Bucket versioning or Lifecycle. An OSS lifecycle rule remains optional and is never created or modified by the app.
+
+Capacity warnings ask administrators to reassess the backup architecture at 10 GB/45 minutes and become critical at 25 GB/90 minutes. They never reduce the configured OSS restore-point count automatically.
 
 “Attachments” means live Frappe File objects sent directly to the Attachment Bucket. “Local Private Files Folder Backup” means a generated archive of files still present in `sites/<site>/private/files`; it is not a second backup of object-backed attachments.
 

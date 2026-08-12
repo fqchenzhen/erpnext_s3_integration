@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ERPNext S3 Integration VERSION\n"
 "Report-Msgid-Bugs-To: sahil@solufy.in\n"
-"POT-Creation-Date: 2026-08-12 07:10+0000\n"
-"PO-Revision-Date: 2026-08-12 07:10+0000\n"
+"POT-Creation-Date: 2026-08-12 10:43+0000\n"
+"PO-Revision-Date: 2026-08-12 10:43+0000\n"
 "Last-Translator: sahil@solufy.in\n"
 "Language-Team: sahil@solufy.in\n"
 "MIME-Version: 1.0\n"
@@ -40,7 +40,7 @@ msgstr ""
 msgid "<div class=\"alert alert-warning\">Unclassified objects are not automatically archived. Review rules, preview results, and recalculate existing objects before enabling the provider lifecycle rule.</div>"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:275
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:289
 msgid "A failed backup never removes an existing successful restore point."
 msgstr ""
 
@@ -48,7 +48,7 @@ msgstr ""
 msgid "A new File cannot read content from an arbitrary object storage URL."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:437
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:459
 msgid "A new successful restore point was uploaded."
 msgstr ""
 
@@ -70,7 +70,7 @@ msgstr ""
 #. Label of the access_key_id (Password) field in DocType 'Object Storage
 #. Profile'
 #: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:132
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:141
 msgid "Access Key ID"
 msgstr ""
 
@@ -81,7 +81,7 @@ msgstr ""
 #. Label of the access_key_secret (Password) field in DocType 'Object Storage
 #. Profile'
 #: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:133
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:142
 msgid "Access Key Secret"
 msgstr ""
 
@@ -101,7 +101,7 @@ msgstr ""
 msgid "Active request"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:410
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:432
 msgid "Add tag condition: retention = business-archive"
 msgstr ""
 
@@ -111,14 +111,14 @@ msgstr ""
 msgid "Addressing Style"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:245
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:246
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:247
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:248
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:255
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:256
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:257
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:258
 msgid "After {0} days"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:403
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:425
 msgid "After {0} days: {1}"
 msgstr ""
 
@@ -154,7 +154,7 @@ msgstr ""
 msgid "Allowed Restore Roles"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:202
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:212
 msgid "Always Standard"
 msgstr ""
 
@@ -166,32 +166,32 @@ msgstr ""
 msgid "Apply Recommended Jakarta Settings"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:36
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:45
 msgid "Apply Recommended Storage Plan"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:442
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:464
 msgid "Applying recommended settings..."
 msgstr ""
 
 #. Label of the restore_tab (Tab Break) field in DocType 'Object Storage
 #. Settings'
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:303
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:325
 #: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
 #: erpnext_s3_integration/object_storage/setup_assistant.py:173
 #: erpnext_s3_integration/object_storage/setup_assistant.py:179
 msgid "Archive Restore"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:246
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:256
 msgid "Archive ZRS, restore before download"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:230
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:240
 msgid "Archive after {0} days"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:246
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:256
 msgid "Archive disabled"
 msgstr ""
 
@@ -226,7 +226,7 @@ msgstr ""
 
 #. Label of the classification_tab (Section Break) field in DocType 'Object
 #. Storage Settings'
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:199
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:209
 #: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
 msgid "Attachment Classification"
 msgstr ""
@@ -261,13 +261,13 @@ msgstr ""
 msgid "Attachment Setup Help"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:176
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:180
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:186
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:190
 #: erpnext_s3_integration/object_storage/setup_assistant.py:38
 msgid "Attachment Storage"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:338
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:360
 msgid "Attachment Storage Is Ready"
 msgstr ""
 
@@ -290,15 +290,15 @@ msgstr ""
 msgid "Attachment lifecycle days cannot be negative. Use 0 to disable a stage."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:333
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:355
 msgid "Attachment upload and download are enabled. Next: create the configured lifecycle rule: {0}."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:334
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:356
 msgid "Attachment upload and download are enabled. Next: review the configured lifecycle rule in Attachment Lifecycle settings."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:71
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:80
 msgid "Attachment upload, download, and database backup can continue. Archive rules still need attention."
 msgstr ""
 
@@ -326,13 +326,13 @@ msgstr ""
 msgid "Auto"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:248
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:258
 msgid "Automatic deletion"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:85
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:180
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:270
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:94
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:190
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:284
 msgid "Available"
 msgstr ""
 
@@ -340,7 +340,7 @@ msgstr ""
 msgid "Back Up Now"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:274
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:288
 msgid "Back Up Now and Verify"
 msgstr ""
 
@@ -368,11 +368,11 @@ msgstr ""
 msgid "Backup Capacity"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:437
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:459
 msgid "Backup Completed"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:437
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:459
 msgid "Backup Needs Attention"
 msgstr ""
 
@@ -397,7 +397,7 @@ msgstr ""
 msgid "Backup Storage Profile"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:297
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:319
 msgid "Backup capacity data is not available yet."
 msgstr ""
 
@@ -405,15 +405,19 @@ msgstr ""
 msgid "Backup lifecycle days must be positive and strictly increasing."
 msgstr ""
 
-#: erpnext_s3_integration/backup_hooks.py:95
+#: erpnext_s3_integration/backup_hooks.py:170
 msgid "Backup object storage sync completed for {0} file(s)."
 msgstr ""
 
-#: erpnext_s3_integration/backup_hooks.py:383
+#: erpnext_s3_integration/backup_hooks.py:291
+msgid "Backup retention cleanup failed: {0}"
+msgstr ""
+
+#: erpnext_s3_integration/backup_hooks.py:643
 msgid "Backup skipped because another backup is running."
 msgstr ""
 
-#: erpnext_s3_integration/backup_hooks.py:137
+#: erpnext_s3_integration/backup_hooks.py:210
 msgid "Backup upload failed for {0}: {1}"
 msgstr ""
 
@@ -440,11 +444,11 @@ msgstr ""
 msgid "Bucket ACL: {0}"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:379
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:401
 msgid "Bucket Check Needs Attention"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:379
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:401
 msgid "Bucket Configuration Passed"
 msgstr ""
 
@@ -454,7 +458,7 @@ msgstr ""
 msgid "Bucket Default"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:130
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:139
 msgid "Bucket Name"
 msgstr ""
 
@@ -468,7 +472,7 @@ msgstr ""
 msgid "Bucket configuration"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:339
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:361
 msgid "Bucket privacy and public-access protection passed"
 msgstr ""
 
@@ -539,7 +543,7 @@ msgstr ""
 msgid "Changing object storage visibility is not supported. Re-upload the File instead."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:259
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:269
 #: erpnext_s3_integration/object_storage/setup_assistant.py:153
 msgid "Check Again"
 msgstr ""
@@ -552,7 +556,7 @@ msgstr ""
 msgid "Check ECS VPC connectivity and the Jakarta internal endpoint."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:89
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:98
 msgid "Check Failed"
 msgstr ""
 
@@ -572,11 +576,11 @@ msgstr ""
 msgid "Check the production bucket security settings."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:365
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:387
 msgid "Checking bucket security and archive rules..."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:317
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:339
 msgid "Checking connection, bucket security, and object operations..."
 msgstr ""
 
@@ -586,7 +590,7 @@ msgstr ""
 msgid "Classification Actions"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:454
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:476
 msgid "Classification Preview"
 msgstr ""
 
@@ -596,7 +600,7 @@ msgstr ""
 msgid "Classification Summary"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:200
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:210
 msgid "Classification assigns retention tags. It never moves a file to another bucket."
 msgstr ""
 
@@ -604,15 +608,15 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:247
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:257
 msgid "Cold Archive"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:231
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:241
 msgid "Cold Archive after {0} days"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:293
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:309
 msgid "Collecting data"
 msgstr ""
 
@@ -628,15 +632,15 @@ msgstr ""
 msgid "Configure"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:259
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:269
 msgid "Configure OSS Archive Rule"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:405
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:427
 msgid "Configure OSS Attachment Archive Rule"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:254
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:264
 msgid "Configure attachment storage before checking the OSS lifecycle rule."
 msgstr ""
 
@@ -668,23 +672,33 @@ msgstr ""
 msgid "Confirm that the bucket is private."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:80
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:89
 msgid "Continue Setup"
+msgstr ""
+
+#. Description of the 'OSS Successful Daily Restore Points to Keep' (Int) field
+#. in DocType 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Controls OSS only. Keep the latest successful daily restore points; failed backup dates do not count."
 msgstr ""
 
 #: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:126
 msgid "Copy Policy JSON"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:376
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:398
 msgid "Copy Updated RAM Policy"
+msgstr ""
+
+#: erpnext_s3_integration/backup_hooks.py:266
+msgid "Could not mark backup group {0} as complete: {1}"
 msgstr ""
 
 #: erpnext_s3_integration/object_storage/ram_policy.py:18
 msgid "Create a custom policy in RAM Console > Permissions > Policies."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:176
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:186
 msgid "Create a dedicated private Attachment Bucket in Jakarta OSS."
 msgstr ""
 
@@ -692,7 +706,7 @@ msgstr ""
 msgid "Create a {0} profile and enter its private OSS bucket."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:409
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:431
 msgid "Create an enabled lifecycle rule with prefix: {0}"
 msgstr ""
 
@@ -705,7 +719,7 @@ msgstr ""
 msgid "Create the configured tag-filtered lifecycle rule: {0}."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:435
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:457
 msgid "Creating, uploading, and verifying the database backup..."
 msgstr ""
 
@@ -727,7 +741,7 @@ msgstr ""
 msgid "Custom Attachment Lifecycle"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:260
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:270
 msgid "Custom Lifecycle"
 msgstr ""
 
@@ -736,17 +750,11 @@ msgstr ""
 msgid "Custom S3"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:270
-msgid "Daily Full Database Backup"
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:284
+msgid "Daily Complete Backup"
 msgstr ""
 
-#. Label of the upload_database_backup (Check) field in DocType 'Object Storage
-#. Settings'
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
-msgid "Database Backup"
-msgstr ""
-
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:338
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:360
 msgid "Database Backup Storage Is Ready"
 msgstr ""
 
@@ -754,23 +762,33 @@ msgstr ""
 msgid "Database Backups"
 msgstr ""
 
-#: erpnext_s3_integration/backup_hooks.py:242
+#. Label of the upload_database_backup (Check) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Database and Site Configuration Backup"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:280
+msgid "Database and site configuration are not selected"
+msgstr ""
+
+#: erpnext_s3_integration/backup_hooks.py:454
 msgid "Database backup file created."
 msgstr ""
 
-#: erpnext_s3_integration/backup_hooks.py:251
+#: erpnext_s3_integration/backup_hooks.py:463
 msgid "Database backup file creation failed."
 msgstr ""
 
-#: erpnext_s3_integration/backup_hooks.py:350
+#: erpnext_s3_integration/backup_hooks.py:610
 msgid "Database backup generation took at least 45 minutes."
 msgstr ""
 
-#: erpnext_s3_integration/backup_hooks.py:344
+#: erpnext_s3_integration/backup_hooks.py:604
 msgid "Database backup generation took at least 90 minutes."
 msgstr ""
 
-#: erpnext_s3_integration/backup_hooks.py:351
+#: erpnext_s3_integration/backup_hooks.py:611
 msgid "Database backup size, age, and generation time are within recommended limits."
 msgstr ""
 
@@ -838,7 +856,7 @@ msgstr ""
 msgid "Disabled"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:411
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:433
 msgid "Do not configure expiration or Cold Archive."
 msgstr ""
 
@@ -874,7 +892,7 @@ msgstr ""
 
 #. Label of the classification_rules_section (Section Break) field in DocType
 #. 'Object Storage Settings'
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:212
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:222
 #: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
 msgid "Edit Classification Rules"
 msgstr ""
@@ -932,7 +950,7 @@ msgstr ""
 #. Rule'
 #: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
 #: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:86
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:95
 msgid "Enabled"
 msgstr ""
 
@@ -940,7 +958,7 @@ msgstr ""
 msgid "Enabled attachment lifecycle stages must be strictly increasing."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:339
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:361
 msgid "Enabled object operations passed"
 msgstr ""
 
@@ -955,7 +973,7 @@ msgstr ""
 
 #. Label of the environment (Select) field in DocType 'Object Storage Profile'
 #: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:129
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:138
 msgid "Environment"
 msgstr ""
 
@@ -979,7 +997,7 @@ msgstr ""
 msgid "Error Message"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:293
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:309
 msgid "Estimated OSS usage"
 msgstr ""
 
@@ -1019,7 +1037,7 @@ msgstr ""
 
 #. Label of the file (Link) field in DocType 'Object Restore Request'
 #: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:448
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:470
 msgid "File"
 msgstr ""
 
@@ -1037,7 +1055,7 @@ msgstr ""
 msgid "File Name"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:455
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:477
 msgid "File Policy"
 msgstr ""
 
@@ -1051,7 +1069,7 @@ msgstr ""
 msgid "File content is required before uploading to object storage."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:78
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:87
 msgid "Fix Problem"
 msgstr ""
 
@@ -1059,7 +1077,7 @@ msgstr ""
 msgid "Fix the failed production bucket security check."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:74
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:83
 msgid "Follow the next highlighted action. The assistant handles save, verification, and enablement in order."
 msgstr ""
 
@@ -1095,23 +1113,28 @@ msgstr ""
 msgid "I Confirm the Bucket Is Private"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:415
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:437
 msgid "I Finished, Check Again"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:245
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:255
 msgid "IA ZRS, immediate download"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:229
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:239
 msgid "IA after {0} days"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:245
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:255
 msgid "IA disabled"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:178
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:279
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:315
+msgid "Includes database and site configuration"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:188
 msgid "Internal Endpoint"
 msgstr ""
 
@@ -1129,11 +1152,11 @@ msgstr ""
 msgid "Invalid restore transition from {0} to {1}."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:203
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:213
 msgid "Item and BOM technical documents"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:202
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:212
 msgid "Item main images, logos, and avatars"
 msgstr ""
 
@@ -1141,7 +1164,7 @@ msgstr ""
 msgid "Jakarta ECS production configuration"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:339
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:361
 msgid "Jakarta OSS connection passed"
 msgstr ""
 
@@ -1155,22 +1178,16 @@ msgstr ""
 msgid "Jakarta region"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:205
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:215
 msgid "Keep Standard"
 msgstr ""
 
 #: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:60
-msgid "Keep at least one successful daily backup restore point."
+msgid "Keep at least one successful daily OSS restore point."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:203
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:213
 msgid "Keep online"
-msgstr ""
-
-#. Description of the 'Successful Daily Restore Points to Keep' (Int) field in
-#. DocType 'Object Storage Settings'
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
-msgid "Keep the latest successful daily restore points. New backup failures never trigger cleanup."
 msgstr ""
 
 #. Label of the last_backup_sync (Datetime) field in DocType 'Object Storage
@@ -1239,15 +1256,15 @@ msgstr ""
 msgid "Last Tested At"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:181
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:191
 msgid "Last checked: {0}"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:292
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:308
 msgid "Latest size"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:291
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:307
 msgid "Latest success"
 msgstr ""
 
@@ -1259,7 +1276,7 @@ msgstr ""
 msgid "Least-privilege RAM Policy"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:131
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:140
 msgid "Leave blank for a dedicated bucket. Use it only to isolate a site or environment inside a shared bucket."
 msgstr ""
 
@@ -1279,19 +1296,27 @@ msgstr ""
 msgid "Local Public Files Folder Backup"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:269
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:313
+msgid "Local backup groups: {0} — controlled by System Settings"
+msgstr ""
+
+#: erpnext_s3_integration/backup_hooks.py:503
+msgid "Local backup retention cleanup failed: {0}"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:283
 msgid "Local files folders may contain ordinary attachments and can produce larger archives."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:268
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:282
 msgid "Local folder backups include only files still stored on this server; they do not duplicate Attachment Bucket objects."
 msgstr ""
 
-#: erpnext_s3_integration/backup_hooks.py:346
+#: erpnext_s3_integration/backup_hooks.py:606
 msgid "Local free space is less than twice the latest database backup size."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:242
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:252
 msgid "Long-term Attachment Storage"
 msgstr ""
 
@@ -1303,7 +1328,11 @@ msgstr ""
 msgid "MIME Type"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:455
+#: erpnext_s3_integration/backup_hooks.py:255
+msgid "Marked backup group {0} as complete."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:477
 msgid "Matched Source"
 msgstr ""
 
@@ -1317,10 +1346,10 @@ msgstr ""
 msgid "MinIO"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:35
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:36
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:37
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:38
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:44
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:45
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:46
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:47
 msgid "More"
 msgstr ""
 
@@ -1372,23 +1401,23 @@ msgstr ""
 msgid "Move to IA After (Days)"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:88
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:97
 msgid "Needs Attention"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:180
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:190
 msgid "Needs check"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:248
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:258
 msgid "Never"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:232
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:242
 msgid "No archive transitions configured"
 msgstr ""
 
-#: erpnext_s3_integration/backup_hooks.py:275
+#: erpnext_s3_integration/backup_hooks.py:524
 msgid "No backup history is available yet."
 msgstr ""
 
@@ -1396,15 +1425,15 @@ msgstr ""
 msgid "No bucket-management or public-access action is included."
 msgstr ""
 
-#: erpnext_s3_integration/backup_hooks.py:83
-msgid "No eligible backup files were found."
+#: erpnext_s3_integration/backup_hooks.py:152
+msgid "No complete backup group was found."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:291
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:307
 msgid "No successful backup yet"
 msgstr ""
 
-#: erpnext_s3_integration/backup_hooks.py:340
+#: erpnext_s3_integration/backup_hooks.py:600
 msgid "No successful database backup has completed in the last 36 hours."
 msgstr ""
 
@@ -1414,11 +1443,11 @@ msgstr ""
 msgid "Not Checked"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:90
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:99
 msgid "Not Configured"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:87
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:96
 msgid "Not Drilled"
 msgstr ""
 
@@ -1428,17 +1457,31 @@ msgstr ""
 msgid "Not Tested"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:179
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:189
 msgid "Not checked"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:176
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:270
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:186
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:284
 msgid "Not configured"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:247
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:277
+msgid "Not scheduled"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:257
 msgid "Not used"
+msgstr ""
+
+#. Label of the backup_retention_days (Int) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "OSS Successful Daily Restore Points to Keep"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:314
+msgid "OSS successful daily restore points: {0}"
 msgstr ""
 
 #. Label of the object_section (Section Break) field in DocType 'Object Restore
@@ -1454,7 +1497,7 @@ msgstr ""
 
 #. Label of the prefix (Data) field in DocType 'Object Storage Profile'
 #: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:131
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:140
 msgid "Object Prefix (Optional)"
 msgstr ""
 
@@ -1463,7 +1506,7 @@ msgstr ""
 msgid "Object Restore Request"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:58
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:67
 #: erpnext_s3_integration/public/js/file.js:6
 msgid "Object Storage"
 msgstr ""
@@ -1493,11 +1536,11 @@ msgstr ""
 msgid "Object Storage Settings"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:73
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:82
 msgid "Object storage is configured and healthy."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:353
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:375
 msgid "One Item Needs Attention"
 msgstr ""
 
@@ -1505,7 +1548,7 @@ msgstr ""
 msgid "Only a Failed restore request can be retried."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:250
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:260
 msgid "Only objects tagged retention=business-archive use this OSS rule. Missing lifecycle rules do not block normal attachment storage."
 msgstr ""
 
@@ -1513,15 +1556,15 @@ msgstr ""
 msgid "Only the restore worker may perform this status transition."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:408
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:430
 msgid "Open Data Management > Lifecycle."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:37
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:46
 msgid "Open OSS Console"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:413
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:435
 msgid "Open OSS and Configure"
 msgstr ""
 
@@ -1529,12 +1572,12 @@ msgstr ""
 msgid "Open Profile"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:35
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:44
 msgid "Open Profiles"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:38
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:376
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:47
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:398
 msgid "Open RAM Console"
 msgstr ""
 
@@ -1542,7 +1585,11 @@ msgstr ""
 msgid "Open Restore Request"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:407
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:316
+msgid "Open System Settings"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:429
 msgid "Open the Attachment Bucket in the Alibaba Cloud OSS console."
 msgstr ""
 
@@ -1575,11 +1622,11 @@ msgstr ""
 msgid "Optional when the ECS metadata service can discover the attached role."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:204
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:214
 msgid "Orders, invoices, receipts, Stock Entries, and quality attachments"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:305
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:327
 msgid "Ordinary Standard and IA attachments download immediately. Backup recovery remains a System Manager runbook."
 msgstr ""
 
@@ -1609,15 +1656,15 @@ msgstr ""
 msgid "Policy Name"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:459
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:481
 msgid "Preview"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:459
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:481
 msgid "Preview Classification"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:210
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:220
 msgid "Preview an Attachment"
 msgstr ""
 
@@ -1688,7 +1735,7 @@ msgstr ""
 msgid "Proxy Downloads Through Frappe"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:178
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:188
 msgid "Public Endpoint"
 msgstr ""
 
@@ -1709,7 +1756,7 @@ msgstr ""
 msgid "Purpose must be {0}."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:466
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:488
 msgid "Queued classification for {0} object-backed Files."
 msgstr ""
 
@@ -1721,7 +1768,7 @@ msgstr ""
 
 #. Label of the ram_role_name (Data) field in DocType 'Object Storage Profile'
 #: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:134
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:143
 msgid "RAM Role Name"
 msgstr ""
 
@@ -1740,11 +1787,11 @@ msgstr ""
 msgid "Ready At"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:211
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:221
 msgid "Recalculate Existing Attachments"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:244
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:254
 msgid "Recent"
 msgstr ""
 
@@ -1752,7 +1799,7 @@ msgstr ""
 msgid "Recommended Jakarta settings applied."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:443
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:465
 msgid "Recommended attachment lifecycle and 30 backup restore points were applied."
 msgstr ""
 
@@ -1762,7 +1809,7 @@ msgstr ""
 msgid "Recommended for business documents that are rarely opened after three months. 0 disables Archive."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:294
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:310
 msgid "Recovery point objective"
 msgstr ""
 
@@ -1793,11 +1840,11 @@ msgstr ""
 msgid "Region and Endpoint"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:245
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:255
 msgid "Remain Standard"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:246
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:256
 msgid "Remain online"
 msgstr ""
 
@@ -1981,7 +2028,7 @@ msgstr ""
 msgid "Run Full Read/Write Test"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:54
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:63
 msgid "Run Health Check"
 msgstr ""
 
@@ -1993,7 +2040,7 @@ msgstr ""
 msgid "Run the Full Read/Write Test."
 msgstr ""
 
-#: erpnext_s3_integration/backup_hooks.py:287
+#: erpnext_s3_integration/backup_hooks.py:538
 msgid "Run the first database backup to collect capacity data."
 msgstr ""
 
@@ -2017,15 +2064,15 @@ msgstr ""
 msgid "Safety Confirmation"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:136
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:190
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:274
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:145
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:200
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:288
 #: erpnext_s3_integration/object_storage/setup_assistant.py:106
 msgid "Save and Check"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:271
-msgid "Schedule: daily at 02:00 · Keep 30 successful daily restore points"
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:285
+msgid "Schedule: {0}"
 msgstr ""
 
 #. Label of the scope (Select) field in DocType 'Object Storage Retention Rule'
@@ -2063,11 +2110,11 @@ msgstr ""
 msgid "Server-side Encryption"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:127
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:136
 msgid "Set Up Attachment Storage"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:127
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:136
 msgid "Set Up Database Backups"
 msgstr ""
 
@@ -2091,7 +2138,7 @@ msgstr ""
 msgid "Setup Progress"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:455
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:477
 msgid "Shared Object Policy"
 msgstr ""
 
@@ -2112,19 +2159,19 @@ msgstr ""
 msgid "Standard"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:244
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:254
 msgid "Standard ZRS"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:190
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:200
 msgid "Start Attachment Setup"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:274
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:288
 msgid "Start Backup Setup"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:79
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:88
 #: erpnext_s3_integration/object_storage/setup_assistant.py:45
 msgid "Start Setup"
 msgstr ""
@@ -2153,12 +2200,6 @@ msgstr ""
 msgid "Success"
 msgstr ""
 
-#. Label of the backup_retention_days (Int) field in DocType 'Object Storage
-#. Settings'
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
-msgid "Successful Daily Restore Points to Keep"
-msgstr ""
-
 #. Description of the 'Move Attachments to IA After (Days)' (Int) field in
 #. DocType 'Object Storage Settings'
 #: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
@@ -2185,8 +2226,8 @@ msgstr ""
 msgid "System Notifications"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:354
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:380
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:376
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:402
 msgid "Technical Details"
 msgstr ""
 
@@ -2222,7 +2263,7 @@ msgstr ""
 msgid "The app cannot read lifecycle rules. Add oss:GetBucketLifecycle and check again."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:412
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:434
 msgid "The app only reads this rule. It never changes OSS lifecycle settings."
 msgstr ""
 
@@ -2230,7 +2271,7 @@ msgstr ""
 msgid "The attachment object no longer exists."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:437
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:459
 msgid "The backup did not complete. Open S3 Sync Log for details."
 msgstr ""
 
@@ -2238,7 +2279,7 @@ msgstr ""
 msgid "The bucket configuration could not be checked ({0})."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:380
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:402
 msgid "The bucket security and recommended lifecycle rule are ready."
 msgstr ""
 
@@ -2246,7 +2287,7 @@ msgstr ""
 msgid "The bucket was not found. Check its name, Jakarta region, and endpoint."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:347
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:369
 msgid "The check did not pass."
 msgstr ""
 
@@ -2254,7 +2295,7 @@ msgstr ""
 msgid "The configured attachment lifecycle rule is ready: {0}."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:350
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:372
 msgid "The existing storage feature remains enabled. Update the read-only RAM permission, then check again."
 msgstr ""
 
@@ -2262,12 +2303,18 @@ msgstr ""
 msgid "The last Full Test failed. Run it again."
 msgstr ""
 
-#: erpnext_s3_integration/backup_hooks.py:348
+#: erpnext_s3_integration/backup_hooks.py:608
 msgid "The latest database backup is at least 10 GB. Monitor growth."
 msgstr ""
 
-#: erpnext_s3_integration/backup_hooks.py:342
+#: erpnext_s3_integration/backup_hooks.py:602
 msgid "The latest database backup is at least 25 GB. Review the backup architecture."
+msgstr ""
+
+#. Description of the 'Database and Site Configuration Backup' (Check) field in
+#. DocType 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "The matching site_config_backup.json is always included with the database backup."
 msgstr ""
 
 #: erpnext_s3_integration/object_storage/setup_assistant.py:84
@@ -2278,7 +2325,7 @@ msgstr ""
 msgid "The provider returned a temporary error. Retry after checking OSS service health."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:134
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:143
 msgid "The role must be attached to the Jakarta ECS instance. Docker obtains temporary credentials from ECS metadata."
 msgstr ""
 
@@ -2319,7 +2366,7 @@ msgstr ""
 msgid "Unlink this profile from Object Storage Settings before changing Purpose."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:205
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:215
 msgid "Unmatched attachments"
 msgstr ""
 
@@ -2327,7 +2374,7 @@ msgstr ""
 msgid "Unnamed rule"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:294
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:310
 msgid "Up to approximately 24 hours"
 msgstr ""
 
@@ -2335,7 +2382,7 @@ msgstr ""
 msgid "Update RAM Policy"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:394
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:416
 msgid "Updated least-privilege RAM Policy copied."
 msgstr ""
 
@@ -2343,11 +2390,11 @@ msgstr ""
 msgid "Upload, download, Range, and permission checks passed."
 msgstr ""
 
-#: erpnext_s3_integration/backup_hooks.py:123
+#: erpnext_s3_integration/backup_hooks.py:198
 msgid "Uploaded backup {0}."
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:191
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:201
 msgid "Uploads, downloads, Range, security, and current permissions are checked together."
 msgstr ""
 
@@ -2438,7 +2485,7 @@ msgstr ""
 msgid "Warning"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:304
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:326
 msgid "When a user opens an archived attachment, Frappe shows a Restore button instead of a download error. The request is permission-checked, polled every 15 minutes, and the user is notified when the temporary readable copy is ready."
 msgstr ""
 
@@ -2498,7 +2545,7 @@ msgstr ""
 msgid "{0} failed: {1}"
 msgstr ""
 
-#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:59
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:68
 msgid "{0} items available, {1} item(s) need attention"
 msgstr ""
 
