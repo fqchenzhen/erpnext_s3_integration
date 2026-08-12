@@ -1,0 +1,2507 @@
+# Translations template for ERPNext S3 Integration.
+# Copyright (C) 2026 Solufy
+# This file is distributed under the same license as the ERPNext S3 Integration project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ERPNext S3 Integration VERSION\n"
+"Report-Msgid-Bugs-To: sahil@solufy.in\n"
+"POT-Creation-Date: 2026-08-12 07:10+0000\n"
+"PO-Revision-Date: 2026-08-12 07:10+0000\n"
+"Last-Translator: sahil@solufy.in\n"
+"Language-Team: sahil@solufy.in\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+
+#. Description of the 'Move Attachments to Cold Archive After (Days)' (Int)
+#. field in DocType 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "0 disables Cold Archive."
+msgstr ""
+
+#. Description of the 'Delete Attachments After (Days)' (Int) field in DocType
+#. 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "0 means attachments are never deleted automatically."
+msgstr ""
+
+#. Content of the 'Restore Help' (HTML) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "<div class=\"alert alert-warning\">Archive and Cold Archive attachments must be restored before download. Users need both original File read permission and an allowed restore role. Backup recovery remains a System Manager runbook.</div>"
+msgstr ""
+
+#. Content of the 'classification_warning' (HTML) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "<div class=\"alert alert-warning\">Unclassified objects are not automatically archived. Review rules, preview results, and recalculate existing objects before enabling the provider lifecycle rule.</div>"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:275
+msgid "A failed backup never removes an existing successful restore point."
+msgstr "备份失败绝不会删除已有的成功恢复点。"
+
+#: erpnext_s3_integration/overrides/s3_file.py:38
+msgid "A new File cannot read content from an arbitrary object storage URL."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:437
+msgid "A new successful restore point was uploaded."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.py:117
+msgid "A restore cannot be cancelled after provider submission."
+msgstr ""
+
+#. Option for the 'Server-side Encryption' (Select) field in DocType 'Object
+#. Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "AES256"
+msgstr ""
+
+#. Option for the 'Provider' (Select) field in DocType 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "AWS S3"
+msgstr ""
+
+#. Label of the access_key_id (Password) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:132
+msgid "Access Key ID"
+msgstr "AccessKey ID"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.py:47
+msgid "Access Key ID and Access Key Secret are required in AccessKey mode."
+msgstr ""
+
+#. Label of the access_key_secret (Password) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:133
+msgid "Access Key Secret"
+msgstr "AccessKey Secret"
+
+#. Option for the 'Credential Mode' (Select) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "AccessKey"
+msgstr ""
+
+#. Label of the active_object_identity (Data) field in DocType 'Object Restore
+#. Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Active Object Identity"
+msgstr ""
+
+#: erpnext_s3_integration/public/js/object_storage.js:37
+msgid "Active request"
+msgstr "活动恢复请求"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:410
+msgid "Add tag condition: retention = business-archive"
+msgstr ""
+
+#. Label of the addressing_style (Select) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Addressing Style"
+msgstr "寻址方式"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:245
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:246
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:247
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:248
+msgid "After {0} days"
+msgstr "{0} 天后"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:403
+msgid "After {0} days: {1}"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:10
+msgid "Alibaba Cloud"
+msgstr "阿里云"
+
+#. Option for the 'Provider' (Select) field in DocType 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Alibaba Cloud OSS"
+msgstr ""
+
+#. Name of a role
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "All"
+msgstr ""
+
+#. Label of the allow_manual_retention_override (Check) field in DocType
+#. 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Allow Manual File Override"
+msgstr "允许在 File 上手工覆盖"
+
+#. Label of the allow_self_service_restore (Check) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Allow Self-service Restore"
+msgstr "允许自助恢复"
+
+#. Label of the restore_roles (Table) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Allowed Restore Roles"
+msgstr "允许恢复的角色"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:202
+msgid "Always Standard"
+msgstr "永久保持 Standard"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.py:133
+msgid "An active restore request already exists for this object."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:5
+msgid "Apply Recommended Jakarta Settings"
+msgstr "应用推荐的雅加达配置"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:36
+msgid "Apply Recommended Storage Plan"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:442
+msgid "Applying recommended settings..."
+msgstr ""
+
+#. Label of the restore_tab (Tab Break) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:303
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+#: erpnext_s3_integration/object_storage/setup_assistant.py:173
+#: erpnext_s3_integration/object_storage/setup_assistant.py:179
+msgid "Archive Restore"
+msgstr "归档恢复"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:246
+msgid "Archive ZRS, restore before download"
+msgstr "Archive ZRS，下载前需要恢复"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:230
+msgid "Archive after {0} days"
+msgstr "{0} 天后转 Archive"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:246
+msgid "Archive disabled"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.py:42
+msgid "Archive restore requests are disabled."
+msgstr ""
+
+#: erpnext_s3_integration/public/js/object_storage.js:28
+msgid "Archived attachment requires restore"
+msgstr "归档附件需要恢复"
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:181
+msgid "Archived attachments can be restored when the first archived file is available."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/ram_policy.py:19
+msgid "Attach it to the ECS instance RAM role, not to a human RAM user."
+msgstr ""
+
+#. Label of the attachment_actions_html (HTML) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Attachment Actions"
+msgstr "附件操作"
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:118
+#: erpnext_s3_integration/object_storage/setup_assistant.py:128
+#: erpnext_s3_integration/object_storage/setup_assistant.py:150
+#: erpnext_s3_integration/object_storage/setup_assistant.py:158
+msgid "Attachment Archive"
+msgstr "附件归档"
+
+#. Label of the classification_tab (Section Break) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:199
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Attachment Classification"
+msgstr "附件分类"
+
+#. Label of the attachment_lifecycle_tab (Section Break) field in DocType
+#. 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Attachment Lifecycle"
+msgstr "附件生命周期"
+
+#. Label of the attachment_lifecycle_actions_html (HTML) field in DocType
+#. 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Attachment Lifecycle Actions"
+msgstr ""
+
+#. Label of the attachment_lifecycle_reviewed (Check) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Attachment Lifecycle Rule Verified"
+msgstr ""
+
+#. Label of the attachment_lifecycle_intro (HTML) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Attachment Lifecycle Summary"
+msgstr ""
+
+#. Label of the attachment_setup_help (HTML) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Attachment Setup Help"
+msgstr "附件配置说明"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:176
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:180
+#: erpnext_s3_integration/object_storage/setup_assistant.py:38
+msgid "Attachment Storage"
+msgstr "附件存储"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:338
+msgid "Attachment Storage Is Ready"
+msgstr "附件存储已就绪"
+
+#. Label of the attachment_storage_profile (Link) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Attachment Storage Profile"
+msgstr "附件存储配置档"
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:193
+#: erpnext_s3_integration/object_storage/bucket_setup.py:207
+msgid "Attachment archive rule"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:76
+msgid "Attachment delete days must be 0 (never delete) or later than the last enabled transition."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:70
+msgid "Attachment lifecycle days cannot be negative. Use 0 to disable a stage."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:333
+msgid "Attachment upload and download are enabled. Next: create the configured lifecycle rule: {0}."
+msgstr "附件上传和下载已启用；下一步：创建已配置的生命周期规则：{0}。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:334
+msgid "Attachment upload and download are enabled. Next: review the configured lifecycle rule in Attachment Lifecycle settings."
+msgstr "附件上传和下载已启用；下一步：在附件生命周期设置中复核已配置的规则。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:71
+msgid "Attachment upload, download, and database backup can continue. Archive rules still need attention."
+msgstr "附件上传、下载和数据库备份可继续运行；归档规则仍需处理。"
+
+#. Option for the 'Purpose' (Select) field in DocType 'Object Storage Profile'
+#. Label of the attachments_tab (Tab Break) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Attachments"
+msgstr "附件"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.py:185
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:54
+msgid "Attachments and backups must use separate buckets."
+msgstr ""
+
+#. Label of the attempts (Int) field in DocType 'Object Restore Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Attempts"
+msgstr "尝试次数"
+
+#. Option for the 'Addressing Style' (Select) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Auto"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:248
+msgid "Automatic deletion"
+msgstr "自动删除"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:85
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:180
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:270
+msgid "Available"
+msgstr "可用"
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:70
+msgid "Back Up Now"
+msgstr "立即备份"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:274
+msgid "Back Up Now and Verify"
+msgstr "立即备份并验证"
+
+#. Description of the 'Local Private Files Folder Backup' (Check) field in
+#. DocType 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Back up the local sites/<site>/private/files folder. Object-backed attachments are not included."
+msgstr ""
+
+#. Description of the 'Local Public Files Folder Backup' (Check) field in
+#. DocType 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Back up the local sites/<site>/public/files folder. Object-backed attachments are not included."
+msgstr ""
+
+#. Label of the backup_actions_html (HTML) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Backup Actions"
+msgstr "备份操作"
+
+#. Label of the backup_capacity_html (HTML) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Backup Capacity"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:437
+msgid "Backup Completed"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:437
+msgid "Backup Needs Attention"
+msgstr ""
+
+#. Label of the backup_cron (Data) field in DocType 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Backup Schedule (Cron)"
+msgstr "备份计划（Cron）"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:58
+msgid "Backup Schedule must be a valid five-part cron expression."
+msgstr ""
+
+#. Label of the backup_setup_help (HTML) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Backup Setup Help"
+msgstr "备份配置说明"
+
+#. Label of the backup_storage_profile (Link) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Backup Storage Profile"
+msgstr "备份存储配置档"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:297
+msgid "Backup capacity data is not available yet."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:103
+msgid "Backup lifecycle days must be positive and strictly increasing."
+msgstr ""
+
+#: erpnext_s3_integration/backup_hooks.py:95
+msgid "Backup object storage sync completed for {0} file(s)."
+msgstr ""
+
+#: erpnext_s3_integration/backup_hooks.py:383
+msgid "Backup skipped because another backup is running."
+msgstr ""
+
+#: erpnext_s3_integration/backup_hooks.py:137
+msgid "Backup upload failed for {0}: {1}"
+msgstr ""
+
+#. Option for the 'Purpose' (Select) field in DocType 'Object Storage Profile'
+#. Label of the backups_tab (Tab Break) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Backups"
+msgstr "备份"
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:150
+msgid "Block Public Access"
+msgstr ""
+
+#. Label of the bucket (Data) field in DocType 'Object Restore Request'
+#. Label of the bucket (Data) field in DocType 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Bucket"
+msgstr "Bucket"
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:144
+msgid "Bucket ACL: {0}"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:379
+msgid "Bucket Check Needs Attention"
+msgstr "Bucket 检查需要处理"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:379
+msgid "Bucket Configuration Passed"
+msgstr "Bucket 配置检查已通过"
+
+#. Option for the 'Server-side Encryption' (Select) field in DocType 'Object
+#. Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Bucket Default"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:130
+msgid "Bucket Name"
+msgstr "Bucket 名称"
+
+#. Label of the bucket_section (Section Break) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Bucket and Object Keys"
+msgstr "Bucket 与对象 Key"
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:325
+msgid "Bucket configuration"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:339
+msgid "Bucket privacy and public-access protection passed"
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:171
+msgid "Bucket redundancy: {0}"
+msgstr "Bucket 冗余类型：{0}"
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:136
+msgid "Bucket region: {0}"
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:57
+msgid "Bucket security"
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:56
+msgid "Bucket security could not be checked."
+msgstr "无法检查 Bucket 安全设置。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.py:113
+msgid "Bucket, endpoint, environment, or prefix changed. Check again."
+msgstr ""
+
+#. Label of the is_default (Check) field in DocType 'Object Storage Retention
+#. Rule'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+msgid "Built-in Rule"
+msgstr "内置规则"
+
+#: erpnext_s3_integration/object_storage/default_rules.py:90
+msgid "Built-in deterministic retention rule."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/default_rules.py:69
+msgid "Built-in rules were updated. Custom rules were kept; review the result before enabling classification."
+msgstr "内置规则已更新，自定义规则已保留；启用分类前请复核结果。"
+
+#. Option for the 'Restore Tier' (Select) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Bulk"
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:152
+msgid "Business archives use the configured lifecycle: {0}."
+msgstr "业务归档附件使用已配置的生命周期：{0}。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.js:10
+msgid "Cancel"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Object Restore Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Cancelled"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:45
+msgid "Cannot enable {0} with profile {1}:"
+msgstr ""
+
+#. Label of the category (Data) field in DocType 'Object Storage Retention
+#. Rule'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+msgid "Category"
+msgstr ""
+
+#: erpnext_s3_integration/overrides/s3_file.py:109
+msgid "Changing object storage visibility is not supported. Re-upload the File instead."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:259
+#: erpnext_s3_integration/object_storage/setup_assistant.py:153
+msgid "Check Again"
+msgstr "重新检查"
+
+#: erpnext_s3_integration/public/js/file.js:4
+msgid "Check Download / Restore"
+msgstr "检查下载/恢复"
+
+#: erpnext_s3_integration/object_storage/healthcheck.py:130
+msgid "Check ECS VPC connectivity and the Jakarta internal endpoint."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:89
+msgid "Check Failed"
+msgstr "检查失败"
+
+#: erpnext_s3_integration/object_storage/healthcheck.py:128
+msgid "Check the ECS RAM Role binding, RAM policy resources, and bucket permissions."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/healthcheck.py:129
+msgid "Check the bucket name, region, and endpoint."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.py:77
+msgid "Check the production bucket security settings before enabling this profile."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:399
+msgid "Check the production bucket security settings."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:365
+msgid "Checking bucket security and archive rules..."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:317
+msgid "Checking connection, bucket security, and object operations..."
+msgstr ""
+
+#. Label of the classification_actions_html (HTML) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Classification Actions"
+msgstr "分类操作"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:454
+msgid "Classification Preview"
+msgstr ""
+
+#. Label of the classification_help (HTML) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Classification Summary"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:200
+msgid "Classification assigns retention tags. It never moves a file to another bucket."
+msgstr "分类只分配保留标签，不会把文件移动到其他 Bucket。"
+
+#: erpnext_s3_integration/public/js/object_storage.js:40
+msgid "Close"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:247
+msgid "Cold Archive"
+msgstr "Cold Archive"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:231
+msgid "Cold Archive after {0} days"
+msgstr "{0} 天后转 Cold Archive"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:293
+msgid "Collecting data"
+msgstr "正在收集数据"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:445
+msgid "Complete the required profile fields, then try again."
+msgstr "请补齐配置档必填项后重试。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.py:94
+msgid "Configuration changed. Run the Full Read/Write Test again."
+msgstr "配置已改变，请重新运行完整读写测试。"
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:164
+msgid "Configure"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:259
+msgid "Configure OSS Archive Rule"
+msgstr "配置 OSS 归档规则"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:405
+msgid "Configure OSS Attachment Archive Rule"
+msgstr "配置 OSS 附件归档规则"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:254
+msgid "Configure attachment storage before checking the OSS lifecycle rule."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:120
+msgid "Configure attachment storage first. Archive settings do not block normal uploads."
+msgstr ""
+
+#. Description of the 'Restore Settings Reviewed' (Check) field in DocType
+#. 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Confirm restore roles, tier, restored-copy days, polling, notifications, and cost guidance."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:391
+msgid "Confirm that Block Public Access is enabled."
+msgstr "请确认已启用 Block Public Access。"
+
+#. Description of the 'Restore Drill Completed' (Check) field in DocType
+#. 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Confirm that a non-sensitive archived attachment was restored and downloaded successfully."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.py:65
+msgid "Confirm that the bucket is private and Block Public Access is enabled."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:388
+msgid "Confirm that the bucket is private."
+msgstr "请确认 Bucket 为私有。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:80
+msgid "Continue Setup"
+msgstr "继续配置"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:126
+msgid "Copy Policy JSON"
+msgstr "复制策略 JSON"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:376
+msgid "Copy Updated RAM Policy"
+msgstr "复制更新后的 RAM 策略"
+
+#: erpnext_s3_integration/object_storage/ram_policy.py:18
+msgid "Create a custom policy in RAM Console > Permissions > Policies."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:176
+msgid "Create a dedicated private Attachment Bucket in Jakarta OSS."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:44
+msgid "Create a {0} profile and enter its private OSS bucket."
+msgstr "创建用途为 {0} 的配置档，并填写它的私有 OSS Bucket。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:409
+msgid "Create an enabled lifecycle rule with prefix: {0}"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:244
+msgid "Create or select a profile."
+msgstr "请创建或选择配置档。"
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:211
+#: erpnext_s3_integration/object_storage/setup_assistant.py:161
+msgid "Create the configured tag-filtered lifecycle rule: {0}."
+msgstr "请创建已配置的按标签筛选生命周期规则：{0}。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:435
+msgid "Creating, uploading, and verifying the database backup..."
+msgstr ""
+
+#. Label of the credential_mode (Select) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Credential Mode"
+msgstr "凭证模式"
+
+#. Label of the credentials_section (Section Break) field in DocType 'Object
+#. Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Credentials"
+msgstr "凭证"
+
+#. Label of the attachment_lifecycle_settings_section (Section Break) field in
+#. DocType 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Custom Attachment Lifecycle"
+msgstr "自定义附件生命周期"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:260
+msgid "Custom Lifecycle"
+msgstr "自定义生命周期"
+
+#. Option for the 'Provider' (Select) field in DocType 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Custom S3"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:270
+msgid "Daily Full Database Backup"
+msgstr "数据库每日全量备份"
+
+#. Label of the upload_database_backup (Check) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Database Backup"
+msgstr "数据库备份"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:338
+msgid "Database Backup Storage Is Ready"
+msgstr "数据库备份存储已就绪"
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:38
+msgid "Database Backups"
+msgstr "数据库备份"
+
+#: erpnext_s3_integration/backup_hooks.py:242
+msgid "Database backup file created."
+msgstr ""
+
+#: erpnext_s3_integration/backup_hooks.py:251
+msgid "Database backup file creation failed."
+msgstr ""
+
+#: erpnext_s3_integration/backup_hooks.py:350
+msgid "Database backup generation took at least 45 minutes."
+msgstr ""
+
+#: erpnext_s3_integration/backup_hooks.py:344
+msgid "Database backup generation took at least 90 minutes."
+msgstr ""
+
+#: erpnext_s3_integration/backup_hooks.py:351
+msgid "Database backup size, age, and generation time are within recommended limits."
+msgstr ""
+
+#. Option for the 'Credential Mode' (Select) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Default Credential Chain"
+msgstr "默认凭证链"
+
+#. Label of the default_retention_policy (Select) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Default Retention Policy"
+msgstr "默认保留策略"
+
+#. Label of the default_rule_key (Data) field in DocType 'Object Storage
+#. Retention Rule'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+msgid "Default Rule Key"
+msgstr "默认规则标识"
+
+#. Description of the 'Backup Schedule (Cron)' (Data) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Default: daily at 02:00 in the site time zone."
+msgstr ""
+
+#. Label of the lifecycle_delete_days (Int) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Delete After (Days)"
+msgstr "多少天后删除"
+
+#. Label of the attachment_lifecycle_delete_days (Int) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Delete Attachments After (Days)"
+msgstr "附件多少天后删除"
+
+#. Label of the delete_local_backup_after_upload (Check) field in DocType
+#. 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Delete Local Backup After Successful Upload"
+msgstr "上传成功后删除本地备份"
+
+#. Label of the delete_on_last_reference (Check) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Delete Object After Last File Reference"
+msgstr "最后一个文件引用删除后再删除对象"
+
+#. Label of the description (Small Text) field in DocType 'Object Storage
+#. Retention Rule'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+msgid "Description"
+msgstr ""
+
+#. Option for the 'Environment' (Select) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Development"
+msgstr "开发"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile_list.js:4
+msgid "Disabled"
+msgstr "已禁用"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:411
+msgid "Do not configure expiration or Cold Archive."
+msgstr ""
+
+#. Option for the 'Scope' (Select) field in DocType 'Object Storage Retention
+#. Rule'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+msgid "DocType"
+msgstr ""
+
+#. Option for the 'Scope' (Select) field in DocType 'Object Storage Retention
+#. Rule'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+msgid "DocType and Field"
+msgstr ""
+
+#. Label of the duration_ms (Int) field in DocType 'S3 Sync Log'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/s3_sync_log/s3_sync_log.json
+msgid "Duration (ms)"
+msgstr ""
+
+#. Option for the 'Credential Mode' (Select) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "ECS Instance RAM Role"
+msgstr ""
+
+#. Label of a Desktop Icon
+#. Title of a Workspace Sidebar
+#: erpnext_s3_integration/desktop_icon/erpnext_s3_integration.json
+#: erpnext_s3_integration/workspace_sidebar/erpnext_s3_integration.json
+msgid "ERPNext S3 Integration"
+msgstr ""
+
+#. Label of the classification_rules_section (Section Break) field in DocType
+#. 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:212
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Edit Classification Rules"
+msgstr "编辑分类规则"
+
+#. Label of the email_notifications (Check) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Email Notifications"
+msgstr "邮件通知"
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:85
+msgid "Enable"
+msgstr ""
+
+#. Label of the enable_archive_restore (Check) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Enable Archive Restore Requests"
+msgstr "启用归档恢复请求"
+
+#. Label of the enable_attachment_storage (Check) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Enable Attachment Object Storage"
+msgstr "启用附件对象存储"
+
+#. Label of the enable_auto_classification (Check) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Enable Automatic Classification"
+msgstr "启用自动分类"
+
+#. Label of the enable_backup_storage (Check) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Enable Backup Object Storage"
+msgstr "启用备份对象存储"
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:154
+msgid "Enable Block Public Access for this bucket."
+msgstr ""
+
+#. Label of the enable_range_requests (Check) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Enable Range Requests"
+msgstr "启用 Range 分段请求"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:415
+msgid "Enable the profile after its test passes."
+msgstr "完整测试通过后启用配置档。"
+
+#. Label of the enabled (Check) field in DocType 'Object Storage Profile'
+#. Label of the enabled (Check) field in DocType 'Object Storage Retention
+#. Rule'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:86
+msgid "Enabled"
+msgstr "已启用"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:73
+msgid "Enabled attachment lifecycle stages must be strictly increasing."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:339
+msgid "Enabled object operations passed"
+msgstr ""
+
+#. Label of the endpoint_url (Data) field in DocType 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Endpoint URL"
+msgstr "Endpoint 地址"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:367
+msgid "Enter the OSS bucket name."
+msgstr "请填写 OSS Bucket 名称。"
+
+#. Label of the environment (Select) field in DocType 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:129
+msgid "Environment"
+msgstr "环境"
+
+#. Label of the error_category (Data) field in DocType 'Object Restore Request'
+#. Label of the error_category (Data) field in DocType 'S3 Sync Log'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/s3_sync_log/s3_sync_log.json
+msgid "Error Category"
+msgstr ""
+
+#. Label of the error_code (Data) field in DocType 'Object Restore Request'
+#. Label of the error_code (Data) field in DocType 'S3 Sync Log'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/s3_sync_log/s3_sync_log.json
+msgid "Error Code"
+msgstr ""
+
+#. Label of the error_message (Small Text) field in DocType 'Object Restore
+#. Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Error Message"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:293
+msgid "Estimated OSS usage"
+msgstr "预计 OSS 占用"
+
+#. Option for the 'Restore Tier' (Select) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Expedited"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Object Restore Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Expired"
+msgstr ""
+
+#. Label of the expires_at (Datetime) field in DocType 'Object Restore Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Expires At"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Object Restore Request'
+#. Option for the 'Last Full Test Status' (Select) field in DocType 'Object
+#. Storage Profile'
+#. Option for the 'Last Bucket Verification Status' (Select) field in DocType
+#. 'Object Storage Profile'
+#. Option for the 'Status' (Select) field in DocType 'S3 Sync Log'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/s3_sync_log/s3_sync_log.json
+msgid "Failed"
+msgstr "失败"
+
+#. Label of the failure_section (Section Break) field in DocType 'Object
+#. Restore Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Failure Details"
+msgstr ""
+
+#. Label of the file (Link) field in DocType 'Object Restore Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:448
+msgid "File"
+msgstr ""
+
+#. Option for the 'Scope' (Select) field in DocType 'Object Storage Retention
+#. Rule'
+#. Label of the file_extension (Data) field in DocType 'Object Storage
+#. Retention Rule'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+msgid "File Extension"
+msgstr ""
+
+#. Label of the file_name_snapshot (Data) field in DocType 'Object Restore
+#. Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "File Name"
+msgstr "文件名"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:455
+msgid "File Policy"
+msgstr "文件策略"
+
+#. Label of the file_size (Int) field in DocType 'S3 Sync Log'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/s3_sync_log/s3_sync_log.json
+msgid "File Size"
+msgstr ""
+
+#: erpnext_s3_integration/file_hooks.py:42
+#: erpnext_s3_integration/file_hooks.py:83
+msgid "File content is required before uploading to object storage."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:78
+msgid "Fix Problem"
+msgstr "修复问题"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:403
+msgid "Fix the failed production bucket security check."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:74
+msgid "Follow the next highlighted action. The assistant handles save, verification, and enablement in order."
+msgstr "请执行当前突出显示的操作；助手会按顺序完成保存、验证和启用。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:109
+msgid "Full Read/Write Test"
+msgstr "完整读写测试"
+
+#: erpnext_s3_integration/object_storage/healthcheck.py:81
+msgid "Full Read/Write Test passed."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:428
+msgid "Full Test"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:10
+msgid "Generate RAM Policy"
+msgstr "生成 RAM 策略"
+
+#: erpnext_s3_integration/object_storage/ram_policy.py:20
+msgid "Generate it again whenever bucket, prefix, delete, classification, or restore settings change."
+msgstr ""
+
+#. Label of the confirm_block_public_access (Check) field in DocType 'Object
+#. Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "I Confirm Block Public Access Is Enabled"
+msgstr "我确认已开启 Block Public Access"
+
+#. Label of the confirm_private_bucket (Check) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "I Confirm the Bucket Is Private"
+msgstr "我确认 Bucket 为私有"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:415
+msgid "I Finished, Check Again"
+msgstr "已完成，重新检查"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:245
+msgid "IA ZRS, immediate download"
+msgstr "IA ZRS，可立即下载"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:229
+msgid "IA after {0} days"
+msgstr "{0} 天后转 IA"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:245
+msgid "IA disabled"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:178
+msgid "Internal Endpoint"
+msgstr ""
+
+#. Label of the setup_checks_section (Section Break) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Internal Setup State"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:74
+msgid "Internet testing configuration"
+msgstr "公网测试配置"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.py:114
+msgid "Invalid restore transition from {0} to {1}."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:203
+msgid "Item and BOM technical documents"
+msgstr "Item 和 BOM 技术资料"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:202
+msgid "Item main images, logos, and avatars"
+msgstr "Item 主图、Logo 和头像"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:74
+msgid "Jakarta ECS production configuration"
+msgstr "雅加达 ECS 生产配置"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:339
+msgid "Jakarta OSS connection passed"
+msgstr ""
+
+#. Description of the 'Endpoint URL' (Data) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Jakarta production ECS: https://oss-ap-southeast-5-internal.aliyuncs.com. Development/Staging over the Internet: https://oss-ap-southeast-5.aliyuncs.com."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:134
+msgid "Jakarta region"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:205
+msgid "Keep Standard"
+msgstr "保持 Standard"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:60
+msgid "Keep at least one successful daily backup restore point."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:203
+msgid "Keep online"
+msgstr "保持在线"
+
+#. Description of the 'Successful Daily Restore Points to Keep' (Int) field in
+#. DocType 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Keep the latest successful daily restore points. New backup failures never trigger cleanup."
+msgstr ""
+
+#. Label of the last_backup_sync (Datetime) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Last Backup Sync"
+msgstr "最近备份同步时间"
+
+#. Label of the last_bucket_verification_details (Long Text) field in DocType
+#. 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Last Bucket Verification Details"
+msgstr ""
+
+#. Label of the last_bucket_verification_fingerprint (Data) field in DocType
+#. 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Last Bucket Verification Fingerprint"
+msgstr ""
+
+#. Label of the last_bucket_verification_status (Select) field in DocType
+#. 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Last Bucket Verification Status"
+msgstr ""
+
+#. Label of the last_bucket_verified_at (Datetime) field in DocType 'Object
+#. Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Last Bucket Verified At"
+msgstr ""
+
+#. Label of the last_checked_at (Datetime) field in DocType 'Object Restore
+#. Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Last Checked At"
+msgstr ""
+
+#. Label of the last_test_status (Select) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Last Full Test Status"
+msgstr "最近一次完整测试状态"
+
+#. Label of the last_notified_status (Data) field in DocType 'Object Restore
+#. Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Last Notified Status"
+msgstr "最近已通知状态"
+
+#. Label of the last_test_details (Long Text) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Last Test Details"
+msgstr "最近测试详情"
+
+#. Label of the last_test_fingerprint (Data) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Last Test Fingerprint"
+msgstr ""
+
+#. Label of the last_tested_at (Datetime) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Last Tested At"
+msgstr "最近测试时间"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:181
+msgid "Last checked: {0}"
+msgstr "最近检查：{0}"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:292
+msgid "Latest size"
+msgstr "最近大小"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:291
+msgid "Latest success"
+msgstr "最近成功"
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:74
+msgid "Latest successful backup: {0}"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:121
+msgid "Least-privilege RAM Policy"
+msgstr "最小权限 RAM 策略"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:131
+msgid "Leave blank for a dedicated bucket. Use it only to isolate a site or environment inside a shared bucket."
+msgstr "独立 Bucket 请留空；仅在共享 Bucket 中隔离站点或环境时填写。"
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:223
+msgid "Lifecycle rule scope"
+msgstr ""
+
+#. Label of the upload_private_files_backup (Check) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Local Private Files Folder Backup"
+msgstr "本地私有文件目录备份"
+
+#. Label of the upload_public_files_backup (Check) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Local Public Files Folder Backup"
+msgstr "本地公共文件目录备份"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:269
+msgid "Local files folders may contain ordinary attachments and can produce larger archives."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:268
+msgid "Local folder backups include only files still stored on this server; they do not duplicate Attachment Bucket objects."
+msgstr "本地目录备份只包含仍保存在服务器上的文件，不会重复备份 Attachment Bucket 中的对象。"
+
+#: erpnext_s3_integration/backup_hooks.py:346
+msgid "Local free space is less than twice the latest database backup size."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:242
+msgid "Long-term Attachment Storage"
+msgstr "附件长期存储"
+
+#. Option for the 'Scope' (Select) field in DocType 'Object Storage Retention
+#. Rule'
+#. Label of the mime_type (Data) field in DocType 'Object Storage Retention
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+msgid "MIME Type"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:455
+msgid "Matched Source"
+msgstr ""
+
+#. Label of the message (Code) field in DocType 'S3 Sync Log'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/s3_sync_log/s3_sync_log.json
+msgid "Message"
+msgstr ""
+
+#. Option for the 'Provider' (Select) field in DocType 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "MinIO"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:35
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:36
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:37
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:38
+msgid "More"
+msgstr ""
+
+#. Label of the attachment_details_section (Section Break) field in DocType
+#. 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "More Attachment Settings"
+msgstr "更多附件设置"
+
+#. Label of the backup_settings_section (Section Break) field in DocType
+#. 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "More Backup Settings"
+msgstr "更多备份设置"
+
+#. Label of the attachment_lifecycle_archive_days (Int) field in DocType
+#. 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Move Attachments to Archive After (Days)"
+msgstr "附件多少天后转 Archive"
+
+#. Label of the attachment_lifecycle_cold_archive_days (Int) field in DocType
+#. 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Move Attachments to Cold Archive After (Days)"
+msgstr "附件多少天后转 Cold Archive"
+
+#. Label of the attachment_lifecycle_ia_days (Int) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Move Attachments to IA After (Days)"
+msgstr "附件多少天后转 IA"
+
+#. Label of the lifecycle_archive_days (Int) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Move to Archive After (Days)"
+msgstr "多少天后转 Archive"
+
+#. Label of the lifecycle_cold_archive_days (Int) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Move to Cold Archive After (Days)"
+msgstr "多少天后转 Cold Archive"
+
+#. Label of the lifecycle_ia_days (Int) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Move to IA After (Days)"
+msgstr "多少天后转 IA"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:88
+msgid "Needs Attention"
+msgstr "需要处理"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:180
+msgid "Needs check"
+msgstr "需要检查"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:248
+msgid "Never"
+msgstr "永不"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:232
+msgid "No archive transitions configured"
+msgstr "未配置归档转换"
+
+#: erpnext_s3_integration/backup_hooks.py:275
+msgid "No backup history is available yet."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/ram_policy.py:21
+msgid "No bucket-management or public-access action is included."
+msgstr ""
+
+#: erpnext_s3_integration/backup_hooks.py:83
+msgid "No eligible backup files were found."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:291
+msgid "No successful backup yet"
+msgstr ""
+
+#: erpnext_s3_integration/backup_hooks.py:340
+msgid "No successful database backup has completed in the last 36 hours."
+msgstr ""
+
+#. Option for the 'Last Bucket Verification Status' (Select) field in DocType
+#. 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Not Checked"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:90
+msgid "Not Configured"
+msgstr "尚未配置"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:87
+msgid "Not Drilled"
+msgstr "尚未演练"
+
+#. Option for the 'Last Full Test Status' (Select) field in DocType 'Object
+#. Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Not Tested"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:179
+msgid "Not checked"
+msgstr "尚未检查"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:176
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:270
+msgid "Not configured"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:247
+msgid "Not used"
+msgstr "不使用"
+
+#. Label of the object_section (Section Break) field in DocType 'Object Restore
+#. Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Object"
+msgstr ""
+
+#. Label of the object_key (Data) field in DocType 'Object Restore Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Object Key"
+msgstr ""
+
+#. Label of the prefix (Data) field in DocType 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:131
+msgid "Object Prefix (Optional)"
+msgstr "对象前缀（可选）"
+
+#. Name of a DocType
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Object Restore Request"
+msgstr "对象恢复请求"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:58
+#: erpnext_s3_integration/public/js/file.js:6
+msgid "Object Storage"
+msgstr "对象存储"
+
+#. Label of the object_storage_profile (Link) field in DocType 'Object Restore
+#. Request'
+#. Name of a DocType
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Object Storage Profile"
+msgstr "对象存储配置档"
+
+#. Name of a DocType
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_restore_role/object_storage_restore_role.json
+msgid "Object Storage Restore Role"
+msgstr "对象存储恢复角色"
+
+#. Name of a DocType
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+msgid "Object Storage Retention Rule"
+msgstr "对象存储保留规则"
+
+#. Name of a DocType
+#. Label of a Workspace Sidebar Item
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+#: erpnext_s3_integration/workspace_sidebar/erpnext_s3_integration.json
+msgid "Object Storage Settings"
+msgstr "对象存储设置"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:73
+msgid "Object storage is configured and healthy."
+msgstr "对象存储已配置且运行正常。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:353
+msgid "One Item Needs Attention"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.py:191
+msgid "Only a Failed restore request can be retried."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:250
+msgid "Only objects tagged retention=business-archive use this OSS rule. Missing lifecycle rules do not block normal attachment storage."
+msgstr "只有带 retention=business-archive 标签的对象使用此 OSS 规则；Lifecycle 缺失不会阻塞普通附件存储。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.py:120
+msgid "Only the restore worker may perform this status transition."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:408
+msgid "Open Data Management > Lifecycle."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:37
+msgid "Open OSS Console"
+msgstr "打开 OSS Console"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:413
+msgid "Open OSS and Configure"
+msgstr "打开 OSS 并配置"
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:106
+msgid "Open Profile"
+msgstr "打开配置档"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:35
+msgid "Open Profiles"
+msgstr "打开配置档列表"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:38
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:376
+msgid "Open RAM Console"
+msgstr "打开 RAM Console"
+
+#: erpnext_s3_integration/public/js/object_storage.js:40
+msgid "Open Restore Request"
+msgstr "打开恢复请求"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:407
+msgid "Open the Attachment Bucket in the Alibaba Cloud OSS console."
+msgstr ""
+
+#. Label of the operation (Data) field in DocType 'S3 Sync Log'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/s3_sync_log/s3_sync_log.json
+msgid "Operation"
+msgstr ""
+
+#. Label of the lifecycle_section (Section Break) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Optional OSS Backup Lifecycle"
+msgstr "可选 OSS 备份生命周期"
+
+#. Description of the 'Use Optional OSS Backup Lifecycle' (Check) field in
+#. DocType 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Optional cost optimization for long retention. It is not required for the default 30-day application retention."
+msgstr ""
+
+#. Description of the 'Object Prefix (Optional)' (Data) field in DocType
+#. 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Optional logical path inside the bucket. Leave blank for a dedicated bucket. Do not change it after production use."
+msgstr ""
+
+#. Description of the 'RAM Role Name' (Data) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Optional when the ECS metadata service can discover the attached role."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:204
+msgid "Orders, invoices, receipts, Stock Entries, and quality attachments"
+msgstr "订单、发票、收货、Stock Entry 和质检附件"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:305
+msgid "Ordinary Standard and IA attachments download immediately. Backup recovery remains a System Manager runbook."
+msgstr "普通 Standard 和 IA 附件可立即下载；备份恢复仍由 System Manager 按运行手册执行。"
+
+#. Option for the 'Last Full Test Status' (Select) field in DocType 'Object
+#. Storage Profile'
+#. Option for the 'Last Bucket Verification Status' (Select) field in DocType
+#. 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Passed"
+msgstr "已通过"
+
+#. Option for the 'Addressing Style' (Select) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Path"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:124
+msgid "Policy JSON"
+msgstr "策略 JSON"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:129
+msgid "Policy JSON copied."
+msgstr "策略 JSON 已复制。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:123
+msgid "Policy Name"
+msgstr "策略名称"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:459
+msgid "Preview"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:459
+msgid "Preview Classification"
+msgstr "预览分类"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:210
+msgid "Preview an Attachment"
+msgstr "预览某个附件"
+
+#. Label of the priority (Int) field in DocType 'Object Storage Retention Rule'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+msgid "Priority"
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:142
+msgid "Private bucket"
+msgstr ""
+
+#. Option for the 'Environment' (Select) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Production"
+msgstr "生产"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.py:57
+msgid "Production Alibaba Cloud OSS must use the Jakarta region and internal endpoint."
+msgstr "阿里云 OSS 生产环境必须使用雅加达地域和内网 Endpoint。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:382
+msgid "Production Alibaba Cloud profiles must use the Jakarta internal endpoint."
+msgstr "阿里云生产配置档必须使用雅加达内网 Endpoint。"
+
+#. Description of the 'Credential Mode' (Select) field in DocType 'Object
+#. Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Production Alibaba Cloud: use ECS Instance RAM Role. AccessKey is allowed only for isolated non-production testing."
+msgstr ""
+
+#. Label of the profile_name (Data) field in DocType 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Profile Name"
+msgstr "配置档名称"
+
+#. Label of the profile_setup_help (HTML) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Profile Setup Help"
+msgstr "配置档设置说明"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:93
+msgid "Profile linked to Object Storage Settings."
+msgstr "配置档已关联到对象存储设置。"
+
+#. Label of the provider (Data) field in DocType 'Object Restore Request'
+#. Label of the provider (Select) field in DocType 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Provider"
+msgstr "服务提供商"
+
+#. Label of the provider_submitted (Check) field in DocType 'Object Restore
+#. Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Provider Submitted"
+msgstr "已提交给云服务"
+
+#: erpnext_s3_integration/api.py:171
+msgid "Provider restore time and charges may apply."
+msgstr ""
+
+#. Label of the proxy_downloads (Check) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Proxy Downloads Through Frappe"
+msgstr "通过 Frappe 代理下载"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:178
+msgid "Public Endpoint"
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:152
+msgid "Public access is blocked."
+msgstr ""
+
+#. Label of the purpose (Select) field in DocType 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Purpose"
+msgstr "用途"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:236
+msgid "Purpose must be Attachments or Backups."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:364
+msgid "Purpose must be {0}."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:466
+msgid "Queued classification for {0} object-backed Files."
+msgstr "已将 {0} 个对象存储文件加入分类队列。"
+
+#. Label of the ram_policy_reviewed (Check) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "RAM Policies Reviewed and Attached"
+msgstr "已复核并绑定 RAM 策略"
+
+#. Label of the ram_role_name (Data) field in DocType 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:134
+msgid "RAM Role Name"
+msgstr "RAM 角色名称"
+
+#: erpnext_s3_integration/object_storage/ram_policy.py:12
+msgid "RAM policy generation is available only for Alibaba Cloud OSS profiles."
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Object Restore Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile_list.js:5
+msgid "Ready"
+msgstr "就绪"
+
+#. Label of the ready_at (Datetime) field in DocType 'Object Restore Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Ready At"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:211
+msgid "Recalculate Existing Attachments"
+msgstr "重新计算现有附件"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:244
+msgid "Recent"
+msgstr "最近"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:54
+msgid "Recommended Jakarta settings applied."
+msgstr "已应用推荐的雅加达配置。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:443
+msgid "Recommended attachment lifecycle and 30 backup restore points were applied."
+msgstr "已应用推荐的附件生命周期和 30 个备份恢复点。"
+
+#. Description of the 'Move Attachments to Archive After (Days)' (Int) field in
+#. DocType 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Recommended for business documents that are rarely opened after three months. 0 disables Archive."
+msgstr "适用于三个月后极少调阅的业务单据；0 表示禁用 Archive。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:294
+msgid "Recovery point objective"
+msgstr "恢复点目标"
+
+#. Label of the reference_doctype (Link) field in DocType 'Object Storage
+#. Retention Rule'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+msgid "Reference DocType"
+msgstr ""
+
+#. Label of the reference_field (Data) field in DocType 'Object Storage
+#. Retention Rule'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+msgid "Reference Field"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.js:7
+msgid "Refresh Now"
+msgstr "立即刷新"
+
+#. Label of the region (Data) field in DocType 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Region"
+msgstr "地域"
+
+#. Label of the location_section (Section Break) field in DocType 'Object
+#. Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Region and Endpoint"
+msgstr "地域与 Endpoint"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:245
+msgid "Remain Standard"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:246
+msgid "Remain online"
+msgstr ""
+
+#: erpnext_s3_integration/public/js/object_storage.js:40
+msgid "Request Restore"
+msgstr "申请恢复"
+
+#. Option for the 'Status' (Select) field in DocType 'Object Restore Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Requested"
+msgstr ""
+
+#. Label of the requested_at (Datetime) field in DocType 'Object Restore
+#. Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Requested At"
+msgstr ""
+
+#. Label of the requested_by (Link) field in DocType 'Object Restore Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Requested By"
+msgstr ""
+
+#. Description of the 'Proxy Downloads Through Frappe' (Check) field in DocType
+#. 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Required security invariant. Provider URLs are never exposed to browsers."
+msgstr ""
+
+#. Label of the restore_check_interval_minutes (Int) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Restore Check Interval (Minutes)"
+msgstr "恢复状态检查间隔（分钟）"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:156
+msgid "Restore Check Interval must be 15 minutes or a multiple of 15 minutes."
+msgstr ""
+
+#. Label of the restore_days (Int) field in DocType 'Object Restore Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Restore Days"
+msgstr ""
+
+#. Label of the restore_drill_completed (Check) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Restore Drill Completed"
+msgstr "已完成恢复演练"
+
+#. Label of the restore_help (HTML) field in DocType 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Restore Help"
+msgstr "恢复说明"
+
+#. Label of the restore_retry_limit (Int) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Restore Retry Limit"
+msgstr "恢复重试上限"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:160
+msgid "Restore Retry Limit must be at least 1."
+msgstr ""
+
+#. Label of the restore_settings_reviewed (Check) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Restore Settings Reviewed"
+msgstr "已复核恢复设置"
+
+#. Label of the restore_tier (Data) field in DocType 'Object Restore Request'
+#. Label of the restore_tier (Select) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Restore Tier"
+msgstr "恢复速度等级"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.py:108
+msgid "Restore request object and provider fields cannot be changed."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/restore.py:133
+msgid "Restore request {0} changed to {1}."
+msgstr ""
+
+#. Label of the restore_days (Int) field in DocType 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Restored Copy Availability (Days)"
+msgstr "恢复副本可用天数"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:158
+msgid "Restored Copy Availability must be at least 1 day."
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Object Restore Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Restoring"
+msgstr ""
+
+#: erpnext_s3_integration/public/js/object_storage.js:36
+msgid "Restoring creates a temporary readable copy and may incur provider request and retrieval charges."
+msgstr "恢复会生成临时可读副本，并可能产生云服务请求与数据取回费用。"
+
+#. Label of the retention_policy (Select) field in DocType 'Object Storage
+#. Retention Rule'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+msgid "Retention Policy"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:150
+msgid "Retention Rule row {0} Category must be a non-sensitive machine label."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:139
+msgid "Retention Rule row {0} Priority cannot be negative."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:121
+msgid "Retention Rule row {0} conflicts with another rule at the same priority."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:147
+msgid "Retention Rule row {0} has an invalid MIME Type."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:117
+msgid "Retention Rule row {0} is missing: {1}."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:142
+msgid "Retention Rule row {0} references a field that does not exist on {1}."
+msgstr ""
+
+#. Label of the retention_rules (Table) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Retention Rules"
+msgstr "保留规则"
+
+#. Label of the retention_rules_reviewed (Check) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Retention Rules Reviewed"
+msgstr "已复核保留规则"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.js:4
+msgid "Retry"
+msgstr ""
+
+#. Label of the retryable (Check) field in DocType 'S3 Sync Log'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/s3_sync_log/s3_sync_log.json
+msgid "Retryable"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:164
+msgid "Review restore permissions and settings before enabling archive restore."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/healthcheck.py:135
+msgid "Review the failed step and server error log, then retry."
+msgstr ""
+
+#. Label of the role (Link) field in DocType 'Object Storage Restore Role'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_restore_role/object_storage_restore_role.json
+msgid "Role"
+msgstr ""
+
+#. Label of the rule_name (Data) field in DocType 'Object Storage Retention
+#. Rule'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+msgid "Rule Name"
+msgstr "规则名称"
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:225
+msgid "Rules without the business-archive tag may affect online attachments: {0}"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:8
+msgid "Run Full Read/Write Test"
+msgstr "运行完整读写测试"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:54
+msgid "Run Health Check"
+msgstr "运行健康检查"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.py:79
+msgid "Run and pass the Full Read/Write Test after the latest configuration change."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:409
+msgid "Run the Full Read/Write Test."
+msgstr "请运行完整读写测试。"
+
+#: erpnext_s3_integration/backup_hooks.py:287
+msgid "Run the first database backup to collect capacity data."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:105
+msgid "Running credential, upload, download, tag, and delete tests..."
+msgstr "正在测试凭证、上传、下载、标签和删除……"
+
+#. Label of the s3_key (Data) field in DocType 'S3 Sync Log'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/s3_sync_log/s3_sync_log.json
+msgid "S3 Key"
+msgstr ""
+
+#. Name of a DocType
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/s3_sync_log/s3_sync_log.json
+msgid "S3 Sync Log"
+msgstr ""
+
+#. Label of the safety_section (Section Break) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Safety Confirmation"
+msgstr "安全确认"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:136
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:190
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:274
+#: erpnext_s3_integration/object_storage/setup_assistant.py:106
+msgid "Save and Check"
+msgstr "保存并检查"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:271
+msgid "Schedule: daily at 02:00 · Keep 30 successful daily restore points"
+msgstr "执行时间：每天 02:00 · 保留 30 个成功每日恢复点"
+
+#. Label of the scope (Select) field in DocType 'Object Storage Retention Rule'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+msgid "Scope"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.py:153
+msgid "Select a valid Environment before applying Jakarta settings."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:39
+msgid "Select an Object Storage Profile before enabling {0}."
+msgstr ""
+
+#. Description of the 'Attachment Storage Profile' (Link) field in DocType
+#. 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Select an enabled Attachments profile whose current configuration passed the Full Read/Write Test."
+msgstr ""
+
+#. Description of the 'Backup Storage Profile' (Link) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Select an enabled Backups profile whose current configuration passed the Full Read/Write Test."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:175
+msgid "Self-service attachment restore is enabled."
+msgstr "附件自助恢复已启用。"
+
+#. Label of the server_side_encryption (Select) field in DocType 'Object
+#. Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Server-side Encryption"
+msgstr "服务端加密"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:127
+msgid "Set Up Attachment Storage"
+msgstr "配置附件存储"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:127
+msgid "Set Up Database Backups"
+msgstr "配置数据库备份"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:412
+msgid "Settings changed after the last Full Test."
+msgstr "完整测试通过后配置又发生了变化。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:12
+msgid "Setup"
+msgstr ""
+
+#. Label of the setup_tab (Tab Break) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Setup Assistant"
+msgstr "配置助手"
+
+#. Label of the setup_progress_html (HTML) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Setup Progress"
+msgstr "配置进度"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:455
+msgid "Shared Object Policy"
+msgstr "共享对象策略"
+
+#. Label of the source_path (Data) field in DocType 'S3 Sync Log'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/s3_sync_log/s3_sync_log.json
+msgid "Source Path"
+msgstr ""
+
+#. Option for the 'Environment' (Select) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Staging"
+msgstr "预发布"
+
+#. Option for the 'Restore Tier' (Select) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Standard"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:244
+msgid "Standard ZRS"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:190
+msgid "Start Attachment Setup"
+msgstr "开始附件配置"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:274
+msgid "Start Backup Setup"
+msgstr "开始备份配置"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:79
+#: erpnext_s3_integration/object_storage/setup_assistant.py:45
+msgid "Start Setup"
+msgstr "开始配置"
+
+#. Label of the status (Select) field in DocType 'Object Restore Request'
+#. Label of the status (Select) field in DocType 'S3 Sync Log'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/s3_sync_log/s3_sync_log.json
+msgid "Status"
+msgstr ""
+
+#. Label of the storage_class (Data) field in DocType 'Object Restore Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+#: erpnext_s3_integration/public/js/object_storage.js:34
+msgid "Storage Class"
+msgstr "存储类型"
+
+#. Label of the submitted_at (Datetime) field in DocType 'Object Restore
+#. Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Submitted At"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'S3 Sync Log'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/s3_sync_log/s3_sync_log.json
+msgid "Success"
+msgstr ""
+
+#. Label of the backup_retention_days (Int) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Successful Daily Restore Points to Keep"
+msgstr "保留的成功每日恢复点数量"
+
+#. Description of the 'Move Attachments to IA After (Days)' (Int) field in
+#. DocType 'Object Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Suggested transition for retention=business-archive objects."
+msgstr ""
+
+#. Description of the 'MIME Type' (Data) field in DocType 'Object Storage
+#. Retention Rule'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+msgid "Supports exact values and wildcards such as image/*."
+msgstr ""
+
+#. Name of a role
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/s3_sync_log/s3_sync_log.json
+msgid "System Manager"
+msgstr ""
+
+#. Label of the system_notifications (Check) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "System Notifications"
+msgstr "系统通知"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:354
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:380
+msgid "Technical Details"
+msgstr "技术详情"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:8
+msgid "Test"
+msgstr "测试"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile_list.js:6
+msgid "Test Failed"
+msgstr "测试失败"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile_list.js:7
+msgid "Test Required"
+msgstr "需要测试"
+
+#: erpnext_s3_integration/object_storage/healthcheck.py:88
+msgid "Test stopped"
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:69
+msgid "The Backup Bucket is ready. Create the first database restore point."
+msgstr "备份 Bucket 已就绪，请创建第一个数据库恢复点。"
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:316
+msgid "The OSS endpoint could not be reached. Check the endpoint and server network."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:312
+msgid "The app cannot check bucket security. Add oss:GetBucketInfo to the generated RAM policy."
+msgstr "应用无法检查 Bucket 安全设置；请把 oss:GetBucketInfo 加入生成的 RAM 策略。"
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:195
+msgid "The app cannot read lifecycle rules. Add oss:GetBucketLifecycle and check again."
+msgstr "应用无法读取生命周期规则；请加入 oss:GetBucketLifecycle 后重新检查。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:412
+msgid "The app only reads this rule. It never changes OSS lifecycle settings."
+msgstr "应用只读取此规则，绝不会修改 OSS 生命周期设置。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.py:60
+msgid "The attachment object no longer exists."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:437
+msgid "The backup did not complete. Open S3 Sync Log for details."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:329
+msgid "The bucket configuration could not be checked ({0})."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:380
+msgid "The bucket security and recommended lifecycle rule are ready."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:315
+msgid "The bucket was not found. Check its name, Jakarta region, and endpoint."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:347
+msgid "The check did not pass."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:209
+msgid "The configured attachment lifecycle rule is ready: {0}."
+msgstr "已配置的附件生命周期规则已就绪：{0}。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:350
+msgid "The existing storage feature remains enabled. Update the read-only RAM permission, then check again."
+msgstr "现有存储功能保持启用；请更新只读 RAM 权限后重新检查。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:420
+msgid "The last Full Test failed. Run it again."
+msgstr ""
+
+#: erpnext_s3_integration/backup_hooks.py:348
+msgid "The latest database backup is at least 10 GB. Monitor growth."
+msgstr ""
+
+#: erpnext_s3_integration/backup_hooks.py:342
+msgid "The latest database backup is at least 25 GB. Review the backup architecture."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:84
+msgid "The profile passed its checks but the feature is disabled."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/healthcheck.py:131
+msgid "The provider returned a temporary error. Retry after checking OSS service health."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:134
+msgid "The role must be attached to the Jakarta ECS instance. Docker obtains temporary credentials from ECS metadata."
+msgstr "该角色必须绑定到雅加达 ECS 实例；Docker 会从 ECS 实例元数据获取临时凭证。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.py:52
+msgid "This File is not stored in configured object storage."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.py:64
+msgid "This attachment is currently available and does not need a restore request."
+msgstr ""
+
+#: erpnext_s3_integration/api.py:148
+msgid "This object is archived. Create or check an Object Restore Request before downloading it."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.py:194
+msgid "This restore request has reached the retry limit."
+msgstr ""
+
+#. Label of the timing_section (Section Break) field in DocType 'Object Restore
+#. Request'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.json
+msgid "Timing"
+msgstr ""
+
+#. Description of the 'classification_warning' (HTML) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Unclassified objects stay online until you review their policy."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:136
+#: erpnext_s3_integration/object_storage/bucket_setup.py:144
+msgid "Unknown"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.py:86
+msgid "Unlink this profile from Object Storage Settings before changing Purpose."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:205
+msgid "Unmatched attachments"
+msgstr "无法识别的附件"
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:218
+msgid "Unnamed rule"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:294
+msgid "Up to approximately 24 hours"
+msgstr "最多可能丢失约 24 小时数据"
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:60
+msgid "Update RAM Policy"
+msgstr "更新 RAM 策略"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:394
+msgid "Updated least-privilege RAM Policy copied."
+msgstr "更新后的最小权限 RAM 策略已复制。"
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:76
+msgid "Upload, download, Range, and permission checks passed."
+msgstr "上传、下载、Range 和权限检查已通过。"
+
+#: erpnext_s3_integration/backup_hooks.py:123
+msgid "Uploaded backup {0}."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:191
+msgid "Uploads, downloads, Range, security, and current permissions are checked together."
+msgstr "系统会一次检查上传、下载、Range、安全设置和当前权限。"
+
+#. Label of the use_internal_endpoint (Check) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Use Internal Endpoint"
+msgstr "使用内网 Endpoint"
+
+#. Label of the lifecycle_reviewed (Check) field in DocType 'Object Storage
+#. Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "Use Optional OSS Backup Lifecycle"
+msgstr "使用可选 OSS 备份生命周期"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:47
+msgid "Use Save, Test and Enable to fix the sequence automatically."
+msgstr "请使用“保存、测试并启用”，系统会自动按正确顺序处理。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:12
+msgid "Use This Profile in Settings"
+msgstr "在设置中使用此配置档"
+
+#. Description of the 'Category' (Data) field in DocType 'Object Storage
+#. Retention Rule'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+msgid "Use a non-sensitive machine label only; never enter customer names, IDs, or business content."
+msgstr ""
+
+#. Description of the 'File Extension' (Data) field in DocType 'Object Storage
+#. Retention Rule'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+msgid "Use a value such as pdf or .pdf."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:76
+msgid "Use an ECS Instance RAM Role and the Jakarta internal endpoint. No AccessKey is stored."
+msgstr "使用 ECS 实例 RAM 角色和雅加达内网 Endpoint，不保存 AccessKey。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.py:59
+msgid "Use an ECS Instance RAM Role or Default Credential Chain in production."
+msgstr "生产环境请使用 ECS 实例 RAM 角色或默认凭证链。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.js:77
+msgid "Use the Jakarta public endpoint. AccessKey is allowed only for isolated Development or Staging tests and public traffic charges may apply."
+msgstr "使用雅加达公网 Endpoint。AccessKey 仅允许用于隔离的开发或预发布测试，并可能产生公网流量费用。"
+
+#: erpnext_s3_integration/api.py:168 erpnext_s3_integration/api.py:169
+msgid "Usually hours; Alibaba Cloud restore time and charges apply."
+msgstr ""
+
+#: erpnext_s3_integration/api.py:170
+msgid "Usually hours; actual time and charges depend on the provider."
+msgstr ""
+
+#: erpnext_s3_integration/api.py:167
+msgid "Usually minutes to hours; actual time and charges depend on the provider."
+msgstr ""
+
+#: erpnext_s3_integration/api.py:166
+msgid "Usually minutes; actual time and charges depend on the selected restore tier."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:59
+msgid "Verify the bucket security settings in the provider console."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:130
+msgid "Verify the tag-filtered lifecycle rule in the provider console."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/setup_assistant.py:131
+#: erpnext_s3_integration/object_storage/setup_assistant.py:182
+msgid "View"
+msgstr "视图"
+
+#. Option for the 'Addressing Style' (Select) field in DocType 'Object Storage
+#. Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Virtual"
+msgstr ""
+
+#. Option for the 'Last Full Test Status' (Select) field in DocType 'Object
+#. Storage Profile'
+#. Option for the 'Last Bucket Verification Status' (Select) field in DocType
+#. 'Object Storage Profile'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_profile/object_storage_profile.json
+msgid "Warning"
+msgstr "警告"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:304
+msgid "When a user opens an archived attachment, Frappe shows a Restore button instead of a download error. The request is permission-checked, polled every 15 minutes, and the user is notified when the temporary readable copy is ready."
+msgstr "用户打开归档附件时，Frappe 会显示恢复按钮而不是下载错误；系统检查权限、每 15 分钟轮询，并在临时可读副本就绪时通知用户。"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.py:45
+msgid "You do not have a role allowed to request archive restores."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_restore_request/object_restore_request.py:50
+msgid "You do not have permission to read this File."
+msgstr ""
+
+#: erpnext_s3_integration/object_storage/bucket_setup.py:169
+msgid "Zone-redundant storage"
+msgstr "同城冗余存储"
+
+#. Option for the 'Retention Policy' (Select) field in DocType 'Object Storage
+#. Retention Rule'
+#. Option for the 'Default Retention Policy' (Select) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "business-archive"
+msgstr ""
+
+#. Option for the 'Retention Policy' (Select) field in DocType 'Object Storage
+#. Retention Rule'
+#. Option for the 'Default Retention Policy' (Select) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "business-online"
+msgstr ""
+
+#. Option for the 'Retention Policy' (Select) field in DocType 'Object Storage
+#. Retention Rule'
+#. Option for the 'Default Retention Policy' (Select) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "permanent-hot"
+msgstr ""
+
+#. Option for the 'Retention Policy' (Select) field in DocType 'Object Storage
+#. Retention Rule'
+#. Option for the 'Default Retention Policy' (Select) field in DocType 'Object
+#. Storage Settings'
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_retention_rule/object_storage_retention_rule.json
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.json
+msgid "unclassified"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:430
+msgid "{0} failed."
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:430
+msgid "{0} failed: {1}"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js:59
+msgid "{0} items available, {1} item(s) need attention"
+msgstr "{0} 项可用，{1} 项需要处理"
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:218
+msgid "{0} runtime settings changed ({1}). Run the Full Read/Write Test again."
+msgstr ""
+

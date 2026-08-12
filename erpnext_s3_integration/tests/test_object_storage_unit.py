@@ -221,6 +221,64 @@ class TestRamPolicy(UnitTestCase):
 		self.assertEqual(bucket_actions, ["oss:GetBucketInfo", "oss:GetBucketLifecycle"])
 
 
+class TestSetupDefaults(UnitTestCase):
+	def test_historical_defaults_migrate_to_30_90_without_deletion(self):
+		from erpnext_s3_integration.setup import _recommended_attachment_lifecycle_update
+
+		for current in ((30, 365, 0, 0), (30, 90, 365, 0)):
+			with self.subTest(current=current):
+				self.assertEqual(
+					_recommended_attachment_lifecycle_update(current),
+					{
+						"attachment_lifecycle_ia_days": 30,
+						"attachment_lifecycle_archive_days": 90,
+						"attachment_lifecycle_cold_archive_days": 0,
+						"attachment_lifecycle_delete_days": 0,
+						"attachment_lifecycle_reviewed": 0,
+					},
+				)
+
+	def test_custom_180_day_lifecycle_is_not_overwritten(self):
+		from erpnext_s3_integration.setup import _recommended_attachment_lifecycle_update
+
+		self.assertIsNone(_recommended_attachment_lifecycle_update((30, 180, 0, 0)))
+
+
+class TestSetupAssistantLifecycle(UnitTestCase):
+	@patch("erpnext_s3_integration.object_storage.setup_assistant._profile")
+	def test_attention_message_uses_configured_archive_days(self, get_profile):
+		from erpnext_s3_integration.object_storage.bucket_setup import (
+			bucket_verification_fingerprint,
+		)
+		from erpnext_s3_integration.object_storage.setup_assistant import _attachment_archive
+
+		profile = frappe._dict(
+			name="Attachments",
+			provider="Alibaba Cloud OSS",
+			purpose="Attachments",
+			environment="Production",
+			region="ap-southeast-5",
+			endpoint_url="https://oss-ap-southeast-5-internal.aliyuncs.com",
+			bucket="attachments",
+			prefix="",
+		)
+		profile.last_bucket_verification_fingerprint = bucket_verification_fingerprint(profile)
+		get_profile.return_value = profile
+		for archive_days in (90, 180):
+			with self.subTest(archive_days=archive_days):
+				settings = frappe._dict(
+					enable_attachment_storage=1,
+					attachment_storage_profile=profile.name,
+					attachment_lifecycle_reviewed=0,
+					attachment_lifecycle_ia_days=30,
+					attachment_lifecycle_archive_days=archive_days,
+					attachment_lifecycle_cold_archive_days=0,
+					attachment_lifecycle_delete_days=0,
+				)
+				feature = _attachment_archive(settings)
+				self.assertIn(f"{archive_days}d Archive", feature["summary"])
+
+
 class TestBucketSetup(UnitTestCase):
 	@patch("erpnext_s3_integration.object_storage.bucket_setup.AlibabaOSSBackend")
 	def test_production_bucket_requires_zrs_but_missing_lifecycle_is_only_a_warning(self, backend_class):
@@ -250,7 +308,7 @@ class TestBucketSetup(UnitTestCase):
 		)
 		settings = frappe._dict(
 			attachment_lifecycle_ia_days=30,
-			attachment_lifecycle_archive_days=365,
+			attachment_lifecycle_archive_days=90,
 			attachment_lifecycle_cold_archive_days=0,
 			attachment_lifecycle_delete_days=0,
 		)
@@ -273,7 +331,7 @@ class TestBucketSetup(UnitTestCase):
 		profile = frappe._dict(region="ap-southeast-5", bucket="attachments", prefix="")
 		settings = frappe._dict(
 			attachment_lifecycle_ia_days=30,
-			attachment_lifecycle_archive_days=365,
+			attachment_lifecycle_archive_days=90,
 			attachment_lifecycle_cold_archive_days=0,
 			attachment_lifecycle_delete_days=0,
 		)
@@ -284,10 +342,24 @@ class TestBucketSetup(UnitTestCase):
 			plan["transitions"],
 			[
 				{"days": 30, "storage_class": "IA"},
-				{"days": 365, "storage_class": "Archive"},
+				{"days": 90, "storage_class": "Archive"},
 			],
 		)
+		self.assertEqual(plan["summary"], "30d IA → 90d Archive → Never delete")
 		self.assertIsNone(plan["expiration_days"])
+
+	def test_custom_180_day_lifecycle_is_reflected_in_dynamic_summary(self):
+		from erpnext_s3_integration.object_storage.bucket_setup import build_bucket_setup_plan
+
+		profile = frappe._dict(region="ap-southeast-5", bucket="attachments", prefix="")
+		settings = frappe._dict(
+			attachment_lifecycle_ia_days=30,
+			attachment_lifecycle_archive_days=180,
+			attachment_lifecycle_cold_archive_days=0,
+			attachment_lifecycle_delete_days=0,
+		)
+		plan = build_bucket_setup_plan(profile, settings)
+		self.assertEqual(plan["summary"], "30d IA → 180d Archive → Never delete")
 
 	def test_bucket_security_fingerprint_does_not_expire_when_lifecycle_days_change(self):
 		from erpnext_s3_integration.object_storage.bucket_setup import bucket_verification_fingerprint
@@ -319,14 +391,14 @@ class TestBucketSetup(UnitTestCase):
 			tags=[oss.Tag(key="retention", value="business-archive")],
 			transitions=[
 				oss.LifecycleRuleTransition(days=30, storage_class=oss.StorageClassType.IA),
-				oss.LifecycleRuleTransition(days=365, storage_class=oss.StorageClassType.ARCHIVE),
+				oss.LifecycleRuleTransition(days=90, storage_class=oss.StorageClassType.ARCHIVE),
 			],
 		)
 		plan = {
 			"prefix": "attachments/",
 			"transitions": [
 				{"days": 30, "storage_class": "IA"},
-				{"days": 365, "storage_class": "Archive"},
+				{"days": 90, "storage_class": "Archive"},
 			],
 			"expiration_days": None,
 		}

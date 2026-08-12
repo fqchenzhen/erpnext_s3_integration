@@ -45,7 +45,7 @@
   {"fieldname":"attachment_lifecycle_actions_html","fieldtype":"HTML","label":"Attachment Lifecycle Actions"},
   {"fieldname":"attachment_lifecycle_settings_section","fieldtype":"Section Break","label":"Custom Attachment Lifecycle","collapsible":1,"collapsed":1},
   {"default":"30","description":"Suggested transition for retention=business-archive objects.","fieldname":"attachment_lifecycle_ia_days","fieldtype":"Int","label":"Move Attachments to IA After (Days)"},
-  {"default":"365","description":"Suggested transition for retention=business-archive objects. 0 disables Archive.","fieldname":"attachment_lifecycle_archive_days","fieldtype":"Int","label":"Move Attachments to Archive After (Days)"},
+  {"default":"90","description":"Recommended for business documents that are rarely opened after three months. 0 disables Archive.","fieldname":"attachment_lifecycle_archive_days","fieldtype":"Int","label":"Move Attachments to Archive After (Days)"},
   {"default":"0","description":"0 disables Cold Archive.","fieldname":"attachment_lifecycle_cold_archive_days","fieldtype":"Int","label":"Move Attachments to Cold Archive After (Days)"},
   {"default":"0","description":"0 means attachments are never deleted automatically.","fieldname":"attachment_lifecycle_delete_days","fieldtype":"Int","label":"Delete Attachments After (Days)"},
   {"default":"0","fieldname":"attachment_lifecycle_reviewed","fieldtype":"Check","hidden":1,"label":"Attachment Lifecycle Rule Verified","read_only":1},

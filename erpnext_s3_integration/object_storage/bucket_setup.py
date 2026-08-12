@@ -206,9 +206,11 @@ def _lifecycle_checks(backend, profile, settings) -> list[dict]:
 			"LIFECYCLE",
 			_("Attachment archive rule"),
 			"Passed" if exact else "Warning",
-			_("The recommended 30-day IA and 365-day Archive rule is configured.")
+			_("The configured attachment lifecycle rule is ready: {0}.").format(plan["summary"])
 			if exact
-			else _("Create the recommended tag-filtered lifecycle rule."),
+			else _("Create the configured tag-filtered lifecycle rule: {0}.").format(
+				plan["summary"]
+			),
 			plan["summary"],
 			_exact_rule_summary(exact) if exact else None,
 		)

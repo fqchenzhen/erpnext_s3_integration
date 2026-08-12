@@ -1,6 +1,18 @@
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
+ATTACHMENT_LIFECYCLE_FIELDS = (
+	"attachment_lifecycle_ia_days",
+	"attachment_lifecycle_archive_days",
+	"attachment_lifecycle_cold_archive_days",
+	"attachment_lifecycle_delete_days",
+)
+RECOMMENDED_ATTACHMENT_LIFECYCLE = (30, 90, 0, 0)
+HISTORICAL_DEFAULT_ATTACHMENT_LIFECYCLES = {
+	(30, 90, 365, 0),
+	(30, 365, 0, 0),
+}
+
 
 def after_migrate() -> None:
 	_create_roles()
@@ -19,28 +31,27 @@ def _enforce_security_defaults() -> None:
 
 
 def _migrate_recommended_retention_defaults() -> None:
-	legacy = tuple(
+	current = tuple(
 		int(frappe.db.get_single_value("Object Storage Settings", fieldname) or 0)
-		for fieldname in (
-			"attachment_lifecycle_ia_days",
-			"attachment_lifecycle_archive_days",
-			"attachment_lifecycle_cold_archive_days",
-			"attachment_lifecycle_delete_days",
-		)
+		for fieldname in ATTACHMENT_LIFECYCLE_FIELDS
 	)
-	if legacy != (30, 90, 365, 0):
+	update = _recommended_attachment_lifecycle_update(current)
+	if not update:
 		return
 	frappe.db.set_single_value(
 		"Object Storage Settings",
-		{
-			"attachment_lifecycle_ia_days": 30,
-			"attachment_lifecycle_archive_days": 365,
-			"attachment_lifecycle_cold_archive_days": 0,
-			"attachment_lifecycle_delete_days": 0,
-			"attachment_lifecycle_reviewed": 0,
-		},
+		update,
 		update_modified=False,
 	)
+
+
+def _recommended_attachment_lifecycle_update(current: tuple[int, ...]) -> dict | None:
+	if current not in HISTORICAL_DEFAULT_ATTACHMENT_LIFECYCLES:
+		return None
+	return {
+		**dict(zip(ATTACHMENT_LIFECYCLE_FIELDS, RECOMMENDED_ATTACHMENT_LIFECYCLE, strict=True)),
+		"attachment_lifecycle_reviewed": 0,
+	}
 
 
 def _create_roles() -> None:

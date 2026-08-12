@@ -71,6 +71,7 @@ class IntegrationTestObjectStorageSettings(IntegrationTestCase):
 		self.assertFalse(meta.has_field("attachment_bucket"))
 		self.assertFalse(meta.has_field("backup_bucket"))
 		self.assertEqual(meta.get_field("backup_retention_days").default, "30")
+		self.assertEqual(meta.get_field("attachment_lifecycle_archive_days").default, "90")
 		self.assertEqual(meta.get_field("upload_database_backup").default, "1")
 
 	def test_classification_and_lifecycle_are_sections_inside_attachments(self):

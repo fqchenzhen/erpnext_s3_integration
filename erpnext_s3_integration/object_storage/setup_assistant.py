@@ -6,7 +6,10 @@ from frappe import _
 from erpnext_s3_integration.erpnext_s3_integration.doctype.object_storage_settings.object_storage_settings import (
 	_profile_blockers,
 )
-from erpnext_s3_integration.object_storage.bucket_setup import bucket_verification_fingerprint
+from erpnext_s3_integration.object_storage.bucket_setup import (
+	bucket_verification_fingerprint,
+	build_bucket_setup_plan,
+)
 
 
 def build_setup_assistant(settings) -> dict:
@@ -135,6 +138,7 @@ def _attachment_archive(settings) -> dict:
 	checks = _verification_checks(profile) if current else []
 	lifecycle = next((item for item in checks if item.get("code") == "LIFECYCLE"), None)
 	dangerous = next((item for item in checks if item.get("code") == "LIFECYCLE_SCOPE"), None)
+	configured_summary = build_bucket_setup_plan(profile, settings)["summary"]
 	if (
 		settings.attachment_lifecycle_reviewed
 		and lifecycle
@@ -145,7 +149,7 @@ def _attachment_archive(settings) -> dict:
 			"attachment_archive",
 			_("Attachment Archive"),
 			"Available",
-			_("Business archives move to IA after 30 days and Archive after 365 days."),
+			_("Business archives use the configured lifecycle: {0}.").format(configured_summary),
 			{"type": "verify_bucket", "profile_name": profile.name, "label": _("Check Again")},
 			profile,
 		)
@@ -154,7 +158,9 @@ def _attachment_archive(settings) -> dict:
 		_("Attachment Archive"),
 		"Needs Attention",
 		(lifecycle or dangerous or {}).get("summary")
-		or _("Create the 30-day IA and 365-day Archive lifecycle rule."),
+		or _("Create the configured tag-filtered lifecycle rule: {0}.").format(
+			configured_summary
+		),
 		{"type": "bucket_setup", "profile_name": profile.name, "label": _("Configure")},
 		profile,
 	)

@@ -24,10 +24,10 @@ frappe.ui.form.on("Object Storage Settings", {
 	enable_backup_storage(frm) {
 		render_backup_status(frm);
 	},
-	attachment_lifecycle_ia_days: render_attachment_lifecycle,
-	attachment_lifecycle_archive_days: render_attachment_lifecycle,
-	attachment_lifecycle_cold_archive_days: render_attachment_lifecycle,
-	attachment_lifecycle_delete_days: render_attachment_lifecycle,
+	attachment_lifecycle_ia_days: render_attachment_policy,
+	attachment_lifecycle_archive_days: render_attachment_policy,
+	attachment_lifecycle_cold_archive_days: render_attachment_policy,
+	attachment_lifecycle_delete_days: render_attachment_policy,
 });
 
 function render_more_menu(frm) {
@@ -193,6 +193,7 @@ function render_attachment_action(frm) {
 }
 
 function render_classification(frm) {
+	const lifecycle = attachment_lifecycle_summary(frm.doc);
 	frm.get_field("classification_help").$wrapper.html(`
 		<div class="object-storage-subsection">
 			<div class="object-storage-heading">${escape_html(__("Attachment Classification"))}</div>
@@ -200,7 +201,7 @@ function render_classification(frm) {
 			<table class="table table-bordered table-sm object-storage-policy-table"><tbody>
 				<tr><td>${escape_html(__("Item main images, logos, and avatars"))}</td><td>${escape_html(__("Always Standard"))}</td></tr>
 				<tr><td>${escape_html(__("Item and BOM technical documents"))}</td><td>${escape_html(__("Keep online"))}</td></tr>
-				<tr><td>${escape_html(__("Orders, invoices, receipts, Stock Entries, and quality attachments"))}</td><td>${escape_html(__("IA after 30 days; Archive after 365 days"))}</td></tr>
+				<tr><td>${escape_html(__("Orders, invoices, receipts, Stock Entries, and quality attachments"))}</td><td>${escape_html(lifecycle)}</td></tr>
 				<tr><td>${escape_html(__("Unmatched attachments"))}</td><td>${escape_html(__("Keep Standard"))}</td></tr>
 			</tbody></table>
 		</div>`);
@@ -213,6 +214,22 @@ function render_classification(frm) {
 	actions.find("[data-classification=preview]").on("click", preview_classification);
 	actions.find("[data-classification=recalculate]").on("click", recalculate_classification);
 	actions.find("[data-classification=edit]").on("click", () => expand_section(frm, "classification_rules_section"));
+}
+
+function render_attachment_policy(frm) {
+	render_classification(frm);
+	render_attachment_lifecycle(frm);
+}
+
+function attachment_lifecycle_summary(settings) {
+	const transitions = [];
+	const ia = Number(settings.attachment_lifecycle_ia_days || 0);
+	const archive = Number(settings.attachment_lifecycle_archive_days || 0);
+	const cold = Number(settings.attachment_lifecycle_cold_archive_days || 0);
+	if (ia) transitions.push(__("IA after {0} days", [ia]));
+	if (archive) transitions.push(__("Archive after {0} days", [archive]));
+	if (cold) transitions.push(__("Cold Archive after {0} days", [cold]));
+	return transitions.join("; ") || __("No archive transitions configured");
 }
 
 function render_attachment_lifecycle(frm) {
@@ -311,8 +328,12 @@ async function verify_and_enable(frm, purpose, profile_name) {
 function show_enable_success(purpose, result) {
 	const checks = result.bucket_verification?.checks || [];
 	const lifecycle = checks.find((item) => item.code === "LIFECYCLE");
+	const configured_summary = result.bucket_verification?.setup_plan?.summary;
+	const next_step = configured_summary
+		? __("Attachment upload and download are enabled. Next: create the configured lifecycle rule: {0}.", [configured_summary])
+		: __("Attachment upload and download are enabled. Next: review the configured lifecycle rule in Attachment Lifecycle settings.");
 	const remaining = lifecycle?.status !== "Passed" && purpose === "Attachments"
-		? `<div class="alert alert-warning">${escape_html(__("Attachment upload and download are enabled. Next: create the 30-day IA and 365-day Archive lifecycle rule."))}</div>` : "";
+		? `<div class="alert alert-warning">${escape_html(next_step)}</div>` : "";
 	frappe.msgprint({
 		title: purpose === "Attachments" ? __("Attachment Storage Is Ready") : __("Database Backup Storage Is Ready"),
 		message: `<ul><li>${escape_html(__("Jakarta OSS connection passed"))}</li><li>${escape_html(__("Bucket privacy and public-access protection passed"))}</li><li>${escape_html(__("Enabled object operations passed"))}</li></ul>${remaining}`,
@@ -419,7 +440,7 @@ async function run_backup_now(frm) {
 
 async function apply_recommended_plan(frm) {
 	await frappe.call({ method: settings_method("apply_recommended_storage_plan"), type: "POST", freeze: true, freeze_message: __("Applying recommended settings...") });
-	frappe.show_alert({ message: __("Recommended 30/365 attachment policy and 30 backup restore points were applied."), indicator: "green" });
+	frappe.show_alert({ message: __("Recommended attachment lifecycle and 30 backup restore points were applied."), indicator: "green" });
 	await frm.reload_doc();
 }
 

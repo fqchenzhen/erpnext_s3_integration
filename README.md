@@ -72,7 +72,7 @@ The detailed Chinese runbook is in [USER_GUIDE.md](USER_GUIDE.md).
 The safe default for unmatched attachments is `unclassified`. Built-in or administrator rules deterministically mark eligible transactional attachments as `business-archive`. Create this rule manually in the Attachment Bucket, filtered by the exact object tag `retention=business-archive`:
 
 - 30 days: IA
-- 365 days: Archive
+- 90 days: Archive
 - Cold Archive: disabled
 - Deletion: disabled by default (`0`)
 
