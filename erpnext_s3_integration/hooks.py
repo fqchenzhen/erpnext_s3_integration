@@ -26,6 +26,10 @@ extend_doctype_class = {"File": ["erpnext_s3_integration.overrides.s3_file.S3Fil
 
 doctype_js = {"File": "public/js/file.js"}
 
+override_whitelisted_methods = {
+	"erpnext.accounts.doctype.bank_statement_import.bank_statement_import.convert_mt940_to_csv": "erpnext_s3_integration.compatibility.bank_statement_import.convert_mt940_to_csv"
+}
+
 app_include_js = ["/assets/erpnext_s3_integration/js/object_storage.js"]
 app_include_css = ["/assets/erpnext_s3_integration/css/object_storage_settings.css"]
 

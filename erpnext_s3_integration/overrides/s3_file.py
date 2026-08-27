@@ -1,13 +1,18 @@
+import io
+import os
+import zipfile
+
 import frappe
 from frappe import _
 
 from erpnext_s3_integration.object_storage.service import ObjectStorageService
+from erpnext_s3_integration.object_urls import is_object_url
 
 
 class S3FileMixin:
 	@property
 	def is_remote_file(self):
-		if _is_object_url(self.file_url):
+		if is_object_url(self.file_url):
 			return True
 		return super().is_remote_file
 
@@ -28,7 +33,7 @@ class S3FileMixin:
 		)
 
 	def get_content(self, encodings=None) -> bytes | str:
-		if not _is_object_url(self.file_url):
+		if not is_object_url(self.file_url):
 			return super().get_content(encodings)
 		if self.get("content"):
 			self._content = self.content
@@ -59,20 +64,20 @@ class S3FileMixin:
 		return self._content
 
 	def get_full_path(self):
-		if _is_object_url(self.file_url):
+		if is_object_url(self.file_url):
 			return self.file_url
 		return super().get_full_path()
 
 	def validate_file_path(self):
-		if not _is_object_url(self.file_url):
+		if not is_object_url(self.file_url):
 			return super().validate_file_path()
 
 	def validate_file_url(self):
-		if not _is_object_url(self.file_url):
+		if not is_object_url(self.file_url):
 			return super().validate_file_url()
 
 	def exists_on_disk(self):
-		if not _is_object_url(self.file_url):
+		if not is_object_url(self.file_url):
 			return super().exists_on_disk()
 		if not self.object_storage_profile or not self.object_storage_key:
 			return False
@@ -82,12 +87,12 @@ class S3FileMixin:
 		)
 
 	def validate_file_on_disk(self):
-		if _is_object_url(self.file_url):
+		if is_object_url(self.file_url):
 			return True
 		return super().validate_file_on_disk()
 
 	def _delete_file_on_disk(self):
-		if not _is_object_url(self.file_url):
+		if not is_object_url(self.file_url):
 			return super()._delete_file_on_disk()
 		shared = frappe.db.exists(
 			"File",
@@ -100,17 +105,80 @@ class S3FileMixin:
 		self.delete_file_data_content(only_thumbnail=bool(shared))
 
 	def generate_content_hash(self):
-		if not _is_object_url(self.file_url):
+		if not is_object_url(self.file_url):
 			return super().generate_content_hash()
 
 	def handle_is_private_changed(self):
-		if _is_object_url(self.file_url):
+		if is_object_url(self.file_url):
 			frappe.throw(
 				_("Changing object storage visibility is not supported. Re-upload the File instead."),
 				exc=frappe.ValidationError,
 			)
 		return super().handle_is_private_changed()
 
+	def unzip(self):
+		if not is_object_url(self.file_url):
+			return super().unzip()
+		if not (self.file_name or "").lower().endswith(".zip"):
+			frappe.throw(_("{0} is not a zip file").format(self.file_name))
 
-def _is_object_url(file_url: str | None) -> bool:
-	return bool(file_url and file_url.startswith("/s3/"))
+		from frappe.core.api.file import get_max_extract_size
+
+		content = self.get_content(encodings=())
+		if isinstance(content, str):
+			content = content.encode()
+		max_extracted_size = get_max_extract_size()
+		files = []
+		total_extracted_size = 0
+
+		try:
+			archive = zipfile.ZipFile(io.BytesIO(content))
+		except zipfile.BadZipFile:
+			frappe.throw(_("{0} is a not a valid zip file").format(self.file_name))
+
+		with archive:
+			members = [
+				member
+				for member in archive.filelist
+				if not (member.is_dir() or member.filename.startswith("__MACOSX/"))
+				and not os.path.basename(member.filename).startswith(".")
+			]
+			declared_total_size = sum(member.file_size for member in members)
+			if declared_total_size > max_extracted_size:
+				frappe.throw(
+					_("Zip file extracts to more than the maximum allowed size of {0} MB").format(
+						max_extracted_size // 1048576
+					)
+				)
+
+			try:
+				for member in members:
+					file_doc = frappe.new_doc("File")
+					try:
+						member_content = archive.read(member.filename)
+					except zipfile.BadZipFile:
+						frappe.throw(_("{0} is a not a valid zip file").format(self.file_name))
+
+					total_extracted_size += len(member_content)
+					if total_extracted_size > max_extracted_size:
+						frappe.throw(
+							_("Zip file extracts to more than the maximum allowed size of {0} MB").format(
+								max_extracted_size // 1048576
+							)
+						)
+
+					file_doc.content = member_content
+					file_doc.file_name = os.path.basename(member.filename)
+					file_doc.folder = self.folder
+					file_doc.is_private = self.is_private
+					file_doc.attached_to_doctype = self.attached_to_doctype
+					file_doc.attached_to_name = self.attached_to_name
+					file_doc.save()
+					files.append(file_doc)
+			except Exception:
+				for file_doc in files:
+					frappe.delete_doc("File", file_doc.name, ignore_permissions=True, force=True)
+				raise
+
+		frappe.delete_doc("File", self.name)
+		return files

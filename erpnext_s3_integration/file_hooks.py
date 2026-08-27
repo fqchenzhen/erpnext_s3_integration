@@ -7,6 +7,12 @@ from frappe.core.doctype.file.utils import get_content_hash
 from frappe.utils import cint
 
 from erpnext_s3_integration.object_storage.service import ObjectStorageService
+from erpnext_s3_integration.object_urls import (
+	build_object_url,
+	is_object_url,
+	object_key_candidates,
+)
+from erpnext_s3_integration.storage_policy import StorageTarget, get_storage_target
 
 
 def attachment_storage_enabled() -> bool:
@@ -30,8 +36,8 @@ def _content(file_doc) -> bytes | None:
 	return content.encode() if isinstance(content, str) else content
 
 
-def _write_file_doc(file_doc):
-	if not attachment_storage_enabled():
+def _write_file_doc(file_doc, storage_target: StorageTarget):
+	if storage_target != StorageTarget.OBJECT_STORAGE or not attachment_storage_enabled():
 		return file_doc.save_file_on_filesystem()
 
 	settings = frappe.get_single("Object Storage Settings")
@@ -53,7 +59,7 @@ def _write_file_doc(file_doc):
 	file_doc.object_storage_profile = profile_name
 	file_doc.object_storage_key = key
 	_allow_storage_fields(file_doc)
-	file_doc.file_url = f"/s3/{key}"
+	file_doc.file_url = build_object_url(key, file_doc.file_name)
 	file_doc.content = None
 	return {
 		"file_name": file_doc.file_name,
@@ -65,10 +71,11 @@ def _write_file_doc(file_doc):
 
 def write_file_to_object_storage(file_or_name, content=None, content_type=None, is_private=0):
 	"""Store File content using the active attachment profile."""
+	storage_target = get_storage_target(file_or_name if getattr(file_or_name, "doctype", None) else None)
 	if getattr(file_or_name, "doctype", None) == "File":
-		return _write_file_doc(file_or_name)
+		return _write_file_doc(file_or_name, storage_target)
 
-	if not attachment_storage_enabled():
+	if storage_target != StorageTarget.OBJECT_STORAGE or not attachment_storage_enabled():
 		from frappe.utils.file_manager import save_file_on_filesystem
 
 		return save_file_on_filesystem(
@@ -96,14 +103,14 @@ def _write_legacy_file(file_name, content, content_type, is_private) -> dict:
 	_register_rollback_cleanup(profile_name, key)
 	return {
 		"file_name": file_name,
-		"file_url": f"/s3/{key}",
+		"file_url": build_object_url(key, file_name),
 		"object_storage_profile": profile_name,
 		"object_storage_key": key,
 	}
 
 
 def copy_object_reference(file_doc, method=None):
-	if not file_doc.file_url or not file_doc.file_url.startswith("/s3/"):
+	if not is_object_url(file_doc.file_url):
 		return
 	_allow_storage_fields(file_doc)
 	if file_doc.object_storage_key:
@@ -117,6 +124,19 @@ def copy_object_reference(file_doc, method=None):
 	if existing:
 		file_doc.object_storage_profile = existing.object_storage_profile
 		file_doc.object_storage_key = existing.object_storage_key
+		return
+	identifier = file_doc.file_url.removeprefix("/s3/")
+	for object_key in object_key_candidates(identifier):
+		existing = frappe.db.get_value(
+			"File",
+			{"object_storage_key": object_key},
+			["object_storage_profile", "object_storage_key"],
+			as_dict=True,
+		)
+		if existing:
+			file_doc.object_storage_profile = existing.object_storage_profile
+			file_doc.object_storage_key = existing.object_storage_key
+			return
 
 
 def _allow_storage_fields(file_doc) -> None:
@@ -134,7 +154,7 @@ def _register_rollback_cleanup(profile_name: str, key: str) -> None:
 
 def delete_file_data_content(file_doc, only_thumbnail=False):
 	"""Schedule object deletion only after the surrounding database transaction commits."""
-	if not file_doc.file_url or not file_doc.file_url.startswith("/s3/"):
+	if not is_object_url(file_doc.file_url):
 		return _delete_local(file_doc, only_thumbnail)
 	_delete_local_thumbnail(file_doc)
 	if only_thumbnail:

@@ -9,7 +9,7 @@ from botocore.exceptions import ClientError
 from frappe.tests import UnitTestCase
 from werkzeug.wsgi import FileWrapper
 
-from erpnext_s3_integration.api import parse_range_header
+from erpnext_s3_integration.api import _authorized_file, parse_range_header
 from erpnext_s3_integration.file_hooks import (
 	_delete_if_unreferenced,
 	generate_object_key,
@@ -64,6 +64,7 @@ class TestKeysAndRanges(UnitTestCase):
 		self.assertEqual(file_doc.file_name, "供应商合同.pdf")
 		self.assertNotIn("供应商合同", file_doc.object_storage_key)
 		self.assertEqual(result["object_storage_profile"], "Attachments")
+		self.assertTrue(result["file_url"].endswith("/供应商合同.pdf"))
 		service.put.assert_called_once()
 		metadata = service.put.call_args.kwargs["metadata"]
 		self.assertEqual(metadata, {"content-hash": file_doc.content_hash})
@@ -92,6 +93,7 @@ class TestKeysAndRanges(UnitTestCase):
 			"旧接口合同.pdf", b"legacy-content", content_type="application/pdf", is_private=1
 		)
 		self.assertTrue(result["file_url"].startswith("/s3/site-a/attachments/private/"))
+		self.assertTrue(result["file_url"].endswith("/旧接口合同.pdf"))
 		self.assertNotIn("旧接口合同", result["object_storage_key"])
 		service.put.assert_called_once()
 		register_cleanup.assert_called_once()
@@ -106,7 +108,7 @@ class TestKeysAndRanges(UnitTestCase):
 		find_file.return_value = frappe._dict(
 			file_name="合同.html",
 			name="FILE-1",
-			file_url="/s3/key",
+			file_url="/s3/key/合同.html",
 			object_storage_key="key",
 			object_storage_profile="Attachments",
 			is_private=1,
@@ -118,14 +120,39 @@ class TestKeysAndRanges(UnitTestCase):
 			ObjectInfo("key", 3, "text/html", etag="etag"),
 			"bytes 1-3/6",
 		)
-		frappe.local.form_dict = frappe._dict(key="key")
+		frappe.local.form_dict = frappe._dict(key="key/合同.html")
 		frappe.local.request = frappe._dict(environ={}, headers={"Range": "bytes=1-3"})
 		response = get_file()
 		self.assertEqual(response.status_code, 206)
 		self.assertEqual(response.headers["Content-Range"], "bytes 1-3/6")
 		self.assertIn("%E5%90%88%E5%90%8C.html", response.headers["Content-Disposition"])
 		self.assertEqual(response.headers["Content-Security-Policy"], "sandbox")
+		backend.head.assert_called_once_with("key")
+		backend.get.assert_called_once_with("key", (1, 3))
 		response.close()
+
+	@patch("erpnext_s3_integration.api.frappe.get_doc")
+	@patch("erpnext_s3_integration.api.frappe.get_all")
+	@patch("erpnext_s3_integration.api.find_file_by_url", return_value=None)
+	def test_legacy_url_resolves_authorized_shared_reference(self, _find_file, get_all, get_doc):
+		get_all.return_value = [{"name": "FILE-1"}]
+		file_doc = frappe._dict(name="FILE-1", object_storage_key="key")
+		file_doc.is_downloadable = MagicMock(return_value=True)
+		get_doc.return_value = file_doc
+
+		self.assertIs(_authorized_file("key"), file_doc)
+		get_all.assert_called_once_with("File", filters={"object_storage_key": "key"}, fields="*")
+
+	@patch("erpnext_s3_integration.api.frappe.get_doc")
+	@patch("erpnext_s3_integration.api.frappe.get_all", return_value=[{"name": "FILE-1"}])
+	@patch("erpnext_s3_integration.api.find_file_by_url", return_value=None)
+	def test_legacy_url_rejects_unauthorized_references(self, _find_file, _get_all, get_doc):
+		file_doc = frappe._dict(name="FILE-1", object_storage_key="key")
+		file_doc.is_downloadable = MagicMock(return_value=False)
+		get_doc.return_value = file_doc
+
+		with self.assertRaises(frappe.PermissionError):
+			_authorized_file("key")
 
 	@patch("erpnext_s3_integration.file_hooks.ObjectStorageService")
 	@patch("erpnext_s3_integration.file_hooks.frappe.db.exists", return_value=False)
@@ -133,6 +160,12 @@ class TestKeysAndRanges(UnitTestCase):
 		_delete_if_unreferenced("Attachments", "key")
 		service_class.assert_called_once_with("Attachments", require_enabled=False)
 		service_class.return_value.backend.delete.assert_called_once_with("key")
+
+	@patch("erpnext_s3_integration.file_hooks.ObjectStorageService")
+	@patch("erpnext_s3_integration.file_hooks.frappe.db.exists", return_value=True)
+	def test_shared_reference_prevents_provider_delete(self, _exists, service_class):
+		_delete_if_unreferenced("Attachments", "key")
+		service_class.assert_not_called()
 
 
 class TestClassification(UnitTestCase):

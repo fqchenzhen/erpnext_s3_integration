@@ -11,6 +11,7 @@ from werkzeug.wrappers import Response
 from werkzeug.wsgi import wrap_file
 
 from erpnext_s3_integration.object_storage.service import ObjectStorageService
+from erpnext_s3_integration.object_urls import object_key_candidates, object_url_from_identifier
 
 ARCHIVE_CLASSES = {"Archive", "ColdArchive", "DeepColdArchive", "GLACIER", "DEEP_ARCHIVE"}
 
@@ -22,9 +23,10 @@ def get_file():
 	if not key:
 		raise frappe.PageDoesNotExistError()
 	file_doc = _authorized_file(key)
+	object_key = file_doc.object_storage_key
 
 	service = ObjectStorageService(file_doc.object_storage_profile)
-	info = service.backend.head(key)
+	info = service.backend.head(object_key)
 	if not info:
 		raise frappe.DoesNotExistError()
 	if _restore_required(info.storage_class, info.restore_status):
@@ -40,7 +42,7 @@ def get_file():
 	if byte_range:
 		status = 206
 
-	stream = service.backend.get(key, byte_range)
+	stream = service.backend.get(object_key, byte_range)
 	response = Response(
 		wrap_file(frappe.request.environ, stream),
 		status=status,
@@ -54,7 +56,8 @@ def get_file():
 @frappe.whitelist(allow_guest=True, methods=["GET"])  # nosemgrep
 def get_file_status(key: str) -> dict:
 	file_doc = _authorized_file(key)
-	info = ObjectStorageService(file_doc.object_storage_profile).backend.head(key)
+	object_key = file_doc.object_storage_key
+	info = ObjectStorageService(file_doc.object_storage_profile).backend.head(object_key)
 	if not info:
 		raise frappe.DoesNotExistError()
 	restore_required = _restore_required(info.storage_class, info.restore_status)
@@ -64,7 +67,7 @@ def get_file_status(key: str) -> dict:
 			"Object Restore Request",
 			{
 				"object_storage_profile": file_doc.object_storage_profile,
-				"object_key": key,
+				"object_key": object_key,
 				"status": ["in", ["Requested", "Restoring", "Ready"]],
 			},
 			["name", "status", "requested_at", "last_checked_at", "expires_at"],
@@ -155,10 +158,17 @@ def _restore_required_response(file_doc) -> Response:
 
 
 def _authorized_file(key: str):
-	file_doc = find_file_by_url(f"/s3/{key}")
-	if not file_doc or file_doc.object_storage_key != key:
-		raise frappe.PermissionError()
-	return file_doc
+	file_doc = find_file_by_url(object_url_from_identifier(key))
+	if file_doc and file_doc.object_storage_key:
+		return file_doc
+
+	for object_key in object_key_candidates(key):
+		files = frappe.get_all("File", filters={"object_storage_key": object_key}, fields="*")
+		for file_data in files:
+			file_doc = frappe.get_doc(doctype="File", **file_data)
+			if file_doc.is_downloadable():
+				return file_doc
+	raise frappe.PermissionError()
 
 
 def _restore_estimate(storage_class: str | None) -> str:
