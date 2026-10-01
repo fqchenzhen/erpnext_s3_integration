@@ -66,12 +66,25 @@ def tag_shared_object(profile_name: str, object_key: str) -> None:
 
 
 def set_retention_override_audit(file_doc, method=None) -> None:
+	# A newly-created File with no explicit override is not a manual retention
+	# operation. This includes framework-generated files such as Prepared Report
+	# artifacts. Let the normal storage policy and auto-classification hooks run.
+	if file_doc.is_new() and not file_doc.get("retention_override"):
+		return
 	if not file_doc.has_value_changed("retention_override"):
 		return
-	settings = frappe.get_single("Object Storage Settings")
+
 	roles = set(frappe.get_roles())
-	if not {"System Manager", "Object Storage Manager"}.intersection(roles):
-		frappe.throw("Only an Object Storage Manager may change Retention Override.", frappe.PermissionError)
+	is_manager = frappe.session.user == "Administrator" or bool(
+		{"System Manager", "Object Storage Manager"}.intersection(roles)
+	)
+	if not is_manager:
+		frappe.throw(
+			"Only an Object Storage Manager or System Manager may change Retention Override.",
+			frappe.PermissionError,
+		)
+
+	settings = frappe.get_single("Object Storage Settings")
 	if file_doc.retention_override and not settings.allow_manual_retention_override:
 		frappe.throw("Manual Retention Override is disabled in Object Storage Settings.")
 	if file_doc.retention_override:
