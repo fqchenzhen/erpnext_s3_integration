@@ -61,6 +61,12 @@ class TestRetentionOverrideAudit(UnitTestCase):
 			with self.assertRaises(frappe.PermissionError):
 				classification.set_retention_override_audit(file_doc)
 
+	def test_changing_existing_override_still_requires_privileged_role(self):
+		file_doc = _FileStub(retention_override="business-online", is_new=False, changed=True)
+		with patch.object(classification.frappe, "get_roles", return_value=["Sales User"]):
+			with self.assertRaises(frappe.PermissionError):
+				classification.set_retention_override_audit(file_doc)
+
 	def test_storage_manager_can_set_explicit_override(self):
 		file_doc = _FileStub(retention_override="business-online", is_new=True, changed=True)
 		settings = frappe._dict(allow_manual_retention_override=1)
@@ -75,6 +81,31 @@ class TestRetentionOverrideAudit(UnitTestCase):
 			classification.set_retention_override_audit(file_doc)
 
 		self.assertEqual(file_doc.retention_override_by, frappe.session.user)
+		self.assertIsNotNone(file_doc.retention_override_at)
+
+	def test_system_manager_can_set_explicit_override(self):
+		file_doc = _FileStub(retention_override="business-online", is_new=True, changed=True)
+		settings = frappe._dict(allow_manual_retention_override=1)
+		with (
+			patch.object(classification.frappe, "get_roles", return_value=["System Manager"]),
+			patch.object(classification.frappe, "get_single", return_value=settings),
+		):
+			classification.set_retention_override_audit(file_doc)
+
+		self.assertEqual(file_doc.retention_override_by, frappe.session.user)
+		self.assertIsNotNone(file_doc.retention_override_at)
+
+	def test_administrator_can_set_explicit_override(self):
+		file_doc = _FileStub(retention_override="business-online", is_new=True, changed=True)
+		settings = frappe._dict(allow_manual_retention_override=1)
+		with (
+			patch.object(classification.frappe, "session", frappe._dict(user="Administrator")),
+			patch.object(classification.frappe, "get_roles", return_value=["Sales User"]),
+			patch.object(classification.frappe, "get_single", return_value=settings),
+		):
+			classification.set_retention_override_audit(file_doc)
+
+		self.assertEqual(file_doc.retention_override_by, "Administrator")
 		self.assertIsNotNone(file_doc.retention_override_at)
 
 	def test_manual_override_setting_is_still_enforced(self):
