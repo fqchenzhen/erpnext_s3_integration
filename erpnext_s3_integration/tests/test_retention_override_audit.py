@@ -26,6 +26,13 @@ class _FileStub:
 
 
 class TestRetentionOverrideAudit(UnitTestCase):
+	def setUp(self):
+		self.session_user = patch.object(
+			frappe, "session", frappe._dict(user="retention-audit-test@example.test")
+		)
+		self.session_user.start()
+		self.addCleanup(self.session_user.stop)
+
 	def test_new_file_without_override_does_not_require_storage_manager(self):
 		file_doc = _FileStub(retention_override=None, is_new=True, changed=True)
 		with (
