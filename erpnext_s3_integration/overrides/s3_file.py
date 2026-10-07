@@ -33,6 +33,8 @@ class S3FileMixin:
 		)
 
 	def get_content(self, encodings=None) -> bytes | str:
+		if self.is_folder:
+			frappe.throw(_("Cannot get file contents of a Folder"))
 		if not is_object_url(self.file_url):
 			return super().get_content(encodings)
 		if self.get("content"):
@@ -119,6 +121,7 @@ class S3FileMixin:
 	def unzip(self):
 		if not is_object_url(self.file_url):
 			return super().unzip()
+		self.check_permission("read")
 		if not (self.file_name or "").lower().endswith(".zip"):
 			frappe.throw(_("{0} is not a zip file").format(self.file_name))
 

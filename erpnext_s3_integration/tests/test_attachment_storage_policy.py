@@ -38,9 +38,7 @@ class TestStoragePolicy(UnitTestCase):
 
 	@patch("erpnext_s3_integration.file_hooks.ObjectStorageService")
 	@patch("erpnext_s3_integration.file_hooks.attachment_storage_enabled", return_value=True)
-	def test_prepared_report_uses_private_filesystem_when_oss_is_enabled(
-		self, _enabled, service_class
-	):
+	def test_prepared_report_uses_private_filesystem_when_oss_is_enabled(self, _enabled, service_class):
 		save_local = MagicMock(return_value={"file_url": "/private/files/report.json.gz"})
 		file_doc = frappe._dict(
 			doctype="File",
@@ -83,22 +81,27 @@ class TestStoragePolicy(UnitTestCase):
 	@patch("erpnext_s3_integration.file_hooks.ObjectStorageService")
 	@patch("erpnext_s3_integration.file_hooks.frappe.utils.file_manager.save_file_on_filesystem")
 	@patch("erpnext_s3_integration.file_hooks.attachment_storage_enabled", return_value=True)
-	def test_legacy_bank_conversion_context_uses_local_filesystem(
-		self, _enabled, save_local, service_class
-	):
+	def test_legacy_bank_conversion_context_uses_local_filesystem(self, _enabled, save_local, service_class):
 		save_local.return_value = {"file_url": "/private/files/converted.csv"}
 
 		with storage_context("Bank Statement Import"):
 			result = write_file_to_object_storage("converted.csv", b"content", is_private=1)
 
 		self.assertEqual(result["file_url"], "/private/files/converted.csv")
-		save_local.assert_called_once_with(
-			"converted.csv", b"content", content_type=None, is_private=1
-		)
+		save_local.assert_called_once_with("converted.csv", b"content", content_type=None, is_private=1)
 		service_class.assert_not_called()
 
 
 class TestObjectStorageZip(UnitTestCase):
+	def test_unzip_checks_read_permission_before_reading_object(self):
+		source = _RemoteZip(b"not fetched")
+		source.check_permission.side_effect = frappe.PermissionError
+		source.get_content = MagicMock()
+		with self.assertRaises(frappe.PermissionError):
+			source.unzip()
+		source.check_permission.assert_called_once_with("read")
+		source.get_content.assert_not_called()
+
 	@patch("frappe.core.api.file.get_max_extract_size", return_value=1024)
 	@patch("erpnext_s3_integration.overrides.s3_file.frappe.delete_doc")
 	@patch("erpnext_s3_integration.overrides.s3_file.frappe.new_doc")
@@ -153,6 +156,7 @@ class _RemoteZip(S3FileMixin):
 
 	def __init__(self, content):
 		self._zip_content = content
+		self.check_permission = MagicMock()
 
 	def get_content(self, encodings=None):
 		return self._zip_content
