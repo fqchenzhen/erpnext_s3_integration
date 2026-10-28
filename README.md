@@ -57,6 +57,16 @@ The app requires Frappe / ERPNext v16 and Python 3.14+.
 
 The detailed Chinese runbook is in [USER_GUIDE.md](USER_GUIDE.md).
 
+## CRM attachments and existing local files
+
+- If Frappe CRM is installed, built-in `CRM Lead` and `CRM Deal` attachment rules use `business-online` (immediate-access Standard storage). `Communication` and `Comment` remain unclassified unless the administrator chooses a policy.
+- Enabling attachment storage sends **new** eligible uploads to OSS. It does not automatically move existing server files.
+- Open **Object Storage Settings > Attachments > Attachment Migration** (custom button group) to scan, start a background migration, or manually request cleanup. Migration is an administrator-only, resumable batch job that copies, verifies, and changes the original Frappe `File` references. It also updates exact `Attach` / `Attach Image` field URLs linked to those files.
+- Migration does **not** delete local files. Manual cleanup is a separate step, allowed only after at least **7 days**, with fresh hash/content checks and no remaining local `File` references. `Communication` / `Comment` sources are excluded from automatic local cleanup, because HTML/email bodies may contain literal old URLs.
+- Before requesting cleanup, independently inspect older URLs embedded in HTML, email, templates, custom scripts, or external bookmarks; those URLs are not automatically rewritten. Ensure a restorable site backup exists. Successful file migration is **not** a substitute for a backup.
+- Check **S3 Sync Log** for individual successful/failed operations. Re-run migration to retry failed or skipped files. The job only touches normal `/files/` and `/private/files/` entries eligible under `storage_policy.py`; never copy/delete arbitrary paths, temporary files, or backend-required local files.
+- CRM's upstream Public/Private toggle does not work on an existing OSS-backed File: re-upload with the desired privacy instead. Test CRM attachments and image/link behavior on the exact installed CRM version before cleanup.
+
 ## Security invariants
 
 - Buckets must remain Private with Block Public Access enabled, and new guided profiles request AES256 server-side encryption for every object.

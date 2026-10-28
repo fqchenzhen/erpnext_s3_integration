@@ -2551,3 +2551,48 @@ msgstr "{0} 项可用，{1} 项需要处理"
 #: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.py:218
 msgid "{0} runtime settings changed ({1}). Run the Full Read/Write Test again."
 msgstr ""
+
+msgid "Attachment Migration"
+msgstr "附件迁移"
+
+msgid "Scan Local Attachments"
+msgstr "扫描本地附件"
+
+msgid "Migrate Local Attachments to OSS"
+msgstr "将本地附件迁移到 OSS"
+
+msgid "Clean Migrated Local Copies"
+msgstr "清理已迁移的本地副本"
+
+msgid "Local Attachment Migration"
+msgstr "本地附件迁移"
+
+msgid "{0} local File records; {1} migrated records awaiting local cleanup. Cleanup has a minimum {2}-day grace period."
+msgstr "本地 File 记录 {0} 条；待清理的已迁移记录 {1} 条。清理至少需经过 {2} 天观察期。"
+
+msgid "Migrate eligible local File attachments to OSS? Verified files remain on the server until a separate cleanup is requested."
+msgstr "确认将符合条件的本地附件迁移到 OSS？验证成功的文件仍保留在服务器上，直到单独执行清理。"
+
+msgid "Attachment migration queued. Review S3 Sync Log for results."
+msgstr "附件迁移任务已加入队列，请查看 S3 Sync Log。"
+
+msgid "Delete eligible local copies migrated at least 7 days ago? Verify links and backups first. Communication and Comment attachments are excluded. This does not delete OSS objects or File records."
+msgstr "确认清理至少 7 天前迁移的本地副本？请先检查链接和备份。Communication、Comment 附件不参与清理。本操作不会删除 OSS 对象或 File 记录。"
+
+msgid "Local cleanup queued. Review S3 Sync Log for results."
+msgstr "本地清理任务已加入队列，请查看 S3 Sync Log。"
+
+msgid "Migrated Local URL"
+msgstr "原本地附件 URL"
+
+msgid "Migrated to Object Storage At"
+msgstr "迁移至对象存储时间"
+
+msgid "Local Copy Cleaned At"
+msgstr "本地副本清理时间"
+
+msgid "Enable attachment object storage before migrating local files."
+msgstr "迁移本地附件前，请先启用附件对象存储。"
+
+msgid "Explicit confirmation is required to delete local copies."
+msgstr "必须明确确认后才能清理本地副本。"

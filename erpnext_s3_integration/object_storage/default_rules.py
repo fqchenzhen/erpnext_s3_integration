@@ -21,6 +21,8 @@ DEFAULT_RULES = (
 	DefaultRule("employee-image", "Employee image stays hot", "permanent-hot", "identity-image", "Employee", "image", 10),
 	DefaultRule("company-logo", "Company logo stays hot", "permanent-hot", "brand-image", "Company", "company_logo", 10),
 	DefaultRule("item-documents", "Item documents stay online", "business-online", "master-data", "Item", priority=100),
+	DefaultRule("crm-lead", "CRM Lead attachments stay online", "business-online", "crm", "CRM Lead"),
+	DefaultRule("crm-deal", "CRM Deal attachments stay online", "business-online", "crm", "CRM Deal"),
 	DefaultRule("bom-documents", "BOM documents stay online", "business-online", "manufacturing", "BOM", priority=100),
 	DefaultRule("sales-invoice", "Sales Invoice archive", "business-archive", "transaction", "Sales Invoice"),
 	DefaultRule("purchase-invoice", "Purchase Invoice archive", "business-archive", "transaction", "Purchase Invoice"),

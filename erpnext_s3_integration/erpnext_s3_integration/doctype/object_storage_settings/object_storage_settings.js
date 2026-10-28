@@ -45,7 +45,43 @@ function render_more_menu(frm) {
 	frm.add_custom_button(__("Apply Recommended Storage Plan"), () => apply_recommended_plan(frm), __("More"));
 	frm.add_custom_button(__("Open OSS Console"), () => open_url("https://oss.console.aliyun.com/"), __("More"));
 	frm.add_custom_button(__("Open RAM Console"), () => open_url("https://ram.console.aliyun.com/"), __("More"));
+	frm.add_custom_button(__("Scan Local Attachments"), () => scan_local_attachments(), __("Attachment Migration"));
+	frm.add_custom_button(__("Migrate Local Attachments to OSS"), () => migrate_local_attachments(), __("Attachment Migration"));
+	frm.add_custom_button(__("Clean Migrated Local Copies"), () => clean_local_attachments(), __("Attachment Migration"));
 }
+
+const attachment_migration_api = "erpnext_s3_integration.attachment_migration.";
+
+async function scan_local_attachments() {
+	const { message } = await frappe.call({ method: attachment_migration_api + "get_local_migration_status", type: "GET" });
+	frappe.msgprint({
+		title: __("Local Attachment Migration"),
+		message: __("{0} local File records; {1} migrated records awaiting local cleanup. Cleanup has a minimum {2}-day grace period.", [
+			message.local_file_records, message.pending_cleanup_records, message.cleanup_grace_days,
+		]),
+	});
+}
+
+function migrate_local_attachments() {
+	frappe.confirm(__("Migrate eligible local File attachments to OSS? Verified files remain on the server until a separate cleanup is requested."),
+		async () => {
+			await frappe.call({ method: attachment_migration_api + "start_local_migration", type: "POST" });
+			frappe.msgprint(__("Attachment migration queued. Review S3 Sync Log for results."));
+		});
+}
+
+function clean_local_attachments() {
+	frappe.confirm(__("Delete eligible local copies migrated at least 7 days ago? Verify links and backups first. Communication and Comment attachments are excluded. This does not delete OSS objects or File records."),
+		async () => {
+			await frappe.call({
+				method: attachment_migration_api + "start_local_cleanup",
+				type: "POST",
+				args: { confirm: 1 },
+			});
+			frappe.msgprint(__("Local cleanup queued. Review S3 Sync Log for results."));
+		});
+}
+
 
 async function render_setup_assistant(frm) {
 	const { message } = await frappe.call({
