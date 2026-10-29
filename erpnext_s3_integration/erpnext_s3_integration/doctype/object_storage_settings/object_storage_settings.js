@@ -8,7 +8,7 @@ frappe.ui.form.on("Object Storage Settings", {
 		render_attachment_lifecycle(frm);
 		render_backup_status(frm);
 		render_restore_help(frm);
-		render_more_menu(frm);
+		render_settings_actions(frm);
 	},
 	attachment_storage_profile(frm) {
 		render_attachment_status(frm);
@@ -39,15 +39,17 @@ frappe.ui.form.on("Object Storage Settings", {
 	attachment_lifecycle_delete_days: render_attachment_policy,
 });
 
-function render_more_menu(frm) {
+function render_settings_actions(frm) {
 	frm.clear_custom_buttons();
-	frm.add_custom_button(__("Open Profiles"), () => frappe.set_route("List", "Object Storage Profile"), __("More"));
-	frm.add_custom_button(__("Apply Recommended Storage Plan"), () => apply_recommended_plan(frm), __("More"));
-	frm.add_custom_button(__("Open OSS Console"), () => open_url("https://oss.console.aliyun.com/"), __("More"));
-	frm.add_custom_button(__("Open RAM Console"), () => open_url("https://ram.console.aliyun.com/"), __("More"));
-	frm.add_custom_button(__("Scan Local Attachments"), () => scan_local_attachments(), __("Attachment Migration"));
-	frm.add_custom_button(__("Migrate Local Attachments to OSS"), () => migrate_local_attachments(), __("Attachment Migration"));
-	frm.add_custom_button(__("Clean Migrated Local Copies"), () => clean_local_attachments(), __("Attachment Migration"));
+	const storage_group = __("Storage Management");
+	const attachments_group = __("Attachment Maintenance");
+	frm.add_custom_button(__("Manage Profiles"), () => frappe.set_route("List", "Object Storage Profile"), storage_group);
+	frm.add_custom_button(__("Apply Recommended Storage Plan"), () => apply_recommended_plan(frm), storage_group);
+	frm.add_custom_button(__("Open OSS Console"), () => open_url("https://oss.console.aliyun.com/"), storage_group);
+	frm.add_custom_button(__("Open RAM Console"), () => open_url("https://ram.console.aliyun.com/"), storage_group);
+	frm.add_custom_button(__("Scan Local Attachments"), () => scan_local_attachments(), attachments_group);
+	frm.add_custom_button(__("Migrate Local Attachments to OSS"), () => migrate_local_attachments(), attachments_group);
+	frm.add_custom_button(__("Clean Migrated Local Copies"), () => clean_local_attachments(), attachments_group);
 }
 
 const attachment_migration_api = "erpnext_s3_integration.attachment_migration.";
@@ -69,11 +71,11 @@ async function scan_local_attachments() {
 	).join("");
 	const rows = scan.sample.map((file) => {
 		const [, label, description] = categories.find(([key]) => key === file.status);
-		return `<tr>
-			<td class="object-storage-migration-filename" title="${escape_html(file.file_name || file.name)}">${escape_html(file.file_name || file.name)}</td>
-			<td>${escape_html(file.attached_to_doctype || "-")}</td>
-			<td title="${escape_html(description)}">${escape_html(label)}</td>
-		</tr>`;
+		return `<div class="object-storage-migration-row" role="row">
+			<div class="object-storage-migration-filename" role="cell" title="${escape_html(file.file_name || file.name)}">${escape_html(file.file_name || file.name)}</div>
+			<div role="cell">${escape_html(file.attached_to_doctype || "-")}</div>
+			<div role="cell" title="${escape_html(description)}">${escape_html(label)}</div>
+		</div>`;
 	}).join("");
 	const dialog = new frappe.ui.Dialog({
 		title: __("Local Attachment Migration"),
@@ -88,11 +90,15 @@ async function scan_local_attachments() {
 		<div class="object-storage-migration-metrics">${metrics}</div>
 		<p class="text-muted">${escape_html(__("Previewed {0} File records.", [scan.scanned_records]))}
 			${scan.truncated ? escape_html(__("Preview limited; counts are partial. Candidate files may be marked unknown.")) : ""}</p>
-		${rows ? `<div class="object-storage-migration-table-scroll">
-			<table class="table table-bordered">
-				<thead><tr><th>${__("File")}</th><th>${__("DocType")}</th><th>${__("Migration Status")}</th></tr></thead>
-				<tbody>${rows}</tbody>
-			</table>
+		${rows ? `<div class="object-storage-migration-table" role="table" aria-label="${escape_html(__("Local Attachment Migration"))}">
+			<div role="rowgroup">
+				<div class="object-storage-migration-header" role="row">
+					<div role="columnheader">${escape_html(__("File"))}</div>
+					<div role="columnheader">${escape_html(__("DocType"))}</div>
+					<div role="columnheader">${escape_html(__("Migration Status"))}</div>
+				</div>
+			</div>
+			<div class="object-storage-migration-table-scroll" role="rowgroup">${rows}</div>
 		</div>` : ""}
 	`);
 	style_migration_dialog(dialog);
@@ -122,34 +128,39 @@ function style_migration_dialog(dialog) {
 		"border-radius": "var(--border-radius-md)",
 	});
 	$root.find(".object-storage-migration-metric strong").css("font-size", "1.5rem");
-	$root.find(".object-storage-migration-table-scroll").css({
-		"max-height": "min(430px, 48vh)",
-		overflow: "auto",
-		"scrollbar-gutter": "stable",
+	const columns = "minmax(0, 54fr) minmax(0, 26fr) minmax(0, 20fr)";
+	$root.find(".object-storage-migration-table").css({
 		border: "1px solid var(--border-color)",
 		"border-radius": "var(--border-radius-md)",
+		overflow: "hidden",
 	});
-	$root.find(".object-storage-migration-table-scroll .table").css({
-		width: "100%",
-		"margin-bottom": 0,
-		"table-layout": "fixed",
+	$root.find(".object-storage-migration-header, .object-storage-migration-row").css({
+		display: "grid",
+		"grid-template-columns": columns,
 	});
-	$root.find(".object-storage-migration-table-scroll th").css({
-		position: "sticky",
-		top: 0,
-		"z-index": 1,
+	$root.find(".object-storage-migration-header").css({
+		"font-weight": 600,
 		background: "var(--card-bg)",
+		"overflow-y": "auto",
+		"scrollbar-gutter": "stable",
 	});
-	$root.find(".object-storage-migration-table-scroll th:first-child").css("width", "54%");
-	$root.find(".object-storage-migration-table-scroll th:nth-child(2)").css("width", "26%");
+	$root.find(".object-storage-migration-table-scroll").css({
+		"max-height": "min(430px, 48vh)",
+		"overflow-y": "auto",
+		"scrollbar-gutter": "stable",
+	});
+	$root.find(".object-storage-migration-header [role='columnheader'], .object-storage-migration-row [role='cell']").css({
+		padding: "0.55rem 0.5rem",
+		"min-width": 0,
+		"border-right": "1px solid var(--border-color)",
+		"border-bottom": "1px solid var(--border-color)",
+		"overflow-wrap": "anywhere",
+	});
+	$root.find(".object-storage-migration-header [role='columnheader']:last-child, .object-storage-migration-row [role='cell']:last-child").css("border-right", 0);
 	$root.find(".object-storage-migration-filename").css({
 		overflow: "hidden",
 		"text-overflow": "ellipsis",
 		"white-space": "nowrap",
-	});
-	$root.find(".object-storage-migration-table-scroll td").css({
-		"vertical-align": "middle",
-		"overflow-wrap": "anywhere",
 	});
 }
 
@@ -593,10 +604,15 @@ async function run_backup_now(frm) {
 	await frm.reload_doc();
 }
 
-async function apply_recommended_plan(frm) {
-	await frappe.call({ method: settings_method("apply_recommended_storage_plan"), type: "POST", freeze: true, freeze_message: __("Applying recommended settings...") });
-	frappe.show_alert({ message: __("Recommended attachment lifecycle and 30 backup restore points were applied."), indicator: "green" });
-	await frm.reload_doc();
+function apply_recommended_plan(frm) {
+	frappe.confirm(
+		__("Apply the recommended attachment lifecycle and backup retention settings? This will update the current configuration."),
+		async () => {
+			await frappe.call({ method: settings_method("apply_recommended_storage_plan"), type: "POST", freeze: true, freeze_message: __("Applying recommended settings...") });
+			frappe.show_alert({ message: __("Recommended attachment lifecycle and 30 backup restore points were applied."), indicator: "green" });
+			await frm.reload_doc();
+		}
+	);
 }
 
 function preview_classification() {
