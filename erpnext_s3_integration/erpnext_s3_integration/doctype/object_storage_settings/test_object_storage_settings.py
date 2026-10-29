@@ -16,14 +16,19 @@ class IntegrationTestObjectStorageSettings(IntegrationTestCase):
 	)
 
 	def test_system_manager_navigation_is_installed(self):
-		from frappe.boot import get_sidebar_items
+		from frappe.boot import get_module_sidebars
 
 		sidebar = frappe.get_doc("Workspace Sidebar", "ERPNext S3 Integration")
 		self.assertEqual(sidebar.app, "erpnext_s3_integration")
 		self.assertEqual(sidebar.items[0].label, "Object Storage Settings")
 		self.assertEqual(sidebar.items[0].link_type, "DocType")
 		self.assertEqual(sidebar.items[0].link_to, "Object Storage Settings")
-		self.assertIn("erpnext s3 integration", get_sidebar_items([]))
+		sidebars = get_module_sidebars()
+		self.assertIn(sidebar.name, sidebars)
+		self.assertIn(
+			"Object Storage Settings",
+			[item.get("link_to") for item in sidebars[sidebar.name]["items"]],
+		)
 
 		desktop_icon = frappe.get_doc("Desktop Icon", "ERPNext S3 Integration")
 		self.assertTrue(desktop_icon.hidden)
@@ -32,12 +37,12 @@ class IntegrationTestObjectStorageSettings(IntegrationTestCase):
 		self.assertEqual([row.role for row in desktop_icon.roles], ["System Manager"])
 
 	def test_object_storage_navigation_is_hidden_from_guest(self):
-		from frappe.boot import get_sidebar_items
+		from frappe.boot import get_module_sidebars
 
 		previous_user = frappe.session.user
 		try:
 			frappe.set_user("Guest")
-			self.assertNotIn("erpnext s3 integration", get_sidebar_items([]))
+			self.assertNotIn("ERPNext S3 Integration", get_module_sidebars())
 		finally:
 			frappe.set_user(previous_user)
 
@@ -62,7 +67,9 @@ class IntegrationTestObjectStorageSettings(IntegrationTestCase):
 			[item["key"] for item in assistant["features"]],
 			["attachments", "backups", "attachment_archive", "archive_restore"],
 		)
-		self.assertIn(assistant["features"][2]["status"], {"Available", "Needs Attention", "Not Configured", "Optional"})
+		self.assertIn(
+			assistant["features"][2]["status"], {"Available", "Needs Attention", "Not Configured", "Optional"}
+		)
 		self.assertIn(assistant["features"][3]["status"], {"Enabled", "Optional"})
 
 	def test_settings_layout_has_four_tabs_and_no_bucket_field(self):
@@ -161,9 +168,7 @@ class IntegrationTestObjectStorageSettings(IntegrationTestCase):
 
 	@patch("erpnext_s3_integration.object_storage.healthcheck.run_full_test")
 	@patch("erpnext_s3_integration.object_storage.bucket_setup.inspect_bucket_configuration")
-	def test_one_click_flow_tests_links_and_enables_attachment_profile(
-		self, inspect_bucket, run_full_test
-	):
+	def test_one_click_flow_tests_links_and_enables_attachment_profile(self, inspect_bucket, run_full_test):
 		from frappe.utils import now_datetime
 
 		from erpnext_s3_integration.erpnext_s3_integration.doctype.object_storage_settings.object_storage_settings import (
@@ -255,9 +260,7 @@ class IntegrationTestObjectStorageSettings(IntegrationTestCase):
 		}
 		result = verify_and_enable_profile("Attachments", profile.name)
 		self.assertTrue(result["kept_existing_feature"])
-		self.assertTrue(
-			frappe.db.get_single_value("Object Storage Settings", "enable_attachment_storage")
-		)
+		self.assertTrue(frappe.db.get_single_value("Object Storage Settings", "enable_attachment_storage"))
 
 	def _new_guided_profile(self, purpose):
 		return frappe.get_doc(

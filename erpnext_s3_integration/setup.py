@@ -42,9 +42,7 @@ def _seed_missing_settings_defaults() -> None:
 
 
 def _enforce_security_defaults() -> None:
-	frappe.db.set_single_value(
-		"Object Storage Settings", "proxy_downloads", 1, update_modified=False
-	)
+	frappe.db.set_single_value("Object Storage Settings", "proxy_downloads", 1, update_modified=False)
 
 
 def _migrate_recommended_retention_defaults() -> None:
@@ -141,7 +139,7 @@ def _custom_fields() -> dict:
 			{
 				"fieldname": "object_storage_source_url",
 				"fieldtype": "Data",
-				"length": 1024,
+				"length": 1000,
 				"insert_after": "object_storage_key",
 				"label": "Migrated Local URL",
 				"read_only": 1,

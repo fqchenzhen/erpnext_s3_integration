@@ -7,6 +7,7 @@ Local copies are kept until a separate, administrator-requested cleanup.
 import hashlib
 import mimetypes
 from pathlib import Path
+from urllib.parse import quote
 
 import frappe
 from frappe import _
@@ -21,6 +22,16 @@ BATCH_SIZE = 25
 CLEANUP_GRACE_DAYS = 7
 MIGRATION_JOB = "erpnext_s3_integration.attachment_migration.migrate_batch"
 CLEANUP_JOB = "erpnext_s3_integration.attachment_migration.cleanup_batch"
+CLEANUP_REF_FIELDS = [
+	"name",
+	"file_url",
+	"object_storage_profile",
+	"object_storage_key",
+	"object_storage_migrated_at",
+	"object_storage_local_cleaned_at",
+	"attached_to_doctype",
+	"attached_to_name",
+]
 
 
 def _require_manager():
@@ -89,6 +100,26 @@ def _verify_remote(service, key, expected_hash, expected_size):
 		raise ValueError("OSS object content verification failed")
 
 
+def _ensure_remote_file(path, service, key, expected_hash, expected_size, file_name):
+	try:
+		_verify_remote(service, key, expected_hash, expected_size)
+		return
+	except ValueError:
+		pass
+
+	if _md5(path) != (expected_hash, expected_size):
+		raise ValueError("Local file changed during migration")
+	with path.open("rb") as body:
+		service.put(
+			key,
+			body,
+			content_length=expected_size,
+			content_type=mimetypes.guess_type(file_name or "")[0],
+			metadata={"content-hash": expected_hash},
+		)
+	_verify_remote(service, key, expected_hash, expected_size)
+
+
 def _local_files(start_after=""):
 	return frappe.get_all(
 		"File",
@@ -105,13 +136,21 @@ def _local_files(start_after=""):
 
 def _migration_refs(url):
 	# Lock every File row sharing the original URL before updating references.
-	return frappe.db.sql(
-		"""SELECT name, file_name, is_private, is_folder, attached_to_doctype,
-				  attached_to_name, attached_to_field
-			 FROM `tabFile` WHERE file_url = %s ORDER BY name FOR UPDATE""",
-		(url,),
-		as_dict=True,
-	)
+	return frappe.qb.get_query(
+		"File",
+		fields=[
+			"name",
+			"file_name",
+			"is_private",
+			"is_folder",
+			"attached_to_doctype",
+			"attached_to_name",
+			"attached_to_field",
+		],
+		filters={"file_url": url},
+		order_by="name asc",
+		for_update=True,
+	).run(as_dict=True)
 
 
 def _linked_attach_fields(refs, old_url):
@@ -125,16 +164,95 @@ def _linked_attach_fields(refs, old_url):
 		seen.add((doctype, name))
 		if not frappe.db.exists(doctype, name):
 			continue
-		meta = frappe.get_meta(doctype)
-		for df in meta.fields:
+		doc = frappe.get_doc(doctype, name)
+		for df in doc.meta.fields:
 			if df.fieldtype not in ("Attach", "Attach Image"):
 				continue
-			if frappe.db.get_value(doctype, name, df.fieldname) == old_url:
+			if doc.get(df.fieldname) == old_url:
 				result.append((doctype, name, df.fieldname))
+		for table_field in doc.meta.get_table_fields():
+			for row in doc.get(table_field.fieldname) or []:
+				for df in row.meta.fields:
+					if df.fieldtype in ("Attach", "Attach Image") and row.get(df.fieldname) == old_url:
+						result.append((row.doctype, row.name, df.fieldname))
 	return result
 
 
+def _replace_linked_attach_fields(refs, old_url, new_url):
+	for doctype, name, fieldname in _linked_attach_fields(refs, old_url):
+		if frappe.get_meta(doctype).issingle:
+			current = frappe.db.get_single_value(doctype, fieldname, cache=False, for_update=True)
+			if current == old_url:
+				frappe.db.set_single_value(doctype, fieldname, new_url, update_modified=False)
+			continue
+		# Compare the old value in the UPDATE so a concurrent user edit is not overwritten.
+		frappe.db.set_value(
+			doctype,
+			{"name": name, fieldname: old_url},
+			fieldname,
+			new_url,
+			update_modified=False,
+		)
+
+
+def _replace_attachment_comment_urls(refs, old_url, new_url):
+	"""Keep Frappe's generated attachment history links working after migration."""
+	old_urls = {old_url, quote(old_url, safe="/:")}
+	new_urls = {old_url: new_url, quote(old_url, safe="/:"): quote(new_url, safe="/:")}
+	seen = set()
+	for ref in refs:
+		doctype, name = ref.attached_to_doctype, ref.attached_to_name
+		if not doctype or not name or doctype in {"Communication", "Comment"} or (doctype, name) in seen:
+			continue
+		seen.add((doctype, name))
+		comments = frappe.get_all(
+			"Comment",
+			filters={
+				"reference_doctype": doctype,
+				"reference_name": name,
+				"comment_type": "Attachment",
+			},
+			fields=["name", "content"],
+		)
+		for comment in comments:
+			content = comment.content or ""
+			updated = content
+			for old in old_urls:
+				updated = updated.replace(old, new_urls[old])
+			if updated != content:
+				frappe.db.set_value(
+					"Comment",
+					{"name": comment.name, "content": content},
+					"content",
+					updated,
+					update_modified=False,
+				)
+
+
+def _has_related_content_reference(refs, url):
+	"""Detect old URLs in related Comment or Communication bodies before local deletion."""
+	seen = set()
+	for ref in refs:
+		doctype, name = ref.attached_to_doctype, ref.attached_to_name
+		if not doctype or not name or (doctype, name) in seen:
+			continue
+		seen.add((doctype, name))
+		for content_doctype in ("Comment", "Communication"):
+			if frappe.db.exists(
+				content_doctype,
+				{
+					"reference_doctype": doctype,
+					"reference_name": name,
+					"content": ["like", f"%{url}%"],
+				},
+			):
+				return True
+	return False
+
+
 def _migrate_url(url, service):
+	if len(url) > 1000:
+		raise ValueError("Local attachment URL exceeds the source URL field limit")
 	refs = _migration_refs(url)
 	if not refs:
 		return None
@@ -148,19 +266,10 @@ def _migrate_url(url, service):
 		raise FileNotFoundError(str(path))
 	digest, size = _md5(path)
 	key = generate_object_key(digest, is_private, service.profile.prefix)
-	if service.backend.head(key) is None:
-		with path.open("rb") as body:
-			service.put(
-				key,
-				body,
-				content_length=size,
-				content_type=mimetypes.guess_type(refs[0].file_name or "")[0],
-				metadata={"content-hash": digest},
-			)
-	_verify_remote(service, key, digest, size)
+	_ensure_remote_file(path, service, key, digest, size, refs[0].file_name)
 	new_url = build_object_url(key, refs[0].file_name)
-	for doctype, name, field in _linked_attach_fields(refs, url):
-		frappe.db.set_value(doctype, name, field, new_url, update_modified=False)
+	_replace_linked_attach_fields(refs, url, new_url)
+	_replace_attachment_comment_urls(refs, url, new_url)
 	migrated_at = now_datetime()
 	for ref in refs:
 		frappe.db.set_value(
@@ -187,15 +296,17 @@ def _migrate_url(url, service):
 
 
 def _log(status, operation, url, key=None, size=0, message=None):
-	frappe.get_doc({
-		"doctype": "S3 Sync Log",
-		"status": status,
-		"operation": operation,
-		"source_path": url[:140],
-		"s3_key": key,
-		"file_size": size,
-		"message": (message or "")[:2000],
-	}).insert(ignore_permissions=True)
+	frappe.get_doc(
+		{
+			"doctype": "S3 Sync Log",
+			"status": status,
+			"operation": operation,
+			"source_path": url[:140],
+			"s3_key": key,
+			"file_size": size,
+			"message": (message or "")[:2000],
+		}
+	).insert(ignore_permissions=True)
 
 
 @frappe.whitelist(methods=["GET"])
@@ -206,7 +317,10 @@ def get_local_migration_status():
 		+ frappe.db.count("File", {"file_url": ["like", "/private/files/%"]}),
 		"pending_cleanup_records": frappe.db.count(
 			"File",
-			{"object_storage_source_url": ["is", "set"], "object_storage_local_cleaned_at": ["is", "not set"]},
+			{
+				"object_storage_source_url": ["is", "set"],
+				"object_storage_local_cleaned_at": ["is", "not set"],
+			},
 		),
 		"cleanup_grace_days": CLEANUP_GRACE_DAYS,
 	}
@@ -275,8 +389,7 @@ def _cleanup_url(url):
 	refs = frappe.get_all(
 		"File",
 		filters={"object_storage_source_url": url},
-		fields=["name", "file_url", "object_storage_profile", "object_storage_key", "object_storage_migrated_at",
-				"object_storage_local_cleaned_at", "attached_to_doctype", "attached_to_name"],
+		fields=CLEANUP_REF_FIELDS,
 		limit_page_length=10000,
 	)
 	if not refs or len(refs) == 10000:
@@ -290,14 +403,19 @@ def _cleanup_url(url):
 	if any(ref.attached_to_doctype in {"Communication", "Comment"} for ref in refs):
 		return False
 	threshold = get_datetime(add_days(now_datetime(), -CLEANUP_GRACE_DAYS))
-	if any(not ref.object_storage_migrated_at or get_datetime(ref.object_storage_migrated_at) > threshold for ref in refs):
+	if any(
+		not ref.object_storage_migrated_at or get_datetime(ref.object_storage_migrated_at) > threshold
+		for ref in refs
+	):
 		return False
-	if any(not ref.object_storage_key or not ref.object_storage_profile or
-		   not ref.file_url.startswith("/s3/") for ref in refs):
+	if any(
+		not ref.object_storage_key or not ref.object_storage_profile or not ref.file_url.startswith("/s3/")
+		for ref in refs
+	):
 		return False
 	if len({(ref.object_storage_profile, ref.object_storage_key) for ref in refs}) != 1:
 		return False
-	if _linked_attach_fields(refs, url):
+	if _linked_attach_fields(refs, url) or _has_related_content_reference(refs, url):
 		return False
 	path = _local_path(url)
 	if not path.is_file():
@@ -309,7 +427,32 @@ def _cleanup_url(url):
 		raise ValueError("Local copy changed since migration")
 	service = ObjectStorageService(refs[0].object_storage_profile, require_enabled=False)
 	_verify_remote(service, key, digest, size)
-	path.unlink()
+	# Recheck after the network round trip; the local copy or its references can change meanwhile.
+	if frappe.db.exists("File", {"file_url": url}):
+		return False
+	current_refs = frappe.get_all(
+		"File",
+		filters={"object_storage_source_url": url},
+		fields=CLEANUP_REF_FIELDS,
+		limit_page_length=10000,
+	)
+	if len(current_refs) != len(refs) or len(current_refs) == 10000:
+		return False
+	if sorted(tuple(ref.get(field) for field in CLEANUP_REF_FIELDS) for ref in current_refs) != sorted(
+		tuple(ref.get(field) for field in CLEANUP_REF_FIELDS) for ref in refs
+	):
+		return False
+	if any(ref.attached_to_doctype in {"Communication", "Comment"} for ref in current_refs):
+		return False
+	if _linked_attach_fields(current_refs, url) or _has_related_content_reference(current_refs, url):
+		return False
+	try:
+		current_path = _local_path(url)
+	except ValueError:
+		return False
+	if current_path != path or not current_path.is_file() or _md5(current_path) != (digest, size):
+		return False
+	current_path.unlink()
 	cleaned_at = now_datetime()
 	for ref in refs:
 		frappe.db.set_value(
