@@ -15,14 +15,12 @@ HISTORICAL_DEFAULT_ATTACHMENT_LIFECYCLES = {
 
 
 def after_migrate() -> None:
-	_create_roles()
 	create_custom_fields(_custom_fields(), update=True)
 	_ensure_file_field_permissions()
 	_seed_missing_settings_defaults()
 	_enforce_security_defaults()
 	_migrate_recommended_retention_defaults()
 	_seed_default_rules()
-	_seed_restore_role()
 
 
 def _seed_missing_settings_defaults() -> None:
@@ -69,19 +67,6 @@ def _recommended_attachment_lifecycle_update(current: tuple[int, ...]) -> dict |
 	}
 
 
-def _create_roles() -> None:
-	for role_name in ("Object Storage Manager", "Object Storage Restore User"):
-		if not frappe.db.exists("Role", role_name):
-			frappe.get_doc({"doctype": "Role", "role_name": role_name}).insert(ignore_permissions=True)
-
-
-def _seed_restore_role() -> None:
-	settings = frappe.get_single("Object Storage Settings")
-	if not settings.restore_roles:
-		settings.append("restore_roles", {"role": "Object Storage Restore User"})
-		settings.save(ignore_permissions=True)
-
-
 def _seed_default_rules() -> None:
 	from erpnext_s3_integration.object_storage.default_rules import sync_default_rules
 
@@ -95,7 +80,6 @@ def _ensure_file_field_permissions() -> None:
 	from frappe.permissions import add_permission, update_permission_property
 
 	for role, permlevel, can_write in (
-		("Object Storage Manager", 1, 1),
 		("System Manager", 1, 1),
 		("System Manager", 2, 0),
 	):

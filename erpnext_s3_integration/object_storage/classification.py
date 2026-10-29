@@ -74,15 +74,8 @@ def set_retention_override_audit(file_doc, method=None) -> None:
 	if not file_doc.has_value_changed("retention_override"):
 		return
 
-	roles = set(frappe.get_roles())
-	is_manager = frappe.session.user == "Administrator" or bool(
-		{"System Manager", "Object Storage Manager"}.intersection(roles)
-	)
-	if not is_manager:
-		frappe.throw(
-			"Only an Object Storage Manager or System Manager may change Retention Override.",
-			frappe.PermissionError,
-		)
+	if frappe.session.user != "Administrator" and "System Manager" not in frappe.get_roles():
+		frappe.throw("Only a System Manager may change Retention Override.", frappe.PermissionError)
 
 	settings = frappe.get_single("Object Storage Settings")
 	if file_doc.retention_override and not settings.allow_manual_retention_override:
@@ -274,5 +267,5 @@ def _classification_dict(classification: Classification) -> dict:
 
 
 def _require_storage_manager() -> None:
-	if not {"System Manager", "Object Storage Manager"}.intersection(frappe.get_roles()):
-		frappe.throw("Object Storage Manager role is required.", frappe.PermissionError)
+	if frappe.session.user != "Administrator" and "System Manager" not in frappe.get_roles():
+		frappe.throw("System Manager role is required.", frappe.PermissionError)

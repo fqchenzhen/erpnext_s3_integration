@@ -40,6 +40,44 @@ class TestAppAccess(UnitTestCase):
 		self.assertFalse(can_open_object_storage_app())
 
 
+class TestRestoreRoleAccess(UnitTestCase):
+	def test_allowed_business_role_can_request_restore(self):
+		from erpnext_s3_integration.erpnext_s3_integration.doctype.object_restore_request.object_restore_request import (
+			can_request_restore,
+		)
+
+		settings = frappe._dict(
+			allow_self_service_restore=1,
+			restore_roles=[frappe._dict(role="Stock Manager")],
+		)
+		with patch.object(frappe, "get_roles", return_value=["Stock Manager"]):
+			self.assertTrue(can_request_restore("warehouse@example.test", settings))
+
+	def test_unlisted_or_disabled_business_role_cannot_request_restore(self):
+		from erpnext_s3_integration.erpnext_s3_integration.doctype.object_restore_request.object_restore_request import (
+			can_request_restore,
+		)
+
+		settings = frappe._dict(
+			allow_self_service_restore=1,
+			restore_roles=[frappe._dict(role="Stock Manager")],
+		)
+		with patch.object(frappe, "get_roles", return_value=["Sales User"]):
+			self.assertFalse(can_request_restore("sales@example.test", settings))
+		settings.allow_self_service_restore = 0
+		with patch.object(frappe, "get_roles", return_value=["Stock Manager"]):
+			self.assertFalse(can_request_restore("warehouse@example.test", settings))
+
+	def test_system_manager_can_request_restore_without_configured_roles(self):
+		from erpnext_s3_integration.erpnext_s3_integration.doctype.object_restore_request.object_restore_request import (
+			can_request_restore,
+		)
+
+		settings = frappe._dict(allow_self_service_restore=0, restore_roles=[])
+		with patch.object(frappe, "get_roles", return_value=["System Manager"]):
+			self.assertTrue(can_request_restore("admin@example.test", settings))
+
+
 class TestKeysAndRanges(UnitTestCase):
 	def test_content_hash_key_does_not_include_filename(self):
 		key = generate_object_key("a1b2c3d4e5f6", True, "erpnext/site-a")

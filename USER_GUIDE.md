@@ -186,7 +186,7 @@ Backups 页面动态显示本地备份组上限、OSS 成功日期数量、最�
 ## 十、配置并演练归档恢复
 
 1. 在 **Archive Restore** 中启用恢复请求。
-2. 将业务角色加入 `Allowed Restore Roles`；System Manager 始终可恢复。
+2. 按需将已有业务角色加入 `Allowed Restore Roles`，无需新建专用角色；System Manager 始终可申请附件归档恢复。
 3. 默认恢复副本 1 天、Tier 为 Standard、每 15 分钟检查一次。
 4. System Notification 默认启用，Email 默认关闭。
 5. 使用不含敏感信息的已归档测试附件创建 **Object Restore Request**。备份冷恢复只由 System Manager 按灾备 Runbook 在 OSS Console/管理员工具执行，不复用用户附件恢复请求。
