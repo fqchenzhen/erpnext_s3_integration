@@ -12,6 +12,7 @@ from frappe.tests import UnitTestCase
 from frappe.utils import add_days, now_datetime
 
 from erpnext_s3_integration.attachment_migration import (
+	_acquire_transfer_lock,
 	_cleanup_url,
 	_ensure_remote_file,
 	_has_related_content_reference,
@@ -19,9 +20,16 @@ from erpnext_s3_integration.attachment_migration import (
 	_linked_attach_fields,
 	_local_path,
 	_migrate_url,
+	_migration_ineligibility,
+	_renew_transfer_lock,
 	_replace_attachment_comment_urls,
 	_replace_linked_attach_fields,
+	_scan_local_files,
 	_verify_remote,
+	cleanup_batch,
+	migrate_batch,
+	start_local_cleanup,
+	start_local_migration,
 )
 from erpnext_s3_integration.object_storage.default_rules import DEFAULT_RULES
 from erpnext_s3_integration.setup import _custom_fields
@@ -328,3 +336,103 @@ class TestAttachmentMigration(UnitTestCase):
 					),
 				):
 					self.assertFalse(_cleanup_url("/files/old.pdf"))
+
+	def test_unattached_or_unknown_file_is_not_eligible(self):
+		with patch(
+			"erpnext_s3_integration.attachment_migration.get_storage_target",
+			return_value=StorageTarget.OBJECT_STORAGE,
+		):
+			self.assertEqual(
+				_migration_ineligibility(
+					frappe._dict(is_folder=0, attached_to_doctype=None, attached_to_name=None)
+				),
+				"unknown",
+			)
+			with patch("erpnext_s3_integration.attachment_migration.frappe.db.exists", return_value=False):
+				self.assertEqual(
+					_migration_ineligibility(
+						frappe._dict(is_folder=0, attached_to_doctype="CRM Lead", attached_to_name="missing")
+					),
+					"unknown",
+				)
+
+	def test_prepared_report_files_remain_protected(self):
+		with patch(
+			"erpnext_s3_integration.attachment_migration.get_storage_target",
+			return_value=StorageTarget.LOCAL_TEMPORARY,
+		):
+			self.assertEqual(
+				_migration_ineligibility(
+					frappe._dict(is_folder=0, attached_to_doctype="Prepared Report", attached_to_name="R-1")
+				),
+				"protected",
+			)
+
+	@patch("erpnext_s3_integration.attachment_migration._migration_refs")
+	def test_migration_skips_unattached_local_files(self, refs):
+		refs.return_value = [
+			frappe._dict(is_folder=0, is_private=0, attached_to_doctype=None, attached_to_name=None)
+		]
+		self.assertIsNone(_migrate_url("/files/system.json", MagicMock()))
+
+	def test_preview_categories_are_conservative(self):
+		rows = [
+			frappe._dict(name="1", file_name="contract.pdf", file_url="/files/a.pdf",
+				is_folder=0, is_private=0, attached_to_doctype="CRM Deal", attached_to_name="D-1"),
+			frappe._dict(name="2", file_name="report.json.gz", file_url="/files/b.gz",
+				is_folder=0, is_private=0, attached_to_doctype="Prepared Report", attached_to_name="P-1"),
+			frappe._dict(name="3", file_name="system.json", file_url="/files/c.json",
+				is_folder=0, is_private=0, attached_to_doctype=None, attached_to_name=None),
+			frappe._dict(name="4", file_name="missing.pdf", file_url="/files/missing.pdf",
+				is_folder=0, is_private=0, attached_to_doctype="CRM Lead", attached_to_name="L-1"),
+		]
+		with (
+			patch("erpnext_s3_integration.attachment_migration.frappe.get_all", return_value=rows),
+			patch("erpnext_s3_integration.attachment_migration.frappe.db.exists", return_value=True),
+			patch(
+				"erpnext_s3_integration.attachment_migration.get_storage_target",
+				side_effect=lambda ref: (
+					StorageTarget.LOCAL_TEMPORARY if ref.attached_to_doctype == "Prepared Report"
+					else StorageTarget.OBJECT_STORAGE
+				),
+			),
+			patch("erpnext_s3_integration.attachment_migration._local_path") as path,
+		):
+			path.side_effect = lambda url: SimpleNamespace(is_file=lambda: "missing" not in url)
+			preview = _scan_local_files()
+		self.assertEqual(preview["counts"], {"eligible": 1, "protected": 1, "unknown": 1, "missing": 1})
+		self.assertFalse(preview["truncated"])
+
+	@patch("erpnext_s3_integration.attachment_migration._require_manager")
+	@patch("erpnext_s3_integration.attachment_migration._service")
+	@patch("erpnext_s3_integration.attachment_migration._acquire_transfer_lock", return_value=None)
+	@patch("erpnext_s3_integration.attachment_migration.frappe.enqueue")
+	def test_shared_lock_blocks_overlapping_transfer_jobs(self, enqueue, _lock, _service, _manager):
+		self.assertEqual(start_local_migration(), {"queued": False, "running": True})
+		self.assertEqual(start_local_cleanup(confirm=1), {"queued": False, "running": True})
+		enqueue.assert_not_called()
+
+	@patch("erpnext_s3_integration.attachment_migration._renew_transfer_lock", return_value=False)
+	@patch("erpnext_s3_integration.attachment_migration._local_files")
+	@patch("erpnext_s3_integration.attachment_migration._cleanup_entries")
+	def test_expired_lock_blocks_stale_batch(self, cleanup_entries, local_files, renew):
+		migrate_batch(run_token="old-token")
+		cleanup_batch(run_token="old-token")
+		self.assertEqual(renew.call_count, 2)
+		local_files.assert_not_called()
+		cleanup_entries.assert_not_called()
+
+	@patch("erpnext_s3_integration.attachment_migration.frappe.cache")
+	@patch("erpnext_s3_integration.attachment_migration.frappe.db.after_rollback.add")
+	def test_lock_acquisition_is_atomic_and_expires(self, _rollback, cache_method):
+		cache = cache_method.return_value
+		cache.make_key.return_value = b"test-db|attachment-transfer"
+		cache.set.return_value = True
+		token = _acquire_transfer_lock()
+		self.assertEqual(len(token), 32)
+		cache.set.assert_called_once_with(b"test-db|attachment-transfer", token, nx=True, ex=3600)
+
+	@patch("erpnext_s3_integration.attachment_migration.frappe.cache")
+	def test_empty_token_cannot_renew_lock(self, cache_method):
+		self.assertFalse(_renew_transfer_lock(None))
+		cache_method.assert_not_called()

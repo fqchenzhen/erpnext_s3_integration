@@ -2596,3 +2596,30 @@ msgstr "迁移本地附件前，请先启用附件对象存储。"
 
 msgid "Explicit confirmation is required to delete local copies."
 msgstr "必须明确确认后才能清理本地副本。"
+
+msgid "Eligible for migration"
+msgstr "符合迁移条件"
+
+msgid "Protected — keep local"
+msgstr "受保护，保留在服务器"
+
+msgid "Unattached / unknown — skipped"
+msgstr "未关联或来源不明，已跳过"
+
+msgid "Missing / invalid local path"
+msgstr "本地文件不存在或路径无效"
+
+msgid "Previewed {0} File records."
+msgstr "已预览 {0} 条 File 记录。"
+
+msgid "Preview limited; category counts are partial."
+msgstr "预览数量已达上限，各分类统计并非全部记录。"
+
+msgid "Migration Status"
+msgstr "迁移状态"
+
+msgid "Migrate eligible local File attachments to OSS? Unattached and unknown files are skipped. Verified files remain on the server until a separate cleanup is requested."
+msgstr "确定将符合条件的本地附件迁移至 OSS？未关联或来源不明的文件将跳过。已验证文件仍保留在服务器，只有单独执行清理后才会删除。"
+
+msgid "Another attachment migration or cleanup is already running."
+msgstr "当前已有附件迁移或清理任务在运行。"

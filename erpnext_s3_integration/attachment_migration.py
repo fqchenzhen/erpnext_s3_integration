@@ -7,6 +7,7 @@ Local copies are kept until a separate, administrator-requested cleanup.
 import hashlib
 import mimetypes
 from pathlib import Path
+from uuid import uuid4
 from urllib.parse import quote
 
 import frappe
@@ -19,7 +20,11 @@ from erpnext_s3_integration.object_urls import build_object_url
 from erpnext_s3_integration.storage_policy import StorageTarget, get_storage_target
 
 BATCH_SIZE = 25
+SCAN_LIMIT = 500
+SCAN_SAMPLE_LIMIT = 30
 CLEANUP_GRACE_DAYS = 7
+TRANSFER_LOCK_SECONDS = 3600
+TRANSFER_LOCK_NAME = "object-storage-legacy-attachment-transfer"
 MIGRATION_JOB = "erpnext_s3_integration.attachment_migration.migrate_batch"
 CLEANUP_JOB = "erpnext_s3_integration.attachment_migration.cleanup_batch"
 CLEANUP_REF_FIELDS = [
@@ -118,6 +123,118 @@ def _ensure_remote_file(path, service, key, expected_hash, expected_size, file_n
 			metadata={"content-hash": expected_hash},
 		)
 	_verify_remote(service, key, expected_hash, expected_size)
+
+
+def _transfer_lock_key():
+	return frappe.cache().make_key(TRANSFER_LOCK_NAME)
+
+
+def _acquire_transfer_lock():
+	"""One owner across all migration/cleanup batches, scoped by the site's DB cache key."""
+	token = uuid4().hex
+	if frappe.cache().set(_transfer_lock_key(), token, nx=True, ex=TRANSFER_LOCK_SECONDS):
+		frappe.db.after_rollback.add(lambda: _release_transfer_lock(token))
+		return token
+	return None
+
+
+def _renew_transfer_lock(token):
+	if not isinstance(token, str) or not token:
+		return False
+	return bool(
+		frappe.cache().eval(
+			"if redis.call('get', KEYS[1]) == ARGV[1] then "
+			"return redis.call('expire', KEYS[1], ARGV[2]) else return 0 end",
+			1,
+			_transfer_lock_key(),
+			token,
+			TRANSFER_LOCK_SECONDS,
+		)
+	)
+
+
+def _release_transfer_lock(token):
+	if token:
+		frappe.cache().eval(
+			"if redis.call('get', KEYS[1]) == ARGV[1] then "
+			"return redis.call('del', KEYS[1]) else return 0 end",
+			1,
+			_transfer_lock_key(),
+			token,
+		)
+
+
+def _finish_transfer_lock(token):
+	# Keep the lock until the final batch's DB writes commit.
+	frappe.db.after_commit.add(lambda: _release_transfer_lock(token))
+	frappe.db.after_rollback.add(lambda: _release_transfer_lock(token))
+
+
+def _migration_ineligibility(ref):
+	"""Never infer that an orphaned or unowned File is a safe business attachment."""
+	if ref.is_folder:
+		return "protected"
+	if get_storage_target(ref) != StorageTarget.OBJECT_STORAGE:
+		return "protected"
+	doctype, name = ref.attached_to_doctype, ref.attached_to_name
+	if not doctype or not name:
+		return "unknown"
+	if not frappe.db.exists("DocType", doctype) or not frappe.db.exists(doctype, name):
+		return "unknown"
+	return None
+
+
+def _scan_local_files():
+	"""Bounded administrator preview, not a promise about an incomplete large scan."""
+	entries = frappe.get_all(
+		"File",
+		filters={"is_folder": 0},
+		or_filters=[["file_url", "like", "/files/%"], ["file_url", "like", "/private/files/%"]],
+		fields=[
+			"name", "file_name", "file_url", "is_folder", "is_private",
+			"attached_to_doctype", "attached_to_name",
+		],
+		order_by="name asc",
+		limit_page_length=SCAN_LIMIT + 1,
+	)
+	truncated = len(entries) > SCAN_LIMIT
+	entries = entries[:SCAN_LIMIT]
+	by_url = {}
+	for entry in entries:
+		by_url.setdefault(entry.file_url, []).append(entry)
+	status_counts = {"eligible": 0, "protected": 0, "unknown": 0, "missing": 0}
+	preview = []
+	for url, refs in by_url.items():
+		reasons = {_migration_ineligibility(ref) for ref in refs}
+		if "protected" in reasons:
+			status = "protected"
+		elif "unknown" in reasons:
+			status = "unknown"
+		elif len(url) > 1000:
+			status = "missing"
+		elif any(bool(ref.is_private) != url.startswith("/private/files/") for ref in refs):
+			status = "protected"
+		else:
+			try:
+				status = "eligible" if _local_path(url).is_file() else "missing"
+			except (ValueError, OSError):
+				status = "missing"
+		# A full migration rechecks every File sharing the URL, including any outside the scan cap.
+		for ref in refs:
+			status_counts[status] += 1
+			if len(preview) < SCAN_SAMPLE_LIMIT:
+				preview.append({
+					"name": ref.name,
+					"file_name": ref.file_name,
+					"attached_to_doctype": ref.attached_to_doctype,
+					"status": status,
+				})
+	return {
+		"scanned_records": len(entries),
+		"truncated": truncated,
+		"counts": status_counts,
+		"sample": preview,
+	}
 
 
 def _local_files(start_after=""):
@@ -256,7 +373,7 @@ def _migrate_url(url, service):
 	refs = _migration_refs(url)
 	if not refs:
 		return None
-	if any(ref.is_folder or get_storage_target(ref) != StorageTarget.OBJECT_STORAGE for ref in refs):
+	if any(_migration_ineligibility(ref) for ref in refs):
 		return None
 	is_private = url.startswith("/private/files/")
 	if any(bool(ref.is_private) != is_private for ref in refs):
@@ -323,6 +440,7 @@ def get_local_migration_status():
 			},
 		),
 		"cleanup_grace_days": CLEANUP_GRACE_DAYS,
+		"migration_scan": _scan_local_files(),
 	}
 
 
@@ -330,20 +448,28 @@ def get_local_migration_status():
 def start_local_migration():
 	_require_manager()
 	_service()
+	token = _acquire_transfer_lock()
+	if not token:
+		return {"queued": False, "running": True}
 	frappe.enqueue(
 		MIGRATION_JOB,
+		run_token=token,
 		queue="long",
 		timeout=1500,
-		job_id=f"attachment-migration-{frappe.local.site}",
-		deduplicate=True,
 		enqueue_after_commit=True,
 	)
 	return {"queued": True}
 
 
-def migrate_batch(start_after=""):
-	service = _service()
-	entries = _local_files(start_after)
+def migrate_batch(start_after="", run_token=None):
+	if not _renew_transfer_lock(run_token):
+		return
+	try:
+		service = _service()
+		entries = _local_files(start_after)
+	except Exception:
+		_finish_transfer_lock(run_token)
+		raise
 	seen = set()
 	for entry in entries:
 		if entry.file_url in seen:
@@ -362,10 +488,13 @@ def migrate_batch(start_after=""):
 		frappe.enqueue(
 			MIGRATION_JOB,
 			start_after=entries[-1].name,
+			run_token=run_token,
 			queue="long",
 			timeout=1500,
 			enqueue_after_commit=True,
 		)
+	else:
+		_finish_transfer_lock(run_token)
 
 
 def _cleanup_entries(start_after=""):
@@ -467,19 +596,27 @@ def start_local_cleanup(confirm=0):
 	if not cint(confirm):
 		frappe.throw(_("Explicit confirmation is required to delete local copies."))
 	_service()
+	token = _acquire_transfer_lock()
+	if not token:
+		return {"queued": False, "running": True}
 	frappe.enqueue(
 		CLEANUP_JOB,
+		run_token=token,
 		queue="long",
 		timeout=1500,
-		job_id=f"attachment-cleanup-{frappe.local.site}",
-		deduplicate=True,
 		enqueue_after_commit=True,
 	)
 	return {"queued": True}
 
 
-def cleanup_batch(start_after=""):
-	entries = _cleanup_entries(start_after)
+def cleanup_batch(start_after="", run_token=None):
+	if not _renew_transfer_lock(run_token):
+		return
+	try:
+		entries = _cleanup_entries(start_after)
+	except Exception:
+		_finish_transfer_lock(run_token)
+		raise
 	seen = set()
 	for entry in entries:
 		url = entry.object_storage_source_url
@@ -499,7 +636,10 @@ def cleanup_batch(start_after=""):
 		frappe.enqueue(
 			CLEANUP_JOB,
 			start_after=entries[-1].name,
+			run_token=run_token,
 			queue="long",
 			timeout=1500,
 			enqueue_after_commit=True,
 		)
+	else:
+		_finish_transfer_lock(run_token)

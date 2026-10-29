@@ -54,31 +54,55 @@ const attachment_migration_api = "erpnext_s3_integration.attachment_migration.";
 
 async function scan_local_attachments() {
 	const { message } = await frappe.call({ method: attachment_migration_api + "get_local_migration_status", type: "GET" });
+	const scan = message.migration_scan;
+	const categories = [
+		["eligible", __("Eligible for migration")],
+		["protected", __("Protected — keep local")],
+		["unknown", __("Unattached / unknown — skipped")],
+		["missing", __("Missing / invalid local path")],
+	];
+	const summary = categories.map(([key, label]) =>
+		`<li>${escape_html(label)}: <strong>${scan.counts[key]}</strong></li>`
+	).join("");
+	const sample = scan.sample.map((file) =>
+		`<tr><td>${escape_html(file.file_name || file.name)}</td><td>${escape_html(file.attached_to_doctype || "-")}</td><td>${escape_html(categories.find(([key]) => key === file.status)[1])}</td></tr>`
+	).join("");
 	frappe.msgprint({
 		title: __("Local Attachment Migration"),
-		message: __("{0} local File records; {1} migrated records awaiting local cleanup. Cleanup has a minimum {2}-day grace period.", [
-			message.local_file_records, message.pending_cleanup_records, message.cleanup_grace_days,
-		]),
+		message: `
+			<p>${escape_html(__("{0} local File records; {1} migrated records awaiting local cleanup. Cleanup has a minimum {2}-day grace period.", [
+				message.local_file_records, message.pending_cleanup_records, message.cleanup_grace_days,
+			]))}</p>
+			<p>${escape_html(__("Previewed {0} File records.", [scan.scanned_records]))} ${scan.truncated ? escape_html(__("Preview limited; category counts are partial.")) : ""}</p>
+			<ul>${summary}</ul>
+			${sample ? `<table class="table table-bordered table-sm">
+				<thead><tr><th>${__("File")}</th><th>${__("DocType")}</th><th>${__("Migration Status")}</th></tr></thead>
+				<tbody>${sample}</tbody></table>` : ""}
+		`,
 	});
 }
 
 function migrate_local_attachments() {
-	frappe.confirm(__("Migrate eligible local File attachments to OSS? Verified files remain on the server until a separate cleanup is requested."),
+	frappe.confirm(__("Migrate eligible local File attachments to OSS? Unattached and unknown files are skipped. Verified files remain on the server until a separate cleanup is requested."),
 		async () => {
-			await frappe.call({ method: attachment_migration_api + "start_local_migration", type: "POST" });
-			frappe.msgprint(__("Attachment migration queued. Review S3 Sync Log for results."));
+			const { message } = await frappe.call({ method: attachment_migration_api + "start_local_migration", type: "POST" });
+			frappe.msgprint(message.queued
+				? __("Attachment migration queued. Review S3 Sync Log for results.")
+				: __("Another attachment migration or cleanup is already running."));
 		});
 }
 
 function clean_local_attachments() {
 	frappe.confirm(__("Delete eligible local copies migrated at least 7 days ago? Verify links and backups first. Communication and Comment attachments are excluded. This does not delete OSS objects or File records."),
 		async () => {
-			await frappe.call({
+			const { message } = await frappe.call({
 				method: attachment_migration_api + "start_local_cleanup",
 				type: "POST",
 				args: { confirm: 1 },
 			});
-			frappe.msgprint(__("Local cleanup queued. Review S3 Sync Log for results."));
+			frappe.msgprint(message.queued
+				? __("Local cleanup queued. Review S3 Sync Log for results.")
+				: __("Another attachment migration or cleanup is already running."));
 		});
 }
 
