@@ -16,9 +16,9 @@ class IntegrationTestObjectStorageSettings(IntegrationTestCase):
 	)
 
 	def test_system_manager_navigation_is_installed(self):
-		from frappe.boot import get_module_sidebars
+		from frappe.boot import get_app_data, get_module_sidebars
 
-		sidebar = frappe.get_doc("Workspace Sidebar", "ERPNext S3 Integration")
+		sidebar = frappe.get_doc("Sidebar", "ERPNext S3 Integration")
 		self.assertEqual(sidebar.app, "erpnext_s3_integration")
 		self.assertEqual(sidebar.items[0].label, "Object Storage Settings")
 		self.assertEqual(sidebar.items[0].link_type, "DocType")
@@ -30,11 +30,9 @@ class IntegrationTestObjectStorageSettings(IntegrationTestCase):
 			[item.get("link_to") for item in sidebars[sidebar.name]["items"]],
 		)
 
-		desktop_icon = frappe.get_doc("Desktop Icon", "ERPNext S3 Integration")
-		self.assertTrue(desktop_icon.hidden)
-		self.assertEqual(desktop_icon.link_type, "Workspace Sidebar")
-		self.assertEqual(desktop_icon.link_to, sidebar.name)
-		self.assertEqual([row.role for row in desktop_icon.roles], ["System Manager"])
+		app = next(app for app in get_app_data() if app["app_name"] == "erpnext_s3_integration")
+		self.assertTrue(app["on_apps_screen"])
+		self.assertEqual(app["app_route"], "/app/object-storage-settings")
 
 	def test_object_storage_navigation_is_hidden_from_guest(self):
 		from frappe.boot import get_module_sidebars

@@ -58,7 +58,7 @@ async function scan_local_attachments() {
 	const categories = [
 		["eligible", __("Eligible for migration")],
 		["protected", __("Protected — keep local")],
-		["unknown", __("Unattached / unknown — skipped")],
+		["unknown", __("Unknown / incomplete — migration rechecks eligibility")],
 		["missing", __("Missing / invalid local path")],
 	];
 	const summary = categories.map(([key, label]) =>
@@ -73,7 +73,7 @@ async function scan_local_attachments() {
 			<p>${escape_html(__("{0} local File records; {1} migrated records awaiting local cleanup. Cleanup has a minimum {2}-day grace period.", [
 				message.local_file_records, message.pending_cleanup_records, message.cleanup_grace_days,
 			]))}</p>
-			<p>${escape_html(__("Previewed {0} File records.", [scan.scanned_records]))} ${scan.truncated ? escape_html(__("Preview limited; category counts are partial.")) : ""}</p>
+			<p>${escape_html(__("Previewed {0} File records.", [scan.scanned_records]))} ${scan.truncated ? escape_html(__("Preview limited; counts are partial. Candidate files may be marked unknown.")) : ""}</p>
 			<ul>${summary}</ul>
 			${sample ? `<table class="table table-bordered table-sm">
 				<thead><tr><th>${__("File")}</th><th>${__("DocType")}</th><th>${__("Migration Status")}</th></tr></thead>

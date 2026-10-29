@@ -7,8 +7,8 @@ Local copies are kept until a separate, administrator-requested cleanup.
 import hashlib
 import mimetypes
 from pathlib import Path
-from uuid import uuid4
 from urllib.parse import quote
+from uuid import uuid4
 
 import frappe
 from frappe import _
@@ -191,8 +191,13 @@ def _scan_local_files():
 		filters={"is_folder": 0},
 		or_filters=[["file_url", "like", "/files/%"], ["file_url", "like", "/private/files/%"]],
 		fields=[
-			"name", "file_name", "file_url", "is_folder", "is_private",
-			"attached_to_doctype", "attached_to_name",
+			"name",
+			"file_name",
+			"file_url",
+			"is_folder",
+			"is_private",
+			"attached_to_doctype",
+			"attached_to_name",
 		],
 		order_by="name asc",
 		limit_page_length=SCAN_LIMIT + 1,
@@ -217,18 +222,22 @@ def _scan_local_files():
 		else:
 			try:
 				status = "eligible" if _local_path(url).is_file() else "missing"
-			except (ValueError, OSError):
+			except ValueError, OSError:
 				status = "missing"
+		if truncated and status == "eligible":
+			status = "unknown"
 		# A full migration rechecks every File sharing the URL, including any outside the scan cap.
 		for ref in refs:
 			status_counts[status] += 1
 			if len(preview) < SCAN_SAMPLE_LIMIT:
-				preview.append({
-					"name": ref.name,
-					"file_name": ref.file_name,
-					"attached_to_doctype": ref.attached_to_doctype,
-					"status": status,
-				})
+				preview.append(
+					{
+						"name": ref.name,
+						"file_name": ref.file_name,
+						"attached_to_doctype": ref.attached_to_doctype,
+						"status": status,
+					}
+				)
 	return {
 		"scanned_records": len(entries),
 		"truncated": truncated,

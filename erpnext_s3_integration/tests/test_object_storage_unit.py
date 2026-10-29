@@ -1,6 +1,7 @@
 import datetime
 import io
 import tempfile
+import time
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -967,6 +968,8 @@ class TestBackupRetention(UnitTestCase):
 				prefix = f"202608{day:02d}_020000-{site_slug}"
 				Path(backup_dir, f"{prefix}-database.sql.gz").touch()
 				Path(backup_dir, f"{prefix}-site_config_backup.json").touch()
+				if day < 4:
+					time.sleep(1.1)
 			with (
 				patch.object(backups, "get_site_path", return_value=backup_dir),
 				patch.object(backups.frappe, "get_system_settings", return_value=3),

@@ -2603,8 +2603,8 @@ msgstr "符合迁移条件"
 msgid "Protected — keep local"
 msgstr "受保护，保留在服务器"
 
-msgid "Unattached / unknown — skipped"
-msgstr "未关联或来源不明，已跳过"
+msgid "Unknown / incomplete — migration rechecks eligibility"
+msgstr "来源不明或预览不完整，迁移任务会重新核验"
 
 msgid "Missing / invalid local path"
 msgstr "本地文件不存在或路径无效"
@@ -2612,8 +2612,8 @@ msgstr "本地文件不存在或路径无效"
 msgid "Previewed {0} File records."
 msgstr "已预览 {0} 条 File 记录。"
 
-msgid "Preview limited; category counts are partial."
-msgstr "预览数量已达上限，各分类统计并非全部记录。"
+msgid "Preview limited; counts are partial. Candidate files may be marked unknown."
+msgstr "预览数量已达上限，统计并非全部记录。候选文件可能标记为未确认。"
 
 msgid "Migration Status"
 msgstr "迁移状态"
