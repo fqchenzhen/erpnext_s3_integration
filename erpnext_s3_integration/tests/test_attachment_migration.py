@@ -708,3 +708,209 @@ class TestAttachmentMigration(UnitTestCase):
 			cleanup_batch(run_token="token")
 			self.assertEqual(log.call_args.args[:3], ("Skipped", "Local Attachment Cleanup Batch", "Start"))
 			self.assertIn("cleaned: 0", log.call_args.kwargs["message"])
+
+	def test_source_change_after_remote_verification_never_switches_file_url(self):
+		with tempfile.TemporaryDirectory() as root:
+			path = Path(root) / "contract.pdf"
+			path.write_bytes(b"original")
+			ref = frappe._dict(
+				name="FILE-1",
+				file_name=path.name,
+				is_folder=0,
+				is_private=0,
+				attached_to_doctype="CRM Lead",
+				attached_to_name="LEAD-1",
+			)
+			service = SimpleNamespace(profile=SimpleNamespace(name="Profile", prefix="prefix"))
+			with (
+				patch("erpnext_s3_integration.attachment_migration._migration_refs", return_value=[ref]),
+				patch("erpnext_s3_integration.attachment_migration.frappe.db.exists", return_value=True),
+				patch(
+					"erpnext_s3_integration.attachment_migration.get_storage_target",
+					return_value=StorageTarget.OBJECT_STORAGE,
+				),
+				patch("erpnext_s3_integration.attachment_migration._local_path", return_value=path),
+				patch(
+					"erpnext_s3_integration.attachment_migration._ensure_remote_file",
+					side_effect=lambda *_args: path.write_bytes(b"modified"),
+				),
+				patch("erpnext_s3_integration.attachment_migration._replace_linked_attach_fields") as linked,
+				patch("erpnext_s3_integration.attachment_migration.frappe.db.set_value") as set_value,
+			):
+				with self.assertRaisesRegex(ValueError, "Local file changed during migration"):
+					_migrate_url("/files/contract.pdf", service)
+				linked.assert_not_called()
+				set_value.assert_not_called()
+
+	def test_source_replaced_with_symlink_after_remote_check_is_rejected(self):
+		with tempfile.TemporaryDirectory() as root, tempfile.TemporaryDirectory() as outside:
+			path = Path(root) / "contract.pdf"
+			path.write_bytes(b"original")
+			replacement = Path(outside) / "replacement.pdf"
+			replacement.write_bytes(b"original")
+			ref = frappe._dict(
+				name="FILE-1",
+				file_name=path.name,
+				is_folder=0,
+				is_private=0,
+				attached_to_doctype="CRM Deal",
+				attached_to_name="DEAL-1",
+			)
+			service = SimpleNamespace(profile=SimpleNamespace(name="Profile", prefix="prefix"))
+
+			def swap_to_symlink(*_args):
+				path.unlink()
+				path.symlink_to(replacement)
+
+			with (
+				patch("erpnext_s3_integration.attachment_migration._migration_refs", return_value=[ref]),
+				patch("erpnext_s3_integration.attachment_migration.frappe.db.exists", return_value=True),
+				patch(
+					"erpnext_s3_integration.attachment_migration.get_storage_target",
+					return_value=StorageTarget.OBJECT_STORAGE,
+				),
+				patch("frappe.get_site_path", return_value=root),
+				patch(
+					"erpnext_s3_integration.attachment_migration._ensure_remote_file",
+					side_effect=swap_to_symlink,
+				),
+				patch("erpnext_s3_integration.attachment_migration.frappe.db.set_value") as set_value,
+			):
+				with self.assertRaisesRegex(ValueError, "Symlinked attachment"):
+					_migrate_url("/files/contract.pdf", service)
+				set_value.assert_not_called()
+
+	def test_encoded_comment_reference_prevents_local_cleanup(self):
+		refs = [frappe._dict(attached_to_doctype="CRM Lead", attached_to_name="LEAD-1")]
+		seen = []
+
+		def has_reference(doctype, filters):
+			seen.append((doctype, filters["content"][1]))
+			return doctype == "Comment" and "%20" in filters["content"][1]
+
+		with patch(
+			"erpnext_s3_integration.attachment_migration.frappe.db.exists",
+			side_effect=has_reference,
+		):
+			self.assertTrue(_has_related_content_reference(refs, "/files/contract copy.pdf"))
+		self.assertEqual(
+			seen,
+			[
+				("Comment", "%/files/contract copy.pdf%"),
+				("Comment", "%/files/contract%20copy.pdf%"),
+			],
+		)
+
+	def test_missing_local_copy_recovers_after_db_write_failure(self):
+		with tempfile.TemporaryDirectory() as root:
+			path = Path(root) / "attachment.pdf"
+			payload = b"verified original content"
+			path.write_bytes(payload)
+			digest = hashlib.md5(payload, usedforsecurity=False).hexdigest()
+			ref = frappe._dict(
+				name="FILE-1",
+				file_url="/s3/attachment.pdf",
+				file_size=len(payload),
+				object_storage_profile="Test Profile",
+				object_storage_key=f"attachments/public/aa/bb/{digest}",
+				object_storage_migrated_at=add_days(now_datetime(), -8),
+				object_storage_local_cleaned_at=None,
+				attached_to_doctype="CRM Deal",
+				attached_to_name="DEAL-1",
+			)
+			backend = SimpleNamespace(
+				head=lambda key: SimpleNamespace(size=len(payload)),
+				get=lambda key: io.BytesIO(payload),
+			)
+			service = SimpleNamespace(backend=backend)
+			with (
+				patch("erpnext_s3_integration.attachment_migration.frappe.db.exists", return_value=False),
+				patch("erpnext_s3_integration.attachment_migration.frappe.get_all", return_value=[ref]),
+				patch("erpnext_s3_integration.attachment_migration._linked_attach_fields", return_value=[]),
+				patch(
+					"erpnext_s3_integration.attachment_migration._has_related_content_reference",
+					return_value=False,
+				),
+				patch("erpnext_s3_integration.attachment_migration._local_path", return_value=path),
+				patch("erpnext_s3_integration.attachment_migration.ObjectStorageService", return_value=service),
+				patch(
+					"erpnext_s3_integration.attachment_migration.frappe.db.set_value",
+					side_effect=[RuntimeError("DB write failed"), None],
+				) as set_value,
+			):
+				with self.assertRaisesRegex(RuntimeError, "DB write failed"):
+					_cleanup_url("/files/attachment.pdf")
+				self.assertFalse(path.exists())
+				self.assertTrue(_cleanup_url("/files/attachment.pdf"))
+				self.assertFalse(path.exists())
+				self.assertEqual(set_value.call_count, 2)
+
+	def test_missing_copy_without_known_original_size_is_not_marked_clean(self):
+		with tempfile.TemporaryDirectory() as root:
+			path = Path(root) / "missing.pdf"
+			digest = hashlib.md5(b"original", usedforsecurity=False).hexdigest()
+			ref = frappe._dict(
+				name="FILE-1",
+				file_url="/s3/attachment.pdf",
+				file_size=None,
+				object_storage_profile="Test Profile",
+				object_storage_key=f"attachments/public/aa/bb/{digest}",
+				object_storage_migrated_at=add_days(now_datetime(), -8),
+				object_storage_local_cleaned_at=None,
+				attached_to_doctype="CRM Lead",
+				attached_to_name="LEAD-1",
+			)
+			with (
+				patch("erpnext_s3_integration.attachment_migration.frappe.db.exists", return_value=False),
+				patch("erpnext_s3_integration.attachment_migration.frappe.get_all", return_value=[ref]),
+				patch("erpnext_s3_integration.attachment_migration._linked_attach_fields", return_value=[]),
+				patch(
+					"erpnext_s3_integration.attachment_migration._has_related_content_reference",
+					return_value=False,
+				),
+				patch("erpnext_s3_integration.attachment_migration._local_path", return_value=path),
+				patch("erpnext_s3_integration.attachment_migration.ObjectStorageService") as service,
+				patch("erpnext_s3_integration.attachment_migration.frappe.db.set_value") as set_value,
+			):
+				self.assertFalse(_cleanup_url("/files/missing.pdf"))
+				service.assert_not_called()
+				set_value.assert_not_called()
+
+	def test_missing_copy_with_mismatched_remote_content_stays_pending(self):
+		with tempfile.TemporaryDirectory() as root:
+			path = Path(root) / "missing.pdf"
+			payload = b"verified original"
+			digest = hashlib.md5(payload, usedforsecurity=False).hexdigest()
+			ref = frappe._dict(
+				name="FILE-1",
+				file_url="/s3/attachment.pdf",
+				file_size=len(payload),
+				object_storage_profile="Test Profile",
+				object_storage_key=f"attachments/public/aa/bb/{digest}",
+				object_storage_migrated_at=add_days(now_datetime(), -8),
+				object_storage_local_cleaned_at=None,
+				attached_to_doctype="CRM Lead",
+				attached_to_name="LEAD-1",
+			)
+			backend = SimpleNamespace(
+				head=lambda key: SimpleNamespace(size=len(payload)),
+				get=lambda key: io.BytesIO(b"x" * len(payload)),
+			)
+			with (
+				patch("erpnext_s3_integration.attachment_migration.frappe.db.exists", return_value=False),
+				patch("erpnext_s3_integration.attachment_migration.frappe.get_all", return_value=[ref]),
+				patch("erpnext_s3_integration.attachment_migration._linked_attach_fields", return_value=[]),
+				patch(
+					"erpnext_s3_integration.attachment_migration._has_related_content_reference",
+					return_value=False,
+				),
+				patch("erpnext_s3_integration.attachment_migration._local_path", return_value=path),
+				patch(
+					"erpnext_s3_integration.attachment_migration.ObjectStorageService",
+					return_value=SimpleNamespace(backend=backend),
+				),
+				patch("erpnext_s3_integration.attachment_migration.frappe.db.set_value") as set_value,
+			):
+				with self.assertRaisesRegex(ValueError, "content verification failed"):
+					_cleanup_url("/files/missing.pdf")
+				set_value.assert_not_called()

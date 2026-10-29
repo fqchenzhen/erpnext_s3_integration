@@ -6,6 +6,7 @@ Local copies are kept until a separate, administrator-requested cleanup.
 
 import hashlib
 import mimetypes
+import re
 from pathlib import Path
 from urllib.parse import quote
 from uuid import uuid4
@@ -30,6 +31,7 @@ CLEANUP_JOB = "erpnext_s3_integration.attachment_migration.cleanup_batch"
 CLEANUP_REF_FIELDS = [
 	"name",
 	"file_url",
+	"file_size",
 	"object_storage_profile",
 	"object_storage_key",
 	"object_storage_migrated_at",
@@ -357,6 +359,10 @@ def _replace_attachment_comment_urls(refs, old_url, new_url):
 
 def _has_related_content_reference(refs, url):
 	"""Detect old URLs in related Comment or Communication bodies before local deletion."""
+	url_variants = [url]
+	encoded = quote(url, safe="/:")
+	if encoded != url:
+		url_variants.append(encoded)
 	seen = set()
 	for ref in refs:
 		doctype, name = ref.attached_to_doctype, ref.attached_to_name
@@ -364,15 +370,16 @@ def _has_related_content_reference(refs, url):
 			continue
 		seen.add((doctype, name))
 		for content_doctype in ("Comment", "Communication"):
-			if frappe.db.exists(
-				content_doctype,
-				{
-					"reference_doctype": doctype,
-					"reference_name": name,
-					"content": ["like", f"%{url}%"],
-				},
-			):
-				return True
+			for candidate in url_variants:
+				if frappe.db.exists(
+					content_doctype,
+					{
+						"reference_doctype": doctype,
+						"reference_name": name,
+						"content": ["like", f"%{candidate}%"],
+					},
+				):
+					return True
 	return False
 
 
@@ -393,6 +400,9 @@ def _migrate_url(url, service):
 	digest, size = _md5(path)
 	key = generate_object_key(digest, is_private, service.profile.prefix)
 	_ensure_remote_file(path, service, key, digest, size, refs[0].file_name)
+	# Recheck the source after remote verification, before changing any references.
+	if _local_path(url) != path or _md5(path) != (digest, size):
+		raise ValueError("Local file changed during migration")
 	new_url = build_object_url(key, refs[0].file_name)
 	_replace_linked_attach_fields(refs, url, new_url)
 	_replace_attachment_comment_urls(refs, url, new_url)
@@ -570,13 +580,24 @@ def _cleanup_url(url):
 	if _linked_attach_fields(refs, url) or _has_related_content_reference(refs, url):
 		return False
 	path = _local_path(url)
-	if not path.is_file():
-		# Missing copy is not a reason to change OSS-backed File records.
-		return False
-	digest, size = _md5(path)
 	key = refs[0].object_storage_key
-	if key.rsplit("/", 1)[-1] != digest:
-		raise ValueError("Local copy changed since migration")
+	missing_copy = not path.is_file()
+	if missing_copy:
+		# Recover when unlink succeeded but the DB transaction did not commit.
+		# Only trust the hash in our content-addressed key and recorded File sizes.
+		if path.exists() or path.is_symlink():
+			return False
+		digest = key.rsplit("/", 1)[-1]
+		sizes = {ref.file_size for ref in refs}
+		if not re.fullmatch(r"[0-9a-f]{32}", digest) or len(sizes) != 1:
+			return False
+		size = sizes.pop()
+		if not isinstance(size, int) or size < 0:
+			return False
+	else:
+		digest, size = _md5(path)
+		if key.rsplit("/", 1)[-1] != digest:
+			raise ValueError("Local copy changed since migration")
 	service = ObjectStorageService(refs[0].object_storage_profile, require_enabled=False)
 	_verify_remote(service, key, digest, size)
 	# Recheck after the network round trip; the local copy or its references can change meanwhile.
@@ -602,9 +623,15 @@ def _cleanup_url(url):
 		current_path = _local_path(url)
 	except ValueError:
 		return False
-	if current_path != path or not current_path.is_file() or _md5(current_path) != (digest, size):
+	if current_path != path:
 		return False
-	current_path.unlink()
+	if missing_copy:
+		if current_path.exists() or current_path.is_symlink():
+			return False
+	elif not current_path.is_file() or _md5(current_path) != (digest, size):
+		return False
+	if not missing_copy:
+		current_path.unlink()
 	cleaned_at = now_datetime()
 	for ref in refs:
 		frappe.db.set_value(
