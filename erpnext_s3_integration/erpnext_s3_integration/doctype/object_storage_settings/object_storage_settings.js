@@ -128,7 +128,7 @@ function style_migration_dialog(dialog) {
 		"border-radius": "var(--border-radius-md)",
 	});
 	$root.find(".object-storage-migration-metric strong").css("font-size", "1.5rem");
-	const columns = "minmax(0, 54fr) minmax(0, 26fr) minmax(0, 20fr)";
+	const columns = "minmax(0, 54fr) minmax(78px, 26fr) minmax(84px, 20fr)";
 	$root.find(".object-storage-migration-table").css({
 		border: "1px solid var(--border-color)",
 		"border-radius": "var(--border-radius-md)",
