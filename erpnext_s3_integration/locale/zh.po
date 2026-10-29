@@ -2623,3 +2623,27 @@ msgstr "确定将符合条件的本地附件迁移至 OSS？未关联或来源�
 
 msgid "Another attachment migration or cleanup is already running."
 msgstr "当前已有附件迁移或清理任务在运行。"
+
+msgid "Eligible"
+msgstr "可迁移"
+
+msgid "Keep local"
+msgstr "保留本地"
+
+msgid "Review"
+msgstr "待核验"
+
+msgid "Missing"
+msgstr "文件缺失"
+
+msgid "Migration queued. Already migrated files are not scanned; only eligible local files are processed. Review S3 Sync Log for results."
+msgstr "迁移已加入队列。已成功迁移的文件不会重复扫描，仅处理符合条件的本地文件。请在 S3 Sync Log 查看处理结果。"
+
+msgid "No eligible local attachments found. Nothing was queued."
+msgstr "当前没有符合条件的本地附件，因此没有创建迁移任务。"
+
+msgid "Cleanup request queued, not completed. Finished batches are summarized in S3 Sync Log even when nothing is deleted."
+msgstr "清理请求已加入队列，尚未完成。处理结束后，即使没有删除任何文件，也会在 S3 Sync Log 中记录批次汇总。"
+
+msgid "Skipped"
+msgstr "已跳过"

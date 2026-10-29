@@ -457,6 +457,9 @@ def get_local_migration_status():
 def start_local_migration():
 	_require_manager()
 	_service()
+	scan = _scan_local_files()
+	if not scan["truncated"] and not scan["counts"]["eligible"]:
+		return {"queued": False, "no_eligible": True}
 	token = _acquire_transfer_lock()
 	if not token:
 		return {"queued": False, "running": True}
@@ -480,6 +483,7 @@ def migrate_batch(start_after="", run_token=None):
 		_finish_transfer_lock(run_token)
 		raise
 	seen = set()
+	migrated = failed = skipped = 0
 	for entry in entries:
 		if entry.file_url in seen:
 			continue
@@ -489,10 +493,20 @@ def migrate_batch(start_after="", run_token=None):
 			result = _migrate_url(entry.file_url, service)
 		except Exception as exc:
 			frappe.db.rollback(save_point="attachment_migration_entry")
+			failed += 1
 			_log("Failed", "Attachment Migration", entry.file_url, message=str(exc))
 		else:
 			if result:
+				migrated += 1
 				_log("Success", "Attachment Migration", entry.file_url, key=result[0], size=result[1])
+			else:
+				skipped += 1
+	_log(
+		"Failed" if failed else ("Success" if migrated else "Skipped"),
+		"Attachment Migration Batch",
+		start_after or "Start",
+		message=f"Source URLs: {len(seen)}; migrated: {migrated}; skipped: {skipped}; failed: {failed}.",
+	)
 	if len(entries) == BATCH_SIZE:
 		frappe.enqueue(
 			MIGRATION_JOB,
@@ -627,6 +641,7 @@ def cleanup_batch(start_after="", run_token=None):
 		_finish_transfer_lock(run_token)
 		raise
 	seen = set()
+	cleaned_count = failed = skipped = 0
 	for entry in entries:
 		url = entry.object_storage_source_url
 		if url in seen:
@@ -637,10 +652,23 @@ def cleanup_batch(start_after="", run_token=None):
 			cleaned = _cleanup_url(url)
 		except Exception as exc:
 			frappe.db.rollback(save_point="attachment_cleanup_entry")
+			failed += 1
 			_log("Failed", "Local Attachment Cleanup", url, message=str(exc))
 		else:
 			if cleaned:
+				cleaned_count += 1
 				_log("Success", "Local Attachment Cleanup", url)
+			else:
+				skipped += 1
+	_log(
+		"Failed" if failed else ("Success" if cleaned_count else "Skipped"),
+		"Local Attachment Cleanup Batch",
+		start_after or "Start",
+		message=(
+			f"Source URLs: {len(seen)}; cleaned: {cleaned_count}; skipped: {skipped}; failed: {failed}. "
+			"Skipped copies may still be in the 7-day grace period or have active references."
+		),
+	)
 	if len(entries) == BATCH_SIZE:
 		frappe.enqueue(
 			CLEANUP_JOB,

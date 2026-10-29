@@ -56,30 +56,46 @@ async function scan_local_attachments() {
 	const { message } = await frappe.call({ method: attachment_migration_api + "get_local_migration_status", type: "GET" });
 	const scan = message.migration_scan;
 	const categories = [
-		["eligible", __("Eligible for migration")],
-		["protected", __("Protected — keep local")],
-		["unknown", __("Unknown / incomplete — migration rechecks eligibility")],
-		["missing", __("Missing / invalid local path")],
+		["eligible", __("Eligible"), __("Eligible for migration")],
+		["protected", __("Keep local"), __("Protected — keep local")],
+		["unknown", __("Review"), __("Unknown / incomplete — migration rechecks eligibility")],
+		["missing", __("Missing"), __("Missing / invalid local path")],
 	];
-	const summary = categories.map(([key, label]) =>
-		`<li>${escape_html(label)}: <strong>${scan.counts[key]}</strong></li>`
+	const metrics = categories.map(([key, label, description]) =>
+		`<div class="object-storage-migration-metric" title="${escape_html(description)}">
+			<span class="text-muted">${escape_html(label)}</span>
+			<strong>${scan.counts[key]}</strong>
+		</div>`
 	).join("");
-	const sample = scan.sample.map((file) =>
-		`<tr><td>${escape_html(file.file_name || file.name)}</td><td>${escape_html(file.attached_to_doctype || "-")}</td><td>${escape_html(categories.find(([key]) => key === file.status)[1])}</td></tr>`
-	).join("");
-	frappe.msgprint({
+	const rows = scan.sample.map((file) => {
+		const [, label, description] = categories.find(([key]) => key === file.status);
+		return `<tr>
+			<td class="object-storage-migration-filename" title="${escape_html(file.file_name || file.name)}">${escape_html(file.file_name || file.name)}</td>
+			<td>${escape_html(file.attached_to_doctype || "-")}</td>
+			<td title="${escape_html(description)}">${escape_html(label)}</td>
+		</tr>`;
+	}).join("");
+	const dialog = new frappe.ui.Dialog({
 		title: __("Local Attachment Migration"),
-		message: `
-			<p>${escape_html(__("{0} local File records; {1} migrated records awaiting local cleanup. Cleanup has a minimum {2}-day grace period.", [
-				message.local_file_records, message.pending_cleanup_records, message.cleanup_grace_days,
-			]))}</p>
-			<p>${escape_html(__("Previewed {0} File records.", [scan.scanned_records]))} ${scan.truncated ? escape_html(__("Preview limited; counts are partial. Candidate files may be marked unknown.")) : ""}</p>
-			<ul>${summary}</ul>
-			${sample ? `<table class="table table-bordered table-sm">
-				<thead><tr><th>${__("File")}</th><th>${__("DocType")}</th><th>${__("Migration Status")}</th></tr></thead>
-				<tbody>${sample}</tbody></table>` : ""}
-		`,
+		size: "large",
+		fields: [{ fieldname: "migration_preview", fieldtype: "HTML" }],
 	});
+	dialog.$wrapper.addClass("object-storage-migration-dialog");
+	dialog.fields_dict.migration_preview.$wrapper.html(`
+		<p class="text-muted">${escape_html(__("{0} local File records; {1} migrated records awaiting local cleanup. Cleanup has a minimum {2}-day grace period.", [
+			message.local_file_records, message.pending_cleanup_records, message.cleanup_grace_days,
+		]))}</p>
+		<div class="object-storage-migration-metrics">${metrics}</div>
+		<p class="text-muted">${escape_html(__("Previewed {0} File records.", [scan.scanned_records]))}
+			${scan.truncated ? escape_html(__("Preview limited; counts are partial. Candidate files may be marked unknown.")) : ""}</p>
+		${rows ? `<div class="object-storage-migration-table-scroll">
+			<table class="table table-bordered">
+				<thead><tr><th>${__("File")}</th><th>${__("DocType")}</th><th>${__("Migration Status")}</th></tr></thead>
+				<tbody>${rows}</tbody>
+			</table>
+		</div>` : ""}
+	`);
+	dialog.show();
 }
 
 function migrate_local_attachments() {
@@ -87,8 +103,10 @@ function migrate_local_attachments() {
 		async () => {
 			const { message } = await frappe.call({ method: attachment_migration_api + "start_local_migration", type: "POST" });
 			frappe.msgprint(message.queued
-				? __("Attachment migration queued. Review S3 Sync Log for results.")
-				: __("Another attachment migration or cleanup is already running."));
+				? __("Migration queued. Already migrated files are not scanned; only eligible local files are processed. Review S3 Sync Log for results.")
+				: message.no_eligible
+					? __("No eligible local attachments found. Nothing was queued.")
+					: __("Another attachment migration or cleanup is already running."));
 		});
 }
 
@@ -101,7 +119,7 @@ function clean_local_attachments() {
 				args: { confirm: 1 },
 			});
 			frappe.msgprint(message.queued
-				? __("Local cleanup queued. Review S3 Sync Log for results.")
+				? __("Cleanup request queued, not completed. Finished batches are summarized in S3 Sync Log even when nothing is deleted.")
 				: __("Another attachment migration or cleanup is already running."));
 		});
 }

@@ -24,7 +24,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Success\nFailed"
+   "options": "Success\nFailed\nSkipped"
   },
   {
    "fieldname": "operation",

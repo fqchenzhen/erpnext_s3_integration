@@ -592,9 +592,13 @@ class TestAttachmentMigration(UnitTestCase):
 
 	@patch("erpnext_s3_integration.attachment_migration._require_manager")
 	@patch("erpnext_s3_integration.attachment_migration._service")
+	@patch(
+		"erpnext_s3_integration.attachment_migration._scan_local_files",
+		return_value={"truncated": False, "counts": {"eligible": 1}},
+	)
 	@patch("erpnext_s3_integration.attachment_migration._acquire_transfer_lock", return_value=None)
 	@patch("erpnext_s3_integration.attachment_migration.frappe.enqueue")
-	def test_shared_lock_blocks_overlapping_transfer_jobs(self, enqueue, _lock, _service, _manager):
+	def test_shared_lock_blocks_overlapping_transfer_jobs(self, enqueue, _lock, _scan, _service, _manager):
 		self.assertEqual(start_local_migration(), {"queued": False, "running": True})
 		self.assertEqual(start_local_cleanup(confirm=1), {"queued": False, "running": True})
 		enqueue.assert_not_called()
@@ -641,3 +645,66 @@ class TestAttachmentMigration(UnitTestCase):
 
 		self.assertIsNone(frappe.cache().get(key))
 		self.assertFalse(_renew_transfer_lock(token))
+
+	def test_no_eligible_files_does_not_queue_migration(self):
+		with (
+			patch("erpnext_s3_integration.attachment_migration._require_manager"),
+			patch("erpnext_s3_integration.attachment_migration._service"),
+			patch(
+				"erpnext_s3_integration.attachment_migration._scan_local_files",
+				return_value={"truncated": False, "counts": {"eligible": 0}},
+			),
+			patch("erpnext_s3_integration.attachment_migration._acquire_transfer_lock") as lock,
+			patch("erpnext_s3_integration.attachment_migration.frappe.enqueue") as enqueue,
+		):
+			self.assertEqual(start_local_migration(), {"queued": False, "no_eligible": True})
+			lock.assert_not_called()
+			enqueue.assert_not_called()
+
+	def test_truncated_preview_does_not_block_migration(self):
+		with (
+			patch("erpnext_s3_integration.attachment_migration._require_manager"),
+			patch("erpnext_s3_integration.attachment_migration._service"),
+			patch(
+				"erpnext_s3_integration.attachment_migration._scan_local_files",
+				return_value={"truncated": True, "counts": {"eligible": 0}},
+			),
+			patch("erpnext_s3_integration.attachment_migration._acquire_transfer_lock", return_value="token"),
+			patch("erpnext_s3_integration.attachment_migration.frappe.enqueue") as enqueue,
+		):
+			self.assertEqual(start_local_migration(), {"queued": True})
+			enqueue.assert_called_once()
+
+	def test_cleanup_skips_are_recorded_in_sync_log(self):
+		with (
+			patch("erpnext_s3_integration.attachment_migration._renew_transfer_lock", return_value=True),
+			patch(
+				"erpnext_s3_integration.attachment_migration._cleanup_entries",
+				return_value=[frappe._dict(name="F-1", object_storage_source_url="/files/recent.pdf")],
+			),
+			patch("erpnext_s3_integration.attachment_migration._cleanup_url", return_value=False),
+			patch("erpnext_s3_integration.attachment_migration.frappe.db.savepoint"),
+			patch("erpnext_s3_integration.attachment_migration._log") as log,
+			patch("erpnext_s3_integration.attachment_migration._finish_transfer_lock"),
+		):
+			cleanup_batch(run_token="token")
+			log.assert_called_once_with(
+				"Skipped",
+				"Local Attachment Cleanup Batch",
+				"Start",
+				message=(
+					"Source URLs: 1; cleaned: 0; skipped: 1; failed: 0. "
+					"Skipped copies may still be in the 7-day grace period or have active references."
+				),
+			)
+
+	def test_empty_cleanup_still_records_batch_result(self):
+		with (
+			patch("erpnext_s3_integration.attachment_migration._renew_transfer_lock", return_value=True),
+			patch("erpnext_s3_integration.attachment_migration._cleanup_entries", return_value=[]),
+			patch("erpnext_s3_integration.attachment_migration._log") as log,
+			patch("erpnext_s3_integration.attachment_migration._finish_transfer_lock"),
+		):
+			cleanup_batch(run_token="token")
+			self.assertEqual(log.call_args.args[:3], ("Skipped", "Local Attachment Cleanup Batch", "Start"))
+			self.assertIn("cleaned: 0", log.call_args.kwargs["message"])
