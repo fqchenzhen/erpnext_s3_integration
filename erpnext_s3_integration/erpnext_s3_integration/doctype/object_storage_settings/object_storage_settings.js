@@ -95,7 +95,62 @@ async function scan_local_attachments() {
 			</table>
 		</div>` : ""}
 	`);
+	style_migration_dialog(dialog);
 	dialog.show();
+}
+
+// Keep the migration preview usable even when the Desk stylesheet is stale.
+function style_migration_dialog(dialog) {
+	const $root = dialog.$wrapper;
+	$root.find(".modal-dialog").css("max-width", "min(920px, calc(100vw - 2rem))");
+	$root.find(".modal-body").css({
+		"max-height": "calc(100vh - 10rem)",
+		"overflow-y": "auto",
+	});
+	$root.find(".object-storage-migration-metrics").css({
+		display: "grid",
+		"grid-template-columns": "repeat(auto-fit, minmax(105px, 1fr))",
+		gap: "0.75rem",
+		margin: "1rem 0",
+	});
+	$root.find(".object-storage-migration-metric").css({
+		display: "flex",
+		"flex-direction": "column",
+		gap: "0.25rem",
+		padding: "0.75rem",
+		border: "1px solid var(--border-color)",
+		"border-radius": "var(--border-radius-md)",
+	});
+	$root.find(".object-storage-migration-metric strong").css("font-size", "1.5rem");
+	$root.find(".object-storage-migration-table-scroll").css({
+		"max-height": "min(430px, 48vh)",
+		overflow: "auto",
+		"scrollbar-gutter": "stable",
+		border: "1px solid var(--border-color)",
+		"border-radius": "var(--border-radius-md)",
+	});
+	$root.find(".object-storage-migration-table-scroll .table").css({
+		width: "100%",
+		"margin-bottom": 0,
+		"table-layout": "fixed",
+	});
+	$root.find(".object-storage-migration-table-scroll th").css({
+		position: "sticky",
+		top: 0,
+		"z-index": 1,
+		background: "var(--card-bg)",
+	});
+	$root.find(".object-storage-migration-table-scroll th:first-child").css("width", "54%");
+	$root.find(".object-storage-migration-table-scroll th:nth-child(2)").css("width", "26%");
+	$root.find(".object-storage-migration-filename").css({
+		overflow: "hidden",
+		"text-overflow": "ellipsis",
+		"white-space": "nowrap",
+	});
+	$root.find(".object-storage-migration-table-scroll td").css({
+		"vertical-align": "middle",
+		"overflow-wrap": "anywhere",
+	});
 }
 
 function migrate_local_attachments() {
