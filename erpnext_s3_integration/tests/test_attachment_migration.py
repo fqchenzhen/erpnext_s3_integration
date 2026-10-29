@@ -498,7 +498,7 @@ class TestAttachmentMigration(UnitTestCase):
 		]
 		with (
 			patch("erpnext_s3_integration.attachment_migration.SCAN_LIMIT", 2),
-			patch("erpnext_s3_integration.attachment_migration.frappe.get_all", return_value=rows),
+			patch("erpnext_s3_integration.attachment_migration.frappe.get_all", return_value=rows) as get_all,
 			patch("erpnext_s3_integration.attachment_migration.frappe.db.exists", return_value=True),
 			patch(
 				"erpnext_s3_integration.attachment_migration.get_storage_target",
@@ -514,6 +514,8 @@ class TestAttachmentMigration(UnitTestCase):
 		self.assertEqual(preview["counts"]["eligible"], 0)
 		self.assertEqual(preview["counts"]["unknown"], 2)
 		self.assertTrue(all(item["status"] == "unknown" for item in preview["sample"]))
+		self.assertEqual(get_all.call_args.kwargs["limit"], 3)
+		self.assertNotIn("limit_page_length", get_all.call_args.kwargs)
 
 	@patch("erpnext_s3_integration.attachment_migration._require_manager")
 	@patch("erpnext_s3_integration.attachment_migration._service")

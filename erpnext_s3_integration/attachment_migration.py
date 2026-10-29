@@ -200,7 +200,7 @@ def _scan_local_files():
 			"attached_to_name",
 		],
 		order_by="name asc",
-		limit_page_length=SCAN_LIMIT + 1,
+		limit=SCAN_LIMIT + 1,
 	)
 	truncated = len(entries) > SCAN_LIMIT
 	entries = entries[:SCAN_LIMIT]
@@ -256,7 +256,7 @@ def _local_files(start_after=""):
 		],
 		fields=["name", "file_url"],
 		order_by="name asc",
-		limit_page_length=BATCH_SIZE,
+		limit=BATCH_SIZE,
 	)
 
 
@@ -516,7 +516,7 @@ def _cleanup_entries(start_after=""):
 		},
 		fields=["name", "object_storage_source_url"],
 		order_by="name asc",
-		limit_page_length=BATCH_SIZE,
+		limit=BATCH_SIZE,
 	)
 
 
@@ -528,7 +528,7 @@ def _cleanup_url(url):
 		"File",
 		filters={"object_storage_source_url": url},
 		fields=CLEANUP_REF_FIELDS,
-		limit_page_length=10000,
+		limit=10000,
 	)
 	if not refs or len(refs) == 10000:
 		return False
@@ -572,7 +572,7 @@ def _cleanup_url(url):
 		"File",
 		filters={"object_storage_source_url": url},
 		fields=CLEANUP_REF_FIELDS,
-		limit_page_length=10000,
+		limit=10000,
 	)
 	if len(current_refs) != len(refs) or len(current_refs) == 10000:
 		return False
