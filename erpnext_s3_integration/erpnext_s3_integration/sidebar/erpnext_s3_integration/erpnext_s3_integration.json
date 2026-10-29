@@ -1,0 +1,50 @@
+{
+ "app": "erpnext_s3_integration",
+ "creation": "2026-10-07 08:38:59.163324",
+ "docstatus": 0,
+ "doctype": "Sidebar",
+ "header_icon": "database",
+ "idx": 0,
+ "items": [
+  {
+   "added": 0,
+   "child": 0,
+   "collapsible": 1,
+   "hidden": 0,
+   "icon": "setting",
+   "indent": 0,
+   "is_default_module": 0,
+   "keep_closed": 0,
+   "label": "Object Storage Settings",
+   "link_to": "Object Storage Settings",
+   "link_type": "DocType",
+   "open_in_new_tab": 1,
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "added": 0,
+   "child": 0,
+   "collapsible": 1,
+   "hidden": 0,
+   "icon": "file-text",
+   "indent": 0,
+   "is_default_module": 0,
+   "keep_closed": 0,
+   "label": "Sync Log",
+   "link_to": "S3 Sync Log",
+   "link_type": "DocType",
+   "open_in_new_tab": 1,
+   "show_arrow": 0,
+   "type": "Link"
+  }
+ ],
+ "merged_from": "[\"ERPNext S3 Integration\"]",
+ "modified": "2026-10-29 08:50:36.516336",
+ "modified_by": "Administrator",
+ "module": "ERPNext S3 Integration",
+ "name": "ERPNext S3 Integration",
+ "owner": "Administrator",
+ "standard": 1,
+ "title": "ERPNext S3 Integration"
+}
