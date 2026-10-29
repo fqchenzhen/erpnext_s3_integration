@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from unittest.mock import ANY, MagicMock, patch
 
 import frappe
-from frappe.tests import UnitTestCase
+from frappe.tests import IntegrationTestCase, UnitTestCase
 from frappe.utils import add_days, now_datetime
 
 from erpnext_s3_integration.attachment_migration import (
@@ -39,6 +39,19 @@ from erpnext_s3_integration.storage_policy import StorageTarget
 
 
 class TestAttachmentMigration(UnitTestCase):
+	def _cleanup_ref(self, name, key, size, attached_to_name):
+		return frappe._dict(
+			name=name,
+			file_url="/s3/object",
+			file_size=size,
+			object_storage_profile="Test Profile",
+			object_storage_key=key,
+			object_storage_migrated_at=add_days(now_datetime(), -8),
+			object_storage_local_cleaned_at=None,
+			attached_to_doctype="CRM Lead",
+			attached_to_name=attached_to_name,
+		)
+
 	def test_crm_rules_keep_active_attachments_online(self):
 		policies = {rule.doctype: rule.policy for rule in DEFAULT_RULES}
 		self.assertEqual(policies["CRM Lead"], "business-online")
@@ -832,7 +845,9 @@ class TestAttachmentMigration(UnitTestCase):
 					return_value=False,
 				),
 				patch("erpnext_s3_integration.attachment_migration._local_path", return_value=path),
-				patch("erpnext_s3_integration.attachment_migration.ObjectStorageService", return_value=service),
+				patch(
+					"erpnext_s3_integration.attachment_migration.ObjectStorageService", return_value=service
+				),
 				patch(
 					"erpnext_s3_integration.attachment_migration.frappe.db.set_value",
 					side_effect=[RuntimeError("DB write failed"), None],
@@ -844,6 +859,111 @@ class TestAttachmentMigration(UnitTestCase):
 				self.assertTrue(_cleanup_url("/files/attachment.pdf"))
 				self.assertFalse(path.exists())
 				self.assertEqual(set_value.call_count, 2)
+
+	def test_shared_missing_copy_recovery_retries_after_database_update_failure(self):
+		with tempfile.TemporaryDirectory() as root:
+			path = Path(root) / "shared.pdf"
+			payload = b"shared original content"
+			digest = hashlib.md5(payload, usedforsecurity=False).hexdigest()
+			key = f"attachments/public/aa/bb/{digest}"
+			refs = [
+				self._cleanup_ref(f"FILE-{index}", key, len(payload), f"LEAD-{index}") for index in (1, 2)
+			]
+			backend = SimpleNamespace(
+				head=lambda key: SimpleNamespace(size=len(payload)),
+				get=lambda key: io.BytesIO(payload),
+			)
+			service = SimpleNamespace(backend=backend)
+			entries = [frappe._dict(name="FILE-1", object_storage_source_url="/files/shared.pdf")]
+			with (
+				patch("erpnext_s3_integration.attachment_migration._renew_transfer_lock", return_value=True),
+				patch("erpnext_s3_integration.attachment_migration._cleanup_entries", return_value=entries),
+				patch("erpnext_s3_integration.attachment_migration._finish_transfer_lock"),
+				patch("erpnext_s3_integration.attachment_migration._log"),
+				patch("erpnext_s3_integration.attachment_migration.frappe.db.savepoint"),
+				patch("erpnext_s3_integration.attachment_migration.frappe.db.rollback") as rollback,
+				patch("erpnext_s3_integration.attachment_migration.frappe.db.exists", return_value=False),
+				patch("erpnext_s3_integration.attachment_migration.frappe.get_all", return_value=refs),
+				patch("erpnext_s3_integration.attachment_migration._linked_attach_fields", return_value=[]),
+				patch(
+					"erpnext_s3_integration.attachment_migration._has_related_content_reference",
+					return_value=False,
+				),
+				patch("erpnext_s3_integration.attachment_migration._local_path", return_value=path),
+				patch(
+					"erpnext_s3_integration.attachment_migration.ObjectStorageService", return_value=service
+				),
+				patch(
+					"erpnext_s3_integration.attachment_migration.frappe.db.set_value",
+					side_effect=[None, RuntimeError("DB write failed"), None, None],
+				) as set_value,
+			):
+				cleanup_batch(run_token="token")
+				self.assertFalse(path.exists())
+				rollback.assert_called_once_with(save_point="attachment_cleanup_entry")
+				cleanup_batch(run_token="token")
+
+			self.assertEqual(set_value.call_count, 4)
+		self.assertEqual([call.args[1] for call in set_value.call_args_list], ["FILE-1", "FILE-2"] * 2)
+
+	def test_missing_copy_reappearing_during_remote_verification_stays_pending(self):
+		with tempfile.TemporaryDirectory() as root:
+			path = Path(root) / "reappeared.pdf"
+			payload = b"verified original content"
+			digest = hashlib.md5(payload, usedforsecurity=False).hexdigest()
+			ref = self._cleanup_ref("FILE-1", f"attachments/public/aa/bb/{digest}", len(payload), "LEAD-1")
+
+			def restore_local_copy(*_args):
+				path.write_bytes(payload)
+
+			with (
+				patch("erpnext_s3_integration.attachment_migration.frappe.db.exists", return_value=False),
+				patch(
+					"erpnext_s3_integration.attachment_migration.frappe.get_all",
+					side_effect=[[ref], [ref]],
+				),
+				patch("erpnext_s3_integration.attachment_migration._linked_attach_fields", return_value=[]),
+				patch(
+					"erpnext_s3_integration.attachment_migration._has_related_content_reference",
+					return_value=False,
+				),
+				patch("erpnext_s3_integration.attachment_migration._local_path", return_value=path),
+				patch("erpnext_s3_integration.attachment_migration.ObjectStorageService"),
+				patch(
+					"erpnext_s3_integration.attachment_migration._verify_remote",
+					side_effect=restore_local_copy,
+				),
+				patch("erpnext_s3_integration.attachment_migration.frappe.db.set_value") as set_value,
+			):
+				self.assertFalse(_cleanup_url("/files/reappeared.pdf"))
+
+			self.assertEqual(path.read_bytes(), payload)
+		set_value.assert_not_called()
+
+	def test_missing_shared_copy_with_conflicting_file_sizes_stays_pending(self):
+		with tempfile.TemporaryDirectory() as root:
+			path = Path(root) / "shared.pdf"
+			digest = hashlib.md5(b"original", usedforsecurity=False).hexdigest()
+			key = f"attachments/public/aa/bb/{digest}"
+			refs = [
+				self._cleanup_ref(f"FILE-{index}", key, size, f"LEAD-{index}")
+				for index, size in ((1, 8), (2, 9))
+			]
+			with (
+				patch("erpnext_s3_integration.attachment_migration.frappe.db.exists", return_value=False),
+				patch("erpnext_s3_integration.attachment_migration.frappe.get_all", return_value=refs),
+				patch("erpnext_s3_integration.attachment_migration._linked_attach_fields", return_value=[]),
+				patch(
+					"erpnext_s3_integration.attachment_migration._has_related_content_reference",
+					return_value=False,
+				),
+				patch("erpnext_s3_integration.attachment_migration._local_path", return_value=path),
+				patch("erpnext_s3_integration.attachment_migration.ObjectStorageService") as service,
+				patch("erpnext_s3_integration.attachment_migration.frappe.db.set_value") as set_value,
+			):
+				self.assertFalse(_cleanup_url("/files/shared.pdf"))
+				service.assert_not_called()
+				set_value.assert_not_called()
 
 	def test_missing_copy_without_known_original_size_is_not_marked_clean(self):
 		with tempfile.TemporaryDirectory() as root:
@@ -914,3 +1034,96 @@ class TestAttachmentMigration(UnitTestCase):
 				with self.assertRaisesRegex(ValueError, "content verification failed"):
 					_cleanup_url("/files/missing.pdf")
 				set_value.assert_not_called()
+
+
+class IntegrationTestAttachmentCleanup(IntegrationTestCase):
+	def test_failed_shared_metadata_update_rolls_back_and_retry_recovers(self):
+		payload = b"shared rollback recovery"
+		digest = hashlib.md5(payload, usedforsecurity=False).hexdigest()
+		token = frappe.generate_hash(length=10)
+		file_name = f"cleanup-{token}.pdf"
+		source_url = f"/files/{file_name}"
+		object_key = f"attachments/public/aa/bb/{digest}"
+		object_url = f"/s3/{object_key}/{file_name}"
+		profile = frappe.get_doc(
+			{
+				"doctype": "Object Storage Profile",
+				"profile_name": f"Cleanup Test {token}",
+				"provider": "AWS S3",
+				"purpose": "Attachments",
+				"environment": "Development",
+				"credential_mode": "Default Credential Chain",
+				"region": "us-east-1",
+				"bucket": "cleanup-test-only",
+			}
+		).insert(ignore_permissions=True)
+		path = Path(frappe.get_site_path("public", "files", file_name))
+		path.write_bytes(payload)
+		file_names = []
+		try:
+			for _index in (1, 2):
+				file_doc = frappe.get_doc(
+					{
+						"doctype": "File",
+						"file_name": file_name,
+						"file_url": object_url,
+						"is_private": 0,
+						"file_size": len(payload),
+						"attached_to_doctype": "User",
+						"attached_to_name": "Administrator",
+						"object_storage_profile": profile.name,
+						"object_storage_key": object_key,
+						"object_storage_source_url": source_url,
+						"object_storage_migrated_at": add_days(now_datetime(), -8),
+					}
+				).insert(ignore_permissions=True)
+				file_names.append(file_doc.name)
+
+			backend = SimpleNamespace(
+				head=lambda key: SimpleNamespace(size=len(payload)),
+				get=lambda key: io.BytesIO(payload),
+			)
+			service = SimpleNamespace(backend=backend)
+			entries = [frappe._dict(name=file_names[0], object_storage_source_url=source_url)]
+			original_set_value = frappe.db.set_value
+			updates = 0
+
+			def fail_on_second_file_update(*args, **kwargs):
+				nonlocal updates
+				updates += 1
+				if updates == 2:
+					raise RuntimeError("Injected File metadata failure")
+				return original_set_value(*args, **kwargs)
+
+			with (
+				patch("erpnext_s3_integration.attachment_migration._renew_transfer_lock", return_value=True),
+				patch("erpnext_s3_integration.attachment_migration._cleanup_entries", return_value=entries),
+				patch("erpnext_s3_integration.attachment_migration._finish_transfer_lock"),
+				patch("erpnext_s3_integration.attachment_migration._log"),
+				patch(
+					"erpnext_s3_integration.attachment_migration.ObjectStorageService", return_value=service
+				),
+				patch("frappe.db.set_value", side_effect=fail_on_second_file_update),
+			):
+				cleanup_batch(run_token="token")
+
+			self.assertFalse(path.exists())
+			for name in file_names:
+				self.assertIsNone(frappe.db.get_value("File", name, "object_storage_local_cleaned_at"))
+
+			with (
+				patch("erpnext_s3_integration.attachment_migration._renew_transfer_lock", return_value=True),
+				patch("erpnext_s3_integration.attachment_migration._cleanup_entries", return_value=entries),
+				patch("erpnext_s3_integration.attachment_migration._finish_transfer_lock"),
+				patch("erpnext_s3_integration.attachment_migration._log"),
+				patch(
+					"erpnext_s3_integration.attachment_migration.ObjectStorageService", return_value=service
+				),
+			):
+				cleanup_batch(run_token="token")
+
+			self.assertFalse(path.exists())
+			for name in file_names:
+				self.assertTrue(frappe.db.get_value("File", name, "object_storage_local_cleaned_at"))
+		finally:
+			path.unlink(missing_ok=True)
