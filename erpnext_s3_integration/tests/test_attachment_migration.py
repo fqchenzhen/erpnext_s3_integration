@@ -5,7 +5,7 @@ import io
 import tempfile
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 import frappe
 from frappe.tests import UnitTestCase
@@ -45,6 +45,67 @@ class TestAttachmentMigration(UnitTestCase):
 		self.assertEqual(policies["CRM Deal"], "business-online")
 		self.assertNotIn("Communication", policies)
 		self.assertNotIn("Comment", policies)
+
+	def test_valid_crm_lead_and_deal_files_migrate_without_deleting_local_source(self):
+		for doctype, name in (("CRM Lead", "LEAD-1"), ("CRM Deal", "DEAL-1")):
+			with self.subTest(doctype=doctype), tempfile.TemporaryDirectory() as root:
+				path = Path(root) / "contract.pdf"
+				payload = b"verified attachment"
+				path.write_bytes(payload)
+				digest = hashlib.md5(payload, usedforsecurity=False).hexdigest()
+				url = "/files/contract.pdf"
+				new_url = "/s3/attachments/public/contract.pdf"
+				key = f"attachments/public/{digest}"
+				ref = frappe._dict(
+					name=f"FILE-{name}",
+					file_name=path.name,
+					is_folder=0,
+					is_private=0,
+					attached_to_doctype=doctype,
+					attached_to_name=name,
+				)
+				service = SimpleNamespace(profile=SimpleNamespace(name="Profile", prefix="attachments"))
+
+				with (
+					patch("erpnext_s3_integration.attachment_migration._migration_refs", return_value=[ref]),
+					patch("erpnext_s3_integration.attachment_migration.frappe.db.exists", return_value=True),
+					patch(
+						"erpnext_s3_integration.attachment_migration.get_storage_target",
+						return_value=StorageTarget.OBJECT_STORAGE,
+					),
+					patch("erpnext_s3_integration.attachment_migration._local_path", return_value=path),
+					patch("erpnext_s3_integration.attachment_migration._ensure_remote_file") as ensure_remote,
+					patch(
+						"erpnext_s3_integration.attachment_migration.generate_object_key",
+						return_value=key,
+					),
+					patch(
+						"erpnext_s3_integration.attachment_migration.build_object_url",
+						return_value=new_url,
+					),
+					patch("erpnext_s3_integration.attachment_migration._replace_linked_attach_fields"),
+					patch("erpnext_s3_integration.attachment_migration._replace_attachment_comment_urls"),
+					patch("erpnext_s3_integration.attachment_migration.frappe.db.set_value") as set_value,
+					patch("erpnext_s3_integration.attachment_migration.frappe.clear_document_cache"),
+					patch("erpnext_s3_integration.attachment_migration.frappe.enqueue"),
+				):
+					self.assertEqual(_migrate_url(url, service), (key, len(payload)))
+
+				ensure_remote.assert_called_once_with(path, service, key, digest, len(payload), path.name)
+				set_value.assert_called_once_with(
+					"File",
+					ref.name,
+					{
+						"file_url": new_url,
+						"object_storage_profile": "Profile",
+						"object_storage_key": key,
+						"object_storage_source_url": url,
+						"object_storage_migrated_at": ANY,
+						"content_hash": None,
+					},
+					update_modified=False,
+				)
+				self.assertTrue(path.is_file())
 
 	def test_migration_source_url_length_fits_frappe_limit(self):
 		fields = {field["fieldname"]: field for field in _custom_fields()["File"]}
@@ -157,6 +218,18 @@ class TestAttachmentMigration(UnitTestCase):
 	def test_cleanup_never_removes_a_still_referenced_local_url(self, exists):
 		self.assertFalse(_cleanup_url("/files/still-used.pdf"))
 		exists.assert_called_once_with("File", {"file_url": "/files/still-used.pdf"})
+
+	def test_cleanup_respects_seven_day_grace_period(self):
+		ref = frappe._dict(
+			object_storage_migrated_at=add_days(now_datetime(), -6),
+			object_storage_local_cleaned_at=None,
+			attached_to_doctype="CRM Lead",
+		)
+		with (
+			patch("erpnext_s3_integration.attachment_migration.frappe.db.exists", return_value=False),
+			patch("erpnext_s3_integration.attachment_migration.frappe.get_all", return_value=[ref]),
+		):
+			self.assertFalse(_cleanup_url("/files/recent.pdf"))
 
 	def test_cleanup_keeps_source_changed_during_remote_verification(self):
 		with tempfile.TemporaryDirectory() as root:
