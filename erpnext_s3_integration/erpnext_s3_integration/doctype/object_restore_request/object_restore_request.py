@@ -191,6 +191,9 @@ def get_permission_query_conditions(user: str | None = None) -> str:
 
 def has_permission(doc, ptype: str | None = None, user: str | None = None, debug: bool = False) -> bool:
 	user = user or frappe.session.user
+	if ptype == "create":
+		# Frappe checks Create before before_insert populates requested_by and verifies File Read.
+		return can_request_restore(user)
 	is_system_manager = "System Manager" in frappe.get_roles(user)
 	if not is_system_manager and (doc.requested_by != user or not can_request_restore(user)):
 		return False

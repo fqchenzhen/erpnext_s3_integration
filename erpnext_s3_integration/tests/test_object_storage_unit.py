@@ -152,6 +152,31 @@ class TestRestoreRoleAccess(UnitTestCase):
 		self.assertIn("OSR-1", condition)
 		self.assertNotIn("requested_by", condition)
 
+	def test_create_permission_does_not_require_request_owner_before_insert(self):
+		from erpnext_s3_integration.erpnext_s3_integration.doctype.object_restore_request.object_restore_request import (
+			has_permission,
+		)
+
+		settings = frappe._dict(
+			allow_self_service_restore=1,
+			restore_roles=[frappe._dict(role="Stock Manager")],
+		)
+		doc = frappe._dict(file="FILE-1", requested_by=None)
+		with (
+			patch.object(frappe, "get_roles", return_value=["Stock Manager"]),
+			patch.object(frappe, "get_single", return_value=settings),
+			patch.object(frappe, "has_permission") as file_permission,
+		):
+			self.assertTrue(has_permission(doc, ptype="create", user="warehouse@example.test"))
+			file_permission.assert_not_called()
+
+		with patch.object(frappe, "get_roles", return_value=["Sales User"]):
+			self.assertFalse(has_permission(doc, ptype="create", user="sales@example.test"))
+
+		settings.allow_self_service_restore = 0
+		with patch.object(frappe, "get_roles", return_value=["Stock Manager"]):
+			self.assertFalse(has_permission(doc, ptype="create", user="warehouse@example.test"))
+
 	def test_restore_request_document_access_requires_file_read_for_every_role(self):
 		from erpnext_s3_integration.erpnext_s3_integration.doctype.object_restore_request.object_restore_request import (
 			has_permission,
@@ -222,18 +247,47 @@ class TestFileStatusPermission(UnitTestCase):
 		)
 		get_value.return_value = frappe._dict(
 			name="OSR-OWN",
+			file="FILE-1",
 			requested_by="warehouse@example.test",
 			status="Restoring",
 		)
 		with (
 			patch.dict(frappe.session, {"user": "warehouse@example.test"}),
 			patch.object(frappe, "get_single", return_value=settings),
+			patch.object(frappe, "get_doc", return_value=frappe._dict(doctype="File", name="FILE-1")),
+			patch.object(frappe, "has_permission", return_value=True),
 		):
 			result = get_file_status("key")
 
 		self.assertEqual(result["restore_request"]["name"], "OSR-OWN")
 		self.assertFalse(result["can_request_restore"])
 		self.assertNotIn("requested_by", result["restore_request"])
+
+	def test_status_hides_request_for_inaccessible_shared_file(self):
+		settings, file_doc = self._archive_status_fixtures()
+		with (
+			patch.dict(frappe.session, {"user": "warehouse@example.test"}),
+			patch.object(frappe, "get_roles", return_value=["Stock Manager"]),
+			patch.object(frappe, "get_single", return_value=settings),
+			patch("erpnext_s3_integration.api._authorized_file", return_value=file_doc),
+			patch("erpnext_s3_integration.api.ObjectStorageService") as service_class,
+			patch.object(
+				frappe.db,
+				"get_value",
+				return_value=frappe._dict(
+					name="OSR-SHARED", file="FILE-OTHER", requested_by="warehouse@example.test"
+				),
+			),
+			patch.object(frappe, "get_doc", return_value=frappe._dict(doctype="File", name="FILE-OTHER")),
+			patch.object(frappe, "has_permission", return_value=False),
+		):
+			service_class.return_value.backend.head.return_value = ObjectInfo(
+				"key", 10, "text/plain", storage_class="Archive"
+			)
+			result = get_file_status("key")
+
+		self.assertIsNone(result["restore_request"])
+		self.assertFalse(result["can_request_restore"])
 
 	@staticmethod
 	def _archive_status_fixtures():
@@ -250,6 +304,70 @@ class TestFileStatusPermission(UnitTestCase):
 			is_private=1,
 		)
 		return settings, file_doc
+
+
+class TestDownloadFilePermission(UnitTestCase):
+	def test_rejected_file_does_not_block_another_eligible_reference(self):
+		denied = frappe._dict(name="FILE-DENIED", object_storage_key="key")
+		allowed = frappe._dict(name="FILE-ALLOWED", object_storage_key="key")
+		docs = {
+			"FILE-DENIED": frappe._dict(name="FILE-DENIED", object_storage_key="key", is_private=1),
+			"FILE-ALLOWED": frappe._dict(name="FILE-ALLOWED", object_storage_key="key", is_private=1),
+		}
+		for doc in docs.values():
+			doc.is_downloadable = lambda: True
+		with (
+			patch.dict(frappe.session, {"user": "warehouse@example.test"}),
+			patch.object(frappe, "get_all", return_value=[denied, allowed]) as get_all,
+			patch.object(frappe, "get_doc", side_effect=lambda **data: docs[data["name"]]),
+			patch.object(
+				frappe, "has_permission", side_effect=lambda *a, **k: k["doc"].name == "FILE-ALLOWED"
+			),
+		):
+			self.assertEqual(_authorized_file("key").name, "FILE-ALLOWED")
+			get_all.assert_called_once()
+
+	def test_denied_file_read_rejects_download(self):
+		file_data = frappe._dict(name="FILE-1", object_storage_key="key")
+		file_doc = frappe._dict(name="FILE-1", object_storage_key="key", is_private=1)
+		file_doc.is_downloadable = lambda: True
+		with (
+			patch.dict(frappe.session, {"user": "warehouse@example.test"}),
+			patch.object(frappe, "get_all", side_effect=[[file_data], [], []]),
+			patch.object(frappe, "get_doc", return_value=file_doc),
+			patch.object(frappe, "has_permission", return_value=False),
+		):
+			with self.assertRaises(frappe.PermissionError):
+				_authorized_file("key")
+
+	def test_guest_public_download_checks_all_file_permission_hooks(self):
+		file_data = frappe._dict(name="FILE-1", object_storage_key="key")
+		file_doc = frappe._dict(name="FILE-1", object_storage_key="key", is_private=0)
+		file_doc.is_downloadable = lambda: True
+		with (
+			patch.dict(frappe.session, {"user": "Guest"}),
+			patch.object(frappe, "get_all", return_value=[file_data]),
+			patch.object(frappe, "get_doc", return_value=file_doc),
+			patch("erpnext_s3_integration.api.has_controller_permissions", return_value=False) as hooks,
+		):
+			with self.assertRaises(frappe.PermissionError):
+				_authorized_file("key")
+			hooks.assert_called()
+			hooks.return_value = True
+			self.assertEqual(_authorized_file("key").name, "FILE-1")
+
+	def test_object_key_lookup_also_checks_cross_app_file_access(self):
+		file_data = frappe._dict(name="FILE-1", object_storage_key="key")
+		file_doc = frappe._dict(name="FILE-1", object_storage_key="key", is_private=1)
+		file_doc.is_downloadable = lambda: True
+		with (
+			patch.dict(frappe.session, {"user": "warehouse@example.test"}),
+			patch.object(frappe, "get_all", side_effect=[[], [file_data]]),
+			patch.object(frappe, "get_doc", return_value=file_doc),
+			patch.object(frappe, "has_permission", return_value=True) as read_permission,
+		):
+			self.assertEqual(_authorized_file("key").name, "FILE-1")
+			read_permission.assert_called_once()
 
 
 class TestKeysAndRanges(UnitTestCase):

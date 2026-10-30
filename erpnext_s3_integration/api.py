@@ -4,7 +4,7 @@ from urllib.parse import quote
 
 import frappe
 from frappe import _
-from frappe.core.doctype.file.utils import find_file_by_url
+from frappe.permissions import has_controller_permissions
 from frappe.utils.response import FORCE_DOWNLOAD_EXTENSIONS
 from werkzeug.http import http_date
 from werkzeug.wrappers import Response
@@ -79,17 +79,21 @@ def get_file_status(key: str) -> dict:
 					"object_key": object_key,
 					"status": ["in", ["Requested", "Restoring", "Ready"]],
 				},
-				["name", "requested_by", "status", "requested_at", "last_checked_at", "expires_at"],
+				["name", "file", "requested_by", "status", "requested_at", "last_checked_at", "expires_at"],
 				as_dict=True,
 			)
-			if active_request and (is_system_manager or active_request.requested_by == user):
-				request = {
-					fieldname: active_request.get(fieldname)
-					for fieldname in ("name", "status", "requested_at", "last_checked_at", "expires_at")
-				}
+			if active_request:
 				can_restore = False
-			elif active_request:
-				can_restore = False
+				if is_system_manager or active_request.requested_by == user:
+					try:
+						request_file = frappe.get_doc("File", active_request.file)
+						except frappe.DoesNotExistError:
+						request_file = None
+					if request_file and frappe.has_permission("File", "read", doc=request_file, user=user):
+						request = {
+							fieldname: active_request.get(fieldname)
+							for fieldname in ("name", "status", "requested_at", "last_checked_at", "expires_at")
+						}
 	return {
 		"file": file_doc.name,
 		"file_name": file_doc.file_name,
@@ -168,17 +172,24 @@ def _restore_required_response(file_doc) -> Response:
 
 
 def _authorized_file(key: str):
-	file_doc = find_file_by_url(object_url_from_identifier(key))
-	if file_doc and file_doc.object_storage_key:
-		return file_doc
-
-	for object_key in object_key_candidates(key):
-		files = frappe.get_all("File", filters={"object_storage_key": object_key}, fields="*")
-		for file_data in files:
+	lookups = [{"file_url": object_url_from_identifier(key)}]
+	lookups.extend({"object_storage_key": object_key} for object_key in object_key_candidates(key))
+	for filters in lookups:
+		for file_data in frappe.get_all("File", filters=filters, fields="*"):
 			file_doc = frappe.get_doc(doctype="File", **file_data)
-			if file_doc.is_downloadable():
+			if file_doc.object_storage_key and _can_download_file(file_doc):
 				return file_doc
 	raise frappe.PermissionError()
+
+
+def _can_download_file(file_doc) -> bool:
+	if not file_doc.is_downloadable():
+		return False
+	user = frappe.session.user
+	# Public files remain accessible to guests, while every installed File permission hook can deny access.
+	if user == "Guest" and not file_doc.is_private:
+		return has_controller_permissions(file_doc, "read", user=user)
+	return bool(frappe.has_permission("File", "read", doc=file_doc, user=user))
 
 
 def _restore_estimate(storage_class: str | None) -> str:
