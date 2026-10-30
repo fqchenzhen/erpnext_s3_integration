@@ -153,20 +153,46 @@ def can_request_restore(user: str, settings=None) -> bool:
 
 def get_permission_query_conditions(user: str | None = None) -> str:
 	user = user or frappe.session.user
-	if "System Manager" in frappe.get_roles(user):
+	if user == "Administrator":
 		return ""
-	if not can_request_restore(user):
+
+	is_system_manager = "System Manager" in frappe.get_roles(user)
+	if not is_system_manager and not can_request_restore(user):
 		return "1=0"
-	return "`tabObject Restore Request`.`requested_by` = {0}".format(frappe.db.escape(user))
+
+	filters = {} if is_system_manager else {"requested_by": user}
+	requests = frappe.get_all("Object Restore Request", filters=filters, fields=["name", "file"])
+	file_names = {request.file for request in requests if request.file}
+	if not file_names:
+		return "1=0"
+
+	files = frappe.get_all("File", filters={"name": ["in", list(file_names)]}, fields="*")
+	readable_files = set()
+	for file_data in files:
+		file_doc = frappe.get_doc({"doctype": "File", **file_data})
+		if frappe.has_permission("File", "read", doc=file_doc, user=user):
+			readable_files.add(file_doc.name)
+
+	request_names = [
+		frappe.db.escape(request.name, percent=False)
+		for request in requests
+		if request.file in readable_files
+	]
+	if not request_names:
+		return "1=0"
+
+	condition = "`tabObject Restore Request`.`name` in ({0})".format(", ".join(request_names))
+	if not is_system_manager:
+		condition += " and `tabObject Restore Request`.`requested_by` = {0}".format(
+			frappe.db.escape(user, percent=False)
+		)
+	return condition
 
 
-def has_permission(doc, user: str | None = None, permission_type: str | None = None) -> bool:
+def has_permission(doc, ptype: str | None = None, user: str | None = None, debug: bool = False) -> bool:
 	user = user or frappe.session.user
-	if "System Manager" in frappe.get_roles(user):
-		return True
-	if doc.requested_by and doc.requested_by != user:
-		return False
-	if not can_request_restore(user):
+	is_system_manager = "System Manager" in frappe.get_roles(user)
+	if not is_system_manager and (doc.requested_by != user or not can_request_restore(user)):
 		return False
 	if not doc.file:
 		return False

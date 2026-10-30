@@ -10,7 +10,7 @@ from botocore.exceptions import ClientError
 from frappe.tests import UnitTestCase
 from werkzeug.wsgi import FileWrapper
 
-from erpnext_s3_integration.api import _authorized_file, parse_range_header
+from erpnext_s3_integration.api import _authorized_file, get_file_status, parse_range_header
 from erpnext_s3_integration.file_hooks import (
 	_delete_if_unreferenced,
 	generate_object_key,
@@ -92,7 +92,7 @@ class TestRestoreRoleAccess(UnitTestCase):
 		):
 			self.assertEqual(get_permission_query_conditions("sales@example.test"), "1=0")
 
-	def test_allowed_role_lists_only_own_restore_requests(self):
+	def test_allowed_role_lists_only_own_requests_for_readable_files(self):
 		from erpnext_s3_integration.erpnext_s3_integration.doctype.object_restore_request.object_restore_request import (
 			get_permission_query_conditions,
 		)
@@ -102,22 +102,154 @@ class TestRestoreRoleAccess(UnitTestCase):
 			restore_roles=[frappe._dict(role="Stock Manager")],
 		)
 		user = "warehouse@example.test"
+		requests = [
+			frappe._dict(name="OSR-1", file="FILE-1"),
+			frappe._dict(name="OSR-2", file="FILE-2"),
+		]
+		files = [frappe._dict(name="FILE-1"), frappe._dict(name="FILE-2")]
+		file_docs = {
+			"FILE-1": frappe._dict(doctype="File", name="FILE-1"),
+			"FILE-2": frappe._dict(doctype="File", name="FILE-2"),
+		}
 		with (
 			patch.object(frappe, "get_roles", return_value=["Stock Manager"]),
 			patch.object(frappe, "get_single", return_value=settings),
+			patch.object(frappe, "get_all", side_effect=[requests, files]),
+			patch.object(
+				frappe,
+				"get_doc",
+				side_effect=lambda values: file_docs[values["name"]],
+			),
+			patch.object(
+				frappe,
+				"has_permission",
+				side_effect=lambda _doctype, _ptype, doc, user: doc.name == "FILE-1",
+			),
 		):
 			condition = get_permission_query_conditions(user)
 
+		self.assertIn("OSR-1", condition)
+		self.assertNotIn("OSR-2", condition)
 		self.assertIn("requested_by", condition)
 		self.assertIn(frappe.db.escape(user), condition)
 
-	def test_system_manager_can_list_restore_requests_without_configured_roles(self):
+	def test_system_manager_lists_only_requests_for_readable_files(self):
 		from erpnext_s3_integration.erpnext_s3_integration.doctype.object_restore_request.object_restore_request import (
 			get_permission_query_conditions,
 		)
 
-		with patch.object(frappe, "get_roles", return_value=["System Manager"]):
-			self.assertEqual(get_permission_query_conditions("admin@example.test"), "")
+		requests = [frappe._dict(name="OSR-1", file="FILE-1")]
+		files = [frappe._dict(name="FILE-1")]
+		file_doc = frappe._dict(doctype="File", name="FILE-1")
+		with (
+			patch.object(frappe, "get_roles", return_value=["System Manager"]),
+			patch.object(frappe, "get_all", side_effect=[requests, files]),
+			patch.object(frappe, "get_doc", return_value=file_doc),
+			patch.object(frappe, "has_permission", return_value=True),
+		):
+			condition = get_permission_query_conditions("admin@example.test")
+
+		self.assertIn("OSR-1", condition)
+		self.assertNotIn("requested_by", condition)
+
+	def test_restore_request_document_access_requires_file_read_for_every_role(self):
+		from erpnext_s3_integration.erpnext_s3_integration.doctype.object_restore_request.object_restore_request import (
+			has_permission,
+		)
+
+		settings = frappe._dict(
+			allow_self_service_restore=1,
+			restore_roles=[frappe._dict(role="Stock Manager")],
+		)
+		doc = frappe._dict(requested_by="warehouse@example.test", file="FILE-1")
+		file_doc = frappe._dict(doctype="File", name="FILE-1")
+		with (
+			patch.object(frappe, "get_roles", return_value=["Stock Manager"]),
+			patch.object(frappe, "get_single", return_value=settings),
+			patch.object(frappe, "get_doc", return_value=file_doc),
+			patch.object(frappe, "has_permission", return_value=False),
+		):
+			self.assertFalse(has_permission(doc, user="warehouse@example.test"))
+
+		with (
+			patch.object(frappe, "get_roles", return_value=["System Manager"]),
+			patch.object(frappe, "get_doc", return_value=file_doc),
+			patch.object(frappe, "has_permission", return_value=False),
+		):
+			self.assertFalse(has_permission(doc, user="manager@example.test"))
+
+
+class TestFileStatusPermission(UnitTestCase):
+	@patch("erpnext_s3_integration.api._authorized_file")
+	@patch("erpnext_s3_integration.api.ObjectStorageService")
+	@patch("erpnext_s3_integration.api.frappe.db.get_value")
+	@patch("erpnext_s3_integration.api.frappe.get_roles", return_value=["Stock Manager"])
+	def test_status_hides_another_users_restore_request(
+		self, _get_roles, get_value, service_class, authorized_file
+	):
+		settings, file_doc = self._archive_status_fixtures()
+		authorized_file.return_value = file_doc
+		service_class.return_value.backend.head.return_value = ObjectInfo(
+			"key", 10, "text/plain", storage_class="Archive"
+		)
+		get_value.return_value = frappe._dict(
+			name="OSR-OTHER",
+			requested_by="other@example.test",
+			status="Restoring",
+		)
+		with (
+			patch.dict(frappe.session, {"user": "warehouse@example.test"}),
+			patch.object(frappe, "get_single", return_value=settings),
+		):
+			result = get_file_status("key")
+
+		self.assertIsNone(result["restore_request"])
+		self.assertFalse(result["can_request_restore"])
+		filters = get_value.call_args.args[1]
+		self.assertNotIn("requested_by", filters)
+
+	@patch("erpnext_s3_integration.api._authorized_file")
+	@patch("erpnext_s3_integration.api.ObjectStorageService")
+	@patch("erpnext_s3_integration.api.frappe.db.get_value")
+	@patch("erpnext_s3_integration.api.frappe.get_roles", return_value=["Stock Manager"])
+	def test_status_shows_the_users_own_restore_request(
+		self, _get_roles, get_value, service_class, authorized_file
+	):
+		settings, file_doc = self._archive_status_fixtures()
+		authorized_file.return_value = file_doc
+		service_class.return_value.backend.head.return_value = ObjectInfo(
+			"key", 10, "text/plain", storage_class="Archive"
+		)
+		get_value.return_value = frappe._dict(
+			name="OSR-OWN",
+			requested_by="warehouse@example.test",
+			status="Restoring",
+		)
+		with (
+			patch.dict(frappe.session, {"user": "warehouse@example.test"}),
+			patch.object(frappe, "get_single", return_value=settings),
+		):
+			result = get_file_status("key")
+
+		self.assertEqual(result["restore_request"]["name"], "OSR-OWN")
+		self.assertFalse(result["can_request_restore"])
+		self.assertNotIn("requested_by", result["restore_request"])
+
+	@staticmethod
+	def _archive_status_fixtures():
+		settings = frappe._dict(
+			allow_self_service_restore=1,
+			restore_roles=[frappe._dict(role="Stock Manager")],
+			enable_range_requests=1,
+		)
+		file_doc = frappe._dict(
+			name="FILE-1",
+			file_name="archive.txt",
+			object_storage_key="key",
+			object_storage_profile="Attachments",
+			is_private=1,
+		)
+		return settings, file_doc
 
 
 class TestKeysAndRanges(UnitTestCase):
@@ -341,9 +473,7 @@ class TestSetupDefaults(UnitTestCase):
 	@patch("erpnext_s3_integration.setup.frappe.db.set_single_value")
 	@patch("erpnext_s3_integration.setup.frappe.get_meta")
 	@patch("erpnext_s3_integration.setup.frappe.db.get_singles_dict")
-	def test_missing_single_settings_receive_defaults(
-		self, get_singles_dict, get_meta, set_single_value
-	):
+	def test_missing_single_settings_receive_defaults(self, get_singles_dict, get_meta, set_single_value):
 		from erpnext_s3_integration.setup import _seed_missing_settings_defaults
 
 		get_singles_dict.return_value = {"restore_days": "7"}
@@ -651,9 +781,9 @@ class TestProviderAdapters(UnitTestCase):
 
 		body = NoSizeOSSBody([b"abc", b"defgh", b"ijkl"])
 		oss_client.return_value.get_object.return_value = _alibaba_get_result(body, 12)
-		stream = AlibabaOSSBackend(
-			_profile(provider="Alibaba Cloud OSS", credential_mode="AccessKey")
-		).get("key")
+		stream = AlibabaOSSBackend(_profile(provider="Alibaba Cloud OSS", credential_mode="AccessKey")).get(
+			"key"
+		)
 
 		self.assertEqual(stream.read(0), b"")
 		self.assertEqual(stream.read(8), b"abcdefgh")
@@ -668,9 +798,9 @@ class TestProviderAdapters(UnitTestCase):
 		payload = b"a" * 8_192 + b"b" * 8_192 + b"tail"
 		body = NoSizeOSSBody([payload[:5_000], payload[5_000:12_000], payload[12_000:]])
 		oss_client.return_value.get_object.return_value = _alibaba_get_result(body, len(payload))
-		stream = AlibabaOSSBackend(
-			_profile(provider="Alibaba Cloud OSS", credential_mode="AccessKey")
-		).get("key", (0, len(payload) - 1))
+		stream = AlibabaOSSBackend(_profile(provider="Alibaba Cloud OSS", credential_mode="AccessKey")).get(
+			"key", (0, len(payload) - 1)
+		)
 
 		wrapper = FileWrapper(stream, buffer_size=8_192)
 		self.assertEqual(b"".join(wrapper), payload)
@@ -688,9 +818,9 @@ class TestProviderAdapters(UnitTestCase):
 
 		body = FailingOSSBody()
 		oss_client.return_value.get_object.return_value = _alibaba_get_result(body, 8)
-		stream = AlibabaOSSBackend(
-			_profile(provider="Alibaba Cloud OSS", credential_mode="AccessKey")
-		).get("key")
+		stream = AlibabaOSSBackend(_profile(provider="Alibaba Cloud OSS", credential_mode="AccessKey")).get(
+			"key"
+		)
 
 		with self.assertRaises(ObjectNetworkError):
 			stream.read()
@@ -735,13 +865,9 @@ class TestGuidedSetup(UnitTestCase):
 
 		production = apply_recommended_jakarta_settings("Production")
 		development = apply_recommended_jakarta_settings("Development")
-		self.assertEqual(
-			production["endpoint_url"], "https://oss-ap-southeast-5-internal.aliyuncs.com"
-		)
+		self.assertEqual(production["endpoint_url"], "https://oss-ap-southeast-5-internal.aliyuncs.com")
 		self.assertEqual(production["credential_mode"], "ECS Instance RAM Role")
-		self.assertEqual(
-			development["endpoint_url"], "https://oss-ap-southeast-5.aliyuncs.com"
-		)
+		self.assertEqual(development["endpoint_url"], "https://oss-ap-southeast-5.aliyuncs.com")
 		self.assertEqual(development["credential_mode"], "AccessKey")
 
 	def test_review_confirmations_do_not_change_profile_fingerprint(self):
@@ -956,15 +1082,15 @@ class TestBackupRetention(UnitTestCase):
 			ObjectInfo("prefix/2026-08-10/0900-site_config_backup.json", last_modified=now),
 			ObjectInfo("prefix/2026-08-11/0800-database.sql.gz", last_modified=now),
 			ObjectInfo("prefix/2026-08-11/0800-site_config_backup.json", last_modified=now),
-			ObjectInfo("prefix/2026-08-11/0900-database.sql.gz", last_modified=now + datetime.timedelta(seconds=1)),
+			ObjectInfo(
+				"prefix/2026-08-11/0900-database.sql.gz", last_modified=now + datetime.timedelta(seconds=1)
+			),
 			ObjectInfo(
 				"prefix/2026-08-11/0900-site_config_backup.json",
 				last_modified=now + datetime.timedelta(seconds=1),
 			),
 		]
-		self.assertEqual(
-			cleanup_old_backups(service, "prefix", 2, {"database", "site-config"}), 4
-		)
+		self.assertEqual(cleanup_old_backups(service, "prefix", 2, {"database", "site-config"}), 4)
 		self.assertEqual(
 			{call.args[0] for call in service.backend.delete.call_args_list},
 			{
@@ -989,12 +1115,8 @@ class TestBackupRetention(UnitTestCase):
 			ObjectInfo("prefix/2026-08-11/0900-site_config_backup.json", last_modified=now),
 			ObjectInfo("prefix/2026-08-11/0900-backup_complete.json", last_modified=now),
 		]
-		self.assertEqual(
-			cleanup_old_backups(service, "prefix", 2, {"database", "site-config"}), 1
-		)
-		service.backend.delete.assert_called_once_with(
-			"prefix/2026-08-10/0900-database.sql.gz"
-		)
+		self.assertEqual(cleanup_old_backups(service, "prefix", 2, {"database", "site-config"}), 1)
+		service.backend.delete.assert_called_once_with("prefix/2026-08-10/0900-database.sql.gz")
 
 	def test_database_backup_includes_matching_site_configuration(self):
 		from erpnext_s3_integration.backup_hooks import _paths_from_result
@@ -1069,9 +1191,7 @@ class TestBackupRetention(UnitTestCase):
 	@patch("erpnext_s3_integration.backup_hooks._upload_backup", side_effect=[True, False])
 	@patch("erpnext_s3_integration.backup_hooks.ObjectStorageService")
 	@patch("erpnext_s3_integration.backup_hooks.frappe.get_single")
-	def test_upload_failure_skips_oss_cleanup(
-		self, get_single, _service_class, _upload, cleanup, _log
-	):
+	def test_upload_failure_skips_oss_cleanup(self, get_single, _service_class, _upload, cleanup, _log):
 		from erpnext_s3_integration.backup_hooks import sync_backup_files
 
 		get_single.return_value = self._backup_settings()
@@ -1135,6 +1255,4 @@ class TestBackupRetention(UnitTestCase):
 
 		now = frappe.utils.now_datetime()
 		self.assertEqual(_backup_health(now, 10 * 1024**3, 0)[0], "Warning")
-		self.assertEqual(
-			_backup_health(now - datetime.timedelta(hours=37), 1024, 0)[0], "Critical"
-		)
+		self.assertEqual(_backup_health(now - datetime.timedelta(hours=37), 1024, 0)[0], "Critical")

@@ -62,24 +62,34 @@ def get_file_status(key: str) -> dict:
 		raise frappe.DoesNotExistError()
 	restore_required = _restore_required(info.storage_class, info.restore_status)
 	request = None
-	if restore_required and frappe.session.user != "Guest":
-		request = frappe.db.get_value(
-			"Object Restore Request",
-			{
-				"object_storage_profile": file_doc.object_storage_profile,
-				"object_key": object_key,
-				"status": ["in", ["Requested", "Restoring", "Ready"]],
-			},
-			["name", "status", "requested_at", "last_checked_at", "expires_at"],
-			as_dict=True,
-		)
 	can_restore = False
 	if restore_required and frappe.session.user != "Guest":
 		from erpnext_s3_integration.erpnext_s3_integration.doctype.object_restore_request.object_restore_request import (
 			can_request_restore,
 		)
 
-		can_restore = can_request_restore(frappe.session.user)
+		user = frappe.session.user
+		can_restore = can_request_restore(user)
+		is_system_manager = user == "Administrator" or "System Manager" in frappe.get_roles(user)
+		if can_restore:
+			active_request = frappe.db.get_value(
+				"Object Restore Request",
+				{
+					"object_storage_profile": file_doc.object_storage_profile,
+					"object_key": object_key,
+					"status": ["in", ["Requested", "Restoring", "Ready"]],
+				},
+				["name", "requested_by", "status", "requested_at", "last_checked_at", "expires_at"],
+				as_dict=True,
+			)
+			if active_request and (is_system_manager or active_request.requested_by == user):
+				request = {
+					fieldname: active_request.get(fieldname)
+					for fieldname in ("name", "status", "requested_at", "last_checked_at", "expires_at")
+				}
+				can_restore = False
+			elif active_request:
+				can_restore = False
 	return {
 		"file": file_doc.name,
 		"file_name": file_doc.file_name,

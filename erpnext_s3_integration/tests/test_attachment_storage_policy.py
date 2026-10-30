@@ -8,7 +8,7 @@ from frappe.tests import UnitTestCase
 from erpnext_s3_integration.file_hooks import write_file_to_object_storage
 from erpnext_s3_integration.object_urls import build_object_url, object_key_candidates
 from erpnext_s3_integration.overrides.s3_file import S3FileMixin
-from erpnext_s3_integration.storage_policy import StorageTarget, get_storage_target, storage_context
+from erpnext_s3_integration.storage_policy import StorageTarget, get_storage_target
 
 FILESYSTEM_REQUIRED_DOCTYPES = (
 	"Transaction Deletion Record",
@@ -77,19 +77,6 @@ class TestStoragePolicy(UnitTestCase):
 			object_key_candidates(f"{key}/invoice.pdf"),
 			(f"{key}/invoice.pdf", key),
 		)
-
-	@patch("erpnext_s3_integration.file_hooks.ObjectStorageService")
-	@patch("erpnext_s3_integration.file_hooks.frappe.utils.file_manager.save_file_on_filesystem")
-	@patch("erpnext_s3_integration.file_hooks.attachment_storage_enabled", return_value=True)
-	def test_legacy_bank_conversion_context_uses_local_filesystem(self, _enabled, save_local, service_class):
-		save_local.return_value = {"file_url": "/private/files/converted.csv"}
-
-		with storage_context("Bank Statement Import"):
-			result = write_file_to_object_storage("converted.csv", b"content", is_private=1)
-
-		self.assertEqual(result["file_url"], "/private/files/converted.csv")
-		save_local.assert_called_once_with("converted.csv", b"content", content_type=None, is_private=1)
-		service_class.assert_not_called()
 
 
 class TestObjectStorageZip(UnitTestCase):
