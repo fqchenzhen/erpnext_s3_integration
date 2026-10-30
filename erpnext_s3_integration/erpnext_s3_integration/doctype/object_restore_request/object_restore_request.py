@@ -155,6 +155,8 @@ def get_permission_query_conditions(user: str | None = None) -> str:
 	user = user or frappe.session.user
 	if "System Manager" in frappe.get_roles(user):
 		return ""
+	if not can_request_restore(user):
+		return "1=0"
 	return "`tabObject Restore Request`.`requested_by` = {0}".format(frappe.db.escape(user))
 
 

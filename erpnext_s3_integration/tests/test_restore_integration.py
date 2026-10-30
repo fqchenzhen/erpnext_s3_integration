@@ -72,3 +72,29 @@ class IntegrationTestObjectRestoreRequest(IntegrationTestCase):
 			)
 			with self.assertRaises(frappe.ValidationError):
 				frappe.get_doc({"doctype": "Object Restore Request", "file": self.file.name}).insert()
+
+	def test_disabled_archive_restore_rejects_request_before_object_lookup(self):
+		settings = frappe.get_single("Object Storage Settings")
+		settings.enable_archive_restore = 0
+		settings.save()
+
+		with patch("erpnext_s3_integration.object_storage.service.ObjectStorageService") as service_class:
+			with self.assertRaises(frappe.ValidationError):
+				frappe.get_doc({"doctype": "Object Restore Request", "file": self.file.name}).insert()
+
+		service_class.assert_not_called()
+
+	def test_request_requires_file_read_permission(self):
+		with (
+			patch.object(frappe, "has_permission", return_value=False) as has_permission,
+			patch("erpnext_s3_integration.object_storage.service.ObjectStorageService") as service_class,
+		):
+			with self.assertRaises(frappe.PermissionError):
+				frappe.get_doc({"doctype": "Object Restore Request", "file": self.file.name}).insert()
+
+		has_permission.assert_called_once()
+		doctype, permission_type = has_permission.call_args.args
+		self.assertEqual((doctype, permission_type), ("File", "read"))
+		self.assertEqual(has_permission.call_args.kwargs["doc"].name, self.file.name)
+		self.assertEqual(has_permission.call_args.kwargs["user"], frappe.session.user)
+		service_class.assert_not_called()

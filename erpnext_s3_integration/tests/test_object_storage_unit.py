@@ -77,6 +77,48 @@ class TestRestoreRoleAccess(UnitTestCase):
 		with patch.object(frappe, "get_roles", return_value=["System Manager"]):
 			self.assertTrue(can_request_restore("admin@example.test", settings))
 
+	def test_unlisted_role_cannot_list_restore_requests(self):
+		from erpnext_s3_integration.erpnext_s3_integration.doctype.object_restore_request.object_restore_request import (
+			get_permission_query_conditions,
+		)
+
+		settings = frappe._dict(
+			allow_self_service_restore=1,
+			restore_roles=[frappe._dict(role="Stock Manager")],
+		)
+		with (
+			patch.object(frappe, "get_roles", return_value=["Sales User"]),
+			patch.object(frappe, "get_single", return_value=settings),
+		):
+			self.assertEqual(get_permission_query_conditions("sales@example.test"), "1=0")
+
+	def test_allowed_role_lists_only_own_restore_requests(self):
+		from erpnext_s3_integration.erpnext_s3_integration.doctype.object_restore_request.object_restore_request import (
+			get_permission_query_conditions,
+		)
+
+		settings = frappe._dict(
+			allow_self_service_restore=1,
+			restore_roles=[frappe._dict(role="Stock Manager")],
+		)
+		user = "warehouse@example.test"
+		with (
+			patch.object(frappe, "get_roles", return_value=["Stock Manager"]),
+			patch.object(frappe, "get_single", return_value=settings),
+		):
+			condition = get_permission_query_conditions(user)
+
+		self.assertIn("requested_by", condition)
+		self.assertIn(frappe.db.escape(user), condition)
+
+	def test_system_manager_can_list_restore_requests_without_configured_roles(self):
+		from erpnext_s3_integration.erpnext_s3_integration.doctype.object_restore_request.object_restore_request import (
+			get_permission_query_conditions,
+		)
+
+		with patch.object(frappe, "get_roles", return_value=["System Manager"]):
+			self.assertEqual(get_permission_query_conditions("admin@example.test"), "")
+
 
 class TestKeysAndRanges(UnitTestCase):
 	def test_content_hash_key_does_not_include_filename(self):
