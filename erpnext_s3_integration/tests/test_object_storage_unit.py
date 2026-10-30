@@ -3,7 +3,7 @@ import io
 import tempfile
 import time
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import frappe
 from botocore.exceptions import ClientError
@@ -263,6 +263,62 @@ class TestFileStatusPermission(UnitTestCase):
 		self.assertFalse(result["can_request_restore"])
 		self.assertNotIn("requested_by", result["restore_request"])
 
+	def test_status_shows_system_manager_request_after_file_read(self):
+		settings, file_doc = self._archive_status_fixtures()
+		with (
+			patch.dict(frappe.session, {"user": "manager@example.test"}),
+			patch.object(frappe, "get_roles", return_value=["System Manager"]),
+			patch.object(frappe, "get_single", return_value=settings),
+			patch("erpnext_s3_integration.api._authorized_file", return_value=file_doc),
+			patch("erpnext_s3_integration.api.ObjectStorageService") as service_class,
+			patch.object(
+				frappe.db,
+				"get_value",
+				return_value=frappe._dict(
+					name="OSR-OTHER", file="FILE-1", requested_by="warehouse@example.test", status="Restoring"
+				),
+			),
+			patch.object(frappe, "get_doc", return_value=frappe._dict(doctype="File", name="FILE-1")),
+			patch.object(frappe, "has_permission", return_value=True),
+		):
+			service_class.return_value.backend.head.return_value = ObjectInfo(
+				"key", 10, "text/plain", storage_class="Archive"
+			)
+			result = get_file_status("key")
+
+		self.assertEqual(result["restore_request"]["name"], "OSR-OTHER")
+		self.assertFalse(result["can_request_restore"])
+
+	def test_status_hides_request_when_original_file_was_deleted(self):
+		settings, file_doc = self._archive_status_fixtures()
+		with (
+			patch.dict(frappe.session, {"user": "warehouse@example.test"}),
+			patch.object(frappe, "get_roles", return_value=["Stock Manager"]),
+			patch.object(frappe, "get_single", return_value=settings),
+			patch("erpnext_s3_integration.api._authorized_file", return_value=file_doc),
+			patch("erpnext_s3_integration.api.ObjectStorageService") as service_class,
+			patch.object(
+				frappe.db,
+				"get_value",
+				return_value=frappe._dict(
+					name="OSR-DELETED",
+					file="FILE-DELETED",
+					requested_by="warehouse@example.test",
+					status="Restoring",
+				),
+			),
+			patch.object(frappe, "get_doc", side_effect=frappe.DoesNotExistError),
+			patch.object(frappe, "has_permission") as has_permission,
+		):
+			service_class.return_value.backend.head.return_value = ObjectInfo(
+				"key", 10, "text/plain", storage_class="Archive"
+			)
+			result = get_file_status("key")
+
+		self.assertIsNone(result["restore_request"])
+		self.assertFalse(result["can_request_restore"])
+		has_permission.assert_not_called()
+
 	def test_status_hides_request_for_inaccessible_shared_file(self):
 		settings, file_doc = self._archive_status_fixtures()
 		with (
@@ -356,6 +412,31 @@ class TestDownloadFilePermission(UnitTestCase):
 			hooks.return_value = True
 			self.assertEqual(_authorized_file("key").name, "FILE-1")
 
+	def test_guest_cannot_download_private_file(self):
+		file_data = frappe._dict(name="FILE-1", object_storage_key="key")
+		file_doc = frappe._dict(name="FILE-1", object_storage_key="key", is_private=1)
+		file_doc.is_downloadable = lambda: False
+		with (
+			patch.dict(frappe.session, {"user": "Guest"}),
+			patch.object(frappe, "get_all", return_value=[file_data]),
+			patch.object(frappe, "get_doc", return_value=file_doc),
+			patch("erpnext_s3_integration.api.has_controller_permissions") as hooks,
+		):
+			with self.assertRaises(frappe.PermissionError):
+				_authorized_file("key")
+			hooks.assert_not_called()
+
+	def test_administrator_can_download_authorized_file(self):
+		file_data = frappe._dict(name="FILE-1", object_storage_key="key")
+		file_doc = frappe._dict(name="FILE-1", object_storage_key="key", is_private=1)
+		file_doc.is_downloadable = lambda: True
+		with (
+			patch.dict(frappe.session, {"user": "Administrator"}),
+			patch.object(frappe, "get_all", return_value=[file_data]),
+			patch.object(frappe, "get_doc", return_value=file_doc),
+		):
+			self.assertEqual(_authorized_file("key").name, "FILE-1")
+
 	def test_object_key_lookup_also_checks_cross_app_file_access(self):
 		file_data = frappe._dict(name="FILE-1", object_storage_key="key")
 		file_doc = frappe._dict(name="FILE-1", object_storage_key="key", is_private=1)
@@ -430,13 +511,13 @@ class TestKeysAndRanges(UnitTestCase):
 		register_cleanup.assert_called_once()
 
 	@patch("erpnext_s3_integration.api.ObjectStorageService")
-	@patch("erpnext_s3_integration.api.find_file_by_url")
+	@patch("erpnext_s3_integration.api._authorized_file")
 	@patch("erpnext_s3_integration.api.frappe.get_single")
-	def test_download_response_has_206_and_unicode_filename(self, get_single, find_file, service_class):
+	def test_download_response_has_206_and_unicode_filename(self, get_single, authorized_file, service_class):
 		from erpnext_s3_integration.api import get_file
 
 		get_single.return_value = frappe._dict(enable_range_requests=1)
-		find_file.return_value = frappe._dict(
+		authorized_file.return_value = frappe._dict(
 			file_name="合同.html",
 			name="FILE-1",
 			file_url="/s3/key/合同.html",
@@ -464,20 +545,24 @@ class TestKeysAndRanges(UnitTestCase):
 
 	@patch("erpnext_s3_integration.api.frappe.get_doc")
 	@patch("erpnext_s3_integration.api.frappe.get_all")
-	@patch("erpnext_s3_integration.api.find_file_by_url", return_value=None)
-	def test_legacy_url_resolves_authorized_shared_reference(self, _find_file, get_all, get_doc):
-		get_all.return_value = [{"name": "FILE-1"}]
+	def test_object_key_lookup_resolves_authorized_shared_reference(self, get_all, get_doc):
+		get_all.side_effect = [[], [{"name": "FILE-1"}]]
 		file_doc = frappe._dict(name="FILE-1", object_storage_key="key")
 		file_doc.is_downloadable = MagicMock(return_value=True)
 		get_doc.return_value = file_doc
 
 		self.assertIs(_authorized_file("key"), file_doc)
-		get_all.assert_called_once_with("File", filters={"object_storage_key": "key"}, fields="*")
+		self.assertEqual(
+			get_all.call_args_list,
+			[
+				call("File", filters={"file_url": "/s3/key"}, fields="*"),
+				call("File", filters={"object_storage_key": "key"}, fields="*"),
+			],
+		)
 
 	@patch("erpnext_s3_integration.api.frappe.get_doc")
 	@patch("erpnext_s3_integration.api.frappe.get_all", return_value=[{"name": "FILE-1"}])
-	@patch("erpnext_s3_integration.api.find_file_by_url", return_value=None)
-	def test_legacy_url_rejects_unauthorized_references(self, _find_file, _get_all, get_doc):
+	def test_object_key_lookup_rejects_unauthorized_references(self, _get_all, get_doc):
 		file_doc = frappe._dict(name="FILE-1", object_storage_key="key")
 		file_doc.is_downloadable = MagicMock(return_value=False)
 		get_doc.return_value = file_doc

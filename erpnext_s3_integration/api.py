@@ -87,12 +87,18 @@ def get_file_status(key: str) -> dict:
 				if is_system_manager or active_request.requested_by == user:
 					try:
 						request_file = frappe.get_doc("File", active_request.file)
-						except frappe.DoesNotExistError:
+					except frappe.DoesNotExistError:
 						request_file = None
 					if request_file and frappe.has_permission("File", "read", doc=request_file, user=user):
 						request = {
 							fieldname: active_request.get(fieldname)
-							for fieldname in ("name", "status", "requested_at", "last_checked_at", "expires_at")
+							for fieldname in (
+								"name",
+								"status",
+								"requested_at",
+								"last_checked_at",
+								"expires_at",
+							)
 						}
 	return {
 		"file": file_doc.name,
