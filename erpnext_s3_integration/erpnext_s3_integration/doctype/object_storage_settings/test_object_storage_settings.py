@@ -100,14 +100,14 @@ class IntegrationTestObjectStorageSettings(IntegrationTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			settings.validate()
 
-	def test_attachment_lifecycle_delete_is_disabled_by_default(self):
+	def test_attachment_lifecycle_delete_is_recommended_at_365_days(self):
 		settings = frappe.get_single("Object Storage Settings")
 		settings.enable_attachment_storage = 0
 		settings.enable_backup_storage = 0
 		settings.attachment_lifecycle_ia_days = 30
 		settings.attachment_lifecycle_archive_days = 90
-		settings.attachment_lifecycle_cold_archive_days = 365
-		settings.attachment_lifecycle_delete_days = 0
+		settings.attachment_lifecycle_cold_archive_days = 0
+		settings.attachment_lifecycle_delete_days = 365
 		settings.validate()
 
 	def test_unreviewed_attachment_lifecycle_does_not_block_regular_attachments(self):

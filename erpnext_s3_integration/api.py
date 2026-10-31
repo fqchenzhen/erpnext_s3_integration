@@ -28,7 +28,10 @@ def get_file():
 	service = ObjectStorageService(file_doc.object_storage_profile)
 	info = service.backend.head(object_key)
 	if not info:
-		raise frappe.DoesNotExistError()
+		frappe.throw(
+			_("This attachment is no longer available in object storage. It may have expired."),
+			frappe.DoesNotExistError,
+		)
 	if _restore_required(info.storage_class, info.restore_status):
 		return _restore_required_response(file_doc)
 
@@ -59,7 +62,10 @@ def get_file_status(key: str) -> dict:
 	object_key = file_doc.object_storage_key
 	info = ObjectStorageService(file_doc.object_storage_profile).backend.head(object_key)
 	if not info:
-		raise frappe.DoesNotExistError()
+		frappe.throw(
+			_("This attachment is no longer available in object storage. It may have expired."),
+			frappe.DoesNotExistError,
+		)
 	restore_required = _restore_required(info.storage_class, info.restore_status)
 	request = None
 	can_restore = False

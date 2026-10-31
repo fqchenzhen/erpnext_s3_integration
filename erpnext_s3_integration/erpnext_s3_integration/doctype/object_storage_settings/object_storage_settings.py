@@ -280,10 +280,10 @@ def verify_and_enable_profile(purpose: str, profile_name: str | None = None) -> 
 			"bucket_verification": bucket_result,
 		}
 	if purpose == "Attachments":
-		lifecycle_passed = any(
-			item["code"] == "LIFECYCLE" and item["status"] == "Passed"
-			for item in bucket_result["checks"]
-		)
+		lifecycle_passed = all(
+			any(item["code"] == code and item["status"] == "Passed" for item in bucket_result["checks"])
+			for code in ("LIFECYCLE", "LIFECYCLE_KEEP")
+		) and not any(item["code"] in {"LIFECYCLE_SCOPE", "LIFECYCLE_TRANSITIONS"} for item in bucket_result["checks"])
 		settings.db_set("attachment_lifecycle_reviewed", int(lifecycle_passed), update_modified=False)
 
 	from erpnext_s3_integration.object_storage.healthcheck import run_full_test
@@ -321,7 +321,7 @@ def apply_recommended_storage_plan() -> dict:
 	settings.attachment_lifecycle_ia_days = 30
 	settings.attachment_lifecycle_archive_days = 90
 	settings.attachment_lifecycle_cold_archive_days = 0
-	settings.attachment_lifecycle_delete_days = 0
+	settings.attachment_lifecycle_delete_days = 365
 	settings.backup_cron = "0 2 * * *"
 	settings.backup_retention_days = 30
 	settings.lifecycle_reviewed = 0
@@ -330,7 +330,7 @@ def apply_recommended_storage_plan() -> dict:
 	settings.attachment_lifecycle_reviewed = 0
 	settings.save()
 	return {
-		"attachment_lifecycle": {"ia_days": 30, "archive_days": 90, "cold_days": 0, "delete_days": 0},
+		"attachment_lifecycle": {"ia_days": 30, "archive_days": 90, "cold_days": 0, "delete_days": 365},
 		"backup_cron": settings.backup_cron,
 		"backup_restore_points": settings.backup_retention_days,
 	}

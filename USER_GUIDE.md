@@ -127,18 +127,18 @@ AccessKey 模式仅用于隔离的开发环境。Access Key ID 与 Secret 作为
 3. Retention Classification 只判断附件应该保持热存储还是以后转冷，不决定附件存到哪个 Bucket：
    - `Rule Name` 只是便于管理员识别的名称，不参与匹配。
    - `Scope`、DocType/Field、MIME Type、File Extension 和 Priority 才是匹配条件。
-   - 匹配结果写为对象标签，例如 `retention=business-archive`。
+   - 匹配结果写为对象标签，例如 `retention=archive-delete`。
 4. 默认策略固定为 `unclassified`。没有确定命中规则的附件保持 Standard，不会因为未知类型而自动转冷。
 5. 在 Attachment Bucket 打开 `Data Management > Lifecycle > Create Rule`。
-6. 规则条件选择对象标签 `retention=business-archive`，不要选择备份 prefix。
+6. 创建两条规则，分别匹配 `retention=archive-delete` 和 `retention=archive-keep`，都限定附件 prefix，不能匹配备份 prefix。
 7. 配置：
    - 30 天转 IA
-   - 365 天转 Archive
-   - Cold Archive 关闭
-   - Delete 保持关闭（ERPNext 中 `Delete Attachments After (Days)` 为 `0`）
+   - 90 天转 Archive，Cold Archive 关闭
+   - `archive-delete`：默认 365 天 Expiration，实际期限直接在 OSS 控制台更改
+   - `archive-keep`：同样 30/90 天归档，但严禁 Expiration
 8. 保存后回到 ERPNext 点击 **重新检查**。系统只读验证规则，Lifecycle 缺失或错误不会阻塞普通附件上传下载，只影响“附件归档”状态。
 
-只有确定命中交易/归档规则或经过授权人工覆盖的附件才写入 `business-archive`。`permanent-hot`、`business-online` 和 `unclassified` 标签都不会匹配这条冷存储规则。若某个内容对象被多个 File 共享，只要其中一个 File 是更热策略，对象就保持更热策略。
+只有确定命中交易/归档规则或经过授权人工覆盖的附件才写入 `archive-delete`。`permanent-hot`、`business-online` 和 `unclassified` 标签都不会匹配这条冷存储规则。若某个内容对象被多个 File 共享，只要其中一个 File 是更热策略，对象就保持更热策略。
 
 OSS 生命周期按对象的最后修改时间计算天数，不是按 ERPNext File 的创建时间计算。重新上传生成新对象时，生命周期会从新对象的最后修改时间重新计算。
 
@@ -178,8 +178,9 @@ Backups 页面动态显示本地备份组上限、OSS 成功日期数量、最�
 
 1. `permanent-hot`
 2. `business-online`
-3. `business-archive`
-4. `unclassified`
+3. `archive-keep`
+4. `archive-delete`
+5. `unclassified`
 
 如果多个 File 共用同一个内容哈希对象，对象标签采用最热策略。对象标签只有 retention、category、application、environment 和 site，不要把客户姓名、证件号或业务内容写入 category。
 
@@ -223,7 +224,7 @@ Backups 页面动态显示本地备份组上限、OSS 成功日期数量、最�
 - 未命中规则的附件为 `unclassified` 并保持 Standard。
 - 数据库和同组 `site_config_backup.json` 默认每天 02:00 上传；本地组数遵循 System Settings，OSS 独立保留最近 30 个成功日期。
 - 已进入 Attachment Bucket 的实时附件不会被 Local Private Files Folder Backup 重复打包。
-- 附件标签为 `business-archive` 的对象在 30 天进入 IA、365 天进入 Archive；Cold Archive 与自动删除默认关闭。
+- 附件按 30 天 IA、90 天 Archive；`archive-delete` 默认对象创建/修改后第 365 天删除（OSS 控制台可调），`archive-keep` 不自动删除。
 - Backup Lifecycle 默认为关闭；如启用，只作用于 Backup Bucket 的备份 prefix，不影响 Attachment Bucket。
 - 归档请求完成 Requested / Restoring / Ready / Expired 与失败重试。
 - Bucket 始终 Private + Block Public Access，无预签名直链、CDN 或浏览器直传。

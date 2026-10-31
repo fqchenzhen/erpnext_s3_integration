@@ -7,11 +7,13 @@ from frappe.utils import now_datetime
 
 from erpnext_s3_integration.object_storage.service import ObjectStorageService
 
+# Shared objects must not be deleted while any reference is unknown or protected.
 RETENTION_RANK = {
-	"unclassified": 0,
-	"business-archive": 1,
-	"business-online": 2,
-	"permanent-hot": 3,
+	"archive-delete": 0,
+	"archive-keep": 1,
+	"unclassified": 2,
+	"business-online": 3,
+	"permanent-hot": 4,
 }
 SCOPE_RANK = {"DocType and Field": 0, "DocType": 1, "MIME Type": 2, "File Extension": 3}
 
@@ -88,7 +90,7 @@ def set_retention_override_audit(file_doc, method=None) -> None:
 		file_doc.retention_override_at = None
 
 
-def tag_file_object(file_name: str, attempt: int = 0) -> None:
+def tag_file_object(file_name: str, attempt: int = 0, *, raise_on_error: bool = False) -> None:
 	file_doc = frappe.get_doc("File", file_name)
 	if not file_doc.object_storage_key:
 		return
@@ -98,7 +100,7 @@ def tag_file_object(file_name: str, attempt: int = 0) -> None:
 			"object_storage_profile": file_doc.object_storage_profile,
 			"object_storage_key": file_doc.object_storage_key,
 		},
-		fields=["name", "file_name", "attached_to_doctype", "attached_to_field", "retention_override"],
+		fields=["name", "file_name", "attached_to_doctype", "attached_to_name", "attached_to_field", "retention_override"],
 	)
 	settings = frappe.get_single("Object Storage Settings")
 	profile = frappe.get_doc("Object Storage Profile", file_doc.object_storage_profile)
@@ -139,10 +141,13 @@ def tag_file_object(file_name: str, attempt: int = 0) -> None:
 				{"object_tag_status": "Failed", "object_tag_error": str(exc)[:500]},
 				update_modified=False,
 			)
+		if raise_on_error:
+			raise
 		if attempt < 2:
 			frappe.enqueue(
 				"erpnext_s3_integration.object_storage.classification.tag_file_object",
 				queue="short",
+				enqueue_after_commit=True,
 				file_name=file_name,
 				attempt=attempt + 1,
 			)
@@ -152,15 +157,50 @@ def tag_file_object(file_name: str, attempt: int = 0) -> None:
 
 def classify_file(file_doc, rules, default_policy: str = "unclassified") -> Classification:
 	if file_doc.get("retention_override"):
-		return Classification(file_doc.retention_override, "manual", "Manual File Override")
+		base = Classification(file_doc.retention_override, "manual", "Manual File Override")
+	else:
+		base = Classification(default_policy or "unclassified", "unclassified", "Default")
+		for rule in sorted(
+			(rule for rule in rules if rule.enabled),
+			key=lambda rule: (SCOPE_RANK.get(rule.scope, 99), rule.priority),
+		):
+			if _matches(file_doc, rule):
+				base = Classification(rule.retention_policy, rule.category or "general", rule.scope)
+				break
 
-	for rule in sorted(
-		(rule for rule in rules if rule.enabled),
-		key=lambda rule: (SCOPE_RANK.get(rule.scope, 99), rule.priority),
-	):
-		if _matches(file_doc, rule):
-			return Classification(rule.retention_policy, rule.category or "general", rule.scope)
-	return Classification(default_policy or "unclassified", "unclassified", "Default")
+	for method in frappe.get_hooks("object_storage_retention_resolvers", []):
+		policy = frappe.get_attr(method)(file_doc)
+		if policy:
+			if policy not in RETENTION_RANK:
+				frappe.throw(f"Invalid storage retention policy from {method}: {policy}")
+			base = choose_hottest(
+				[base, Classification(policy, "business-exception", "Business Retention Hook")]
+			)
+	return base
+
+
+def refresh_document_retention(doctype: str, name: str, protecting: bool = False) -> dict:
+	"""Trusted cross-app hook: promote synchronously, safely demote with retries."""
+	if not frappe.db.get_single_value("Object Storage Settings", "enable_auto_classification"):
+		frappe.throw("Enable automatic classification before changing protected order attachments.")
+	files = frappe.get_all(
+		"File",
+		filters={"attached_to_doctype": doctype, "attached_to_name": name},
+		fields=["name", "object_storage_key", "object_storage_profile"],
+	)
+	seen = set()
+	failed = 0
+	for file_doc in files:
+		key = (file_doc.object_storage_profile, file_doc.object_storage_key)
+		if not all(key) or key in seen:
+			continue
+		seen.add(key)
+		# A failed promotion must roll back the business mark. A failed
+		# demotion leaves the safer archive-keep tag and is retried after commit.
+		tag_file_object(file_doc.name, raise_on_error=bool(protecting))
+		if frappe.db.get_value("File", file_doc.name, "object_tag_status") != "Passed":
+			failed += 1
+	return {"objects": len(seen), "failed": failed}
 
 
 def get_default_retention_policy(settings, purpose: str | None = None) -> str:
@@ -253,7 +293,7 @@ def _shared_classifications(file_doc, settings) -> list[Classification]:
 			"object_storage_profile": file_doc.object_storage_profile,
 			"object_storage_key": file_doc.object_storage_key,
 		},
-		fields=["file_name", "attached_to_doctype", "attached_to_field", "retention_override"],
+		fields=["file_name", "attached_to_doctype", "attached_to_name", "attached_to_field", "retention_override"],
 	)
 	return [classify_file(ref, settings.retention_rules, "unclassified") for ref in refs]
 

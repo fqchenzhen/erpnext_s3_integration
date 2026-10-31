@@ -137,19 +137,21 @@ def _attachment_archive(settings) -> dict:
 	)
 	checks = _verification_checks(profile) if current else []
 	lifecycle = next((item for item in checks if item.get("code") == "LIFECYCLE"), None)
-	dangerous = next((item for item in checks if item.get("code") == "LIFECYCLE_SCOPE"), None)
+	keep = next((item for item in checks if item.get("code") == "LIFECYCLE_KEEP"), None)
+	dangerous = next((item for item in checks if item.get("code") in {"LIFECYCLE_SCOPE", "LIFECYCLE_TRANSITIONS"}), None)
 	configured_summary = build_bucket_setup_plan(profile, settings)["summary"]
 	if (
 		settings.attachment_lifecycle_reviewed
 		and lifecycle
 		and lifecycle.get("status") == "Passed"
+		and keep and keep.get("status") == "Passed"
 		and not dangerous
 	):
 		return _feature(
 			"attachment_archive",
 			_("Attachment Archive"),
 			"Available",
-			_("Business archives use the configured lifecycle: {0}.").format(configured_summary),
+			_("Both archive rules passed the last OSS lifecycle check: {0}.").format(configured_summary),
 			{"type": "verify_bucket", "profile_name": profile.name, "label": _("Check Again")},
 			profile,
 		)
@@ -157,7 +159,7 @@ def _attachment_archive(settings) -> dict:
 		"attachment_archive",
 		_("Attachment Archive"),
 		"Needs Attention",
-		(lifecycle or dangerous or {}).get("summary")
+		(dangerous or (lifecycle if lifecycle and lifecycle.get("status") != "Passed" else keep) or {}).get("summary")
 		or _("Create the configured tag-filtered lifecycle rule: {0}.").format(
 			configured_summary
 		),

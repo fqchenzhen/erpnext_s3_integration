@@ -1,17 +1,7 @@
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
-ATTACHMENT_LIFECYCLE_FIELDS = (
-	"attachment_lifecycle_ia_days",
-	"attachment_lifecycle_archive_days",
-	"attachment_lifecycle_cold_archive_days",
-	"attachment_lifecycle_delete_days",
-)
-RECOMMENDED_ATTACHMENT_LIFECYCLE = (30, 90, 0, 0)
-HISTORICAL_DEFAULT_ATTACHMENT_LIFECYCLES = {
-	(30, 90, 365, 0),
-	(30, 365, 0, 0),
-}
+RECOMMENDED_ATTACHMENT_LIFECYCLE = (30, 90, 0, 365)
 
 
 def after_migrate() -> None:
@@ -19,7 +9,6 @@ def after_migrate() -> None:
 	_ensure_file_field_permissions()
 	_seed_missing_settings_defaults()
 	_enforce_security_defaults()
-	_migrate_recommended_retention_defaults()
 	_seed_default_rules()
 
 
@@ -41,30 +30,6 @@ def _seed_missing_settings_defaults() -> None:
 
 def _enforce_security_defaults() -> None:
 	frappe.db.set_single_value("Object Storage Settings", "proxy_downloads", 1, update_modified=False)
-
-
-def _migrate_recommended_retention_defaults() -> None:
-	current = tuple(
-		int(frappe.db.get_single_value("Object Storage Settings", fieldname) or 0)
-		for fieldname in ATTACHMENT_LIFECYCLE_FIELDS
-	)
-	update = _recommended_attachment_lifecycle_update(current)
-	if not update:
-		return
-	frappe.db.set_single_value(
-		"Object Storage Settings",
-		update,
-		update_modified=False,
-	)
-
-
-def _recommended_attachment_lifecycle_update(current: tuple[int, ...]) -> dict | None:
-	if current not in HISTORICAL_DEFAULT_ATTACHMENT_LIFECYCLES:
-		return None
-	return {
-		**dict(zip(ATTACHMENT_LIFECYCLE_FIELDS, RECOMMENDED_ATTACHMENT_LIFECYCLE, strict=True)),
-		"attachment_lifecycle_reviewed": 0,
-	}
 
 
 def _seed_default_rules() -> None:
@@ -151,7 +116,7 @@ def _custom_fields() -> dict:
 			{
 				"fieldname": "retention_override",
 				"fieldtype": "Select",
-				"options": "\npermanent-hot\nbusiness-online\nbusiness-archive\nunclassified",
+				"options": "\npermanent-hot\nbusiness-online\narchive-keep\narchive-delete\nunclassified",
 				"insert_after": "object_storage_key",
 				"label": "Retention Override",
 				"permlevel": 1,

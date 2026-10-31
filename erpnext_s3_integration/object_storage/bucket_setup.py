@@ -9,8 +9,8 @@ from frappe.utils import now_datetime
 from erpnext_s3_integration.object_storage.alibaba_oss import AlibabaOSSBackend
 from erpnext_s3_integration.object_storage.errors import classify_storage_error
 
-RECOMMENDED_LIFECYCLE_ID = "erpnext-business-archive"
-BUSINESS_ARCHIVE_TAG = {"retention": "business-archive"}
+ARCHIVE_DELETE_ID = "erpnext-archive-delete"
+ARCHIVE_KEEP_ID = "erpnext-archive-keep"
 
 
 @frappe.whitelist(methods=["GET"])
@@ -32,16 +32,20 @@ def verify_bucket_configuration(profile_name: str) -> dict:
 def build_bucket_setup_plan(profile, settings) -> dict:
 	prefix = attachment_object_prefix(profile)
 	transitions = _expected_transitions(settings)
-	expiration_days = _positive_int(settings.attachment_lifecycle_delete_days)
+	delete_rule = {
+		"rule_id": ARCHIVE_DELETE_ID, "prefix": prefix,
+		"tag_key": "retention", "tag_value": "archive-delete",
+		"transitions": transitions, "expiration_days": 365,
+	}
+	keep_rule = {
+		"rule_id": ARCHIVE_KEEP_ID, "prefix": prefix,
+		"tag_key": "retention", "tag_value": "archive-keep",
+		"transitions": transitions, "expiration_days": None,
+	}
 	return {
-		"rule_id": RECOMMENDED_LIFECYCLE_ID,
-		"prefix": prefix,
-		"tag_key": "retention",
-		"tag_value": "business-archive",
-		"transitions": transitions,
-		"expiration_days": expiration_days,
+		**delete_rule, "rules": [delete_rule, keep_rule],
 		"console_url": f"https://oss.console.aliyun.com/bucket/oss-{profile.region}/{profile.bucket}/lifecycle",
-		"summary": _lifecycle_summary(transitions, expiration_days),
+		"summary": _lifecycle_summary(transitions, 365) + "; archive-keep: Never delete",
 	}
 
 
@@ -96,10 +100,10 @@ def inspect_bucket_configuration(profile, settings, *, persist: bool = False) ->
 		)
 		_persist_verification(profile, result)
 		if profile.purpose == "Attachments":
-			lifecycle_ready = any(
-				item["code"] == "LIFECYCLE" and item["status"] == "Passed"
-				for item in checks
-			) and not any(item["code"] == "LIFECYCLE_SCOPE" for item in checks)
+			lifecycle_ready = all(
+				any(item["code"] == code and item["status"] == "Passed" for item in checks)
+				for code in ("LIFECYCLE", "LIFECYCLE_KEEP")
+			) and not any(item["code"] in {"LIFECYCLE_SCOPE", "LIFECYCLE_TRANSITIONS"} for item in checks)
 			frappe.db.set_single_value(
 				"Object Storage Settings",
 				"attachment_lifecycle_reviewed",
@@ -187,71 +191,86 @@ def _lifecycle_checks(backend, profile, settings) -> list[dict]:
 		if details.code in {"NoSuchLifecycle", "NoSuchLifecycleConfiguration"} or details.category == "Not Found":
 			rules = []
 		else:
-			return [
-				_check(
-					"LIFECYCLE_READ_FAILED",
-					_("Attachment archive rule"),
-					"Warning",
-					_("The app cannot read lifecycle rules. Add oss:GetBucketLifecycle and check again."),
-					code_detail=details.code,
-					ram_action="oss:GetBucketLifecycle",
-					request_id=_request_id(exc),
-				)
-			]
+			return [_check(
+				"LIFECYCLE_READ_FAILED", _("Attachment archive rules"), "Warning",
+				_("The app cannot read lifecycle rules. Add oss:GetBucketLifecycle and check again."),
+				code_detail=details.code, ram_action="oss:GetBucketLifecycle", request_id=_request_id(exc),
+			)]
 
-	plan = build_bucket_setup_plan(profile, settings)
-	exact = next((rule for rule in rules if _rule_matches(rule, plan)), None)
-	checks = [
-		_check(
-			"LIFECYCLE",
-			_("Attachment archive rule"),
-			"Passed" if exact else "Warning",
-			_("The configured attachment lifecycle rule is ready: {0}.").format(plan["summary"])
-			if exact
-			else _("Create the configured tag-filtered lifecycle rule: {0}.").format(
-				plan["summary"]
-			),
-			plan["summary"],
-			_exact_rule_summary(exact) if exact else None,
-		)
-	]
-	dangerous = [rule.id or _("Unnamed rule") for rule in rules if _is_dangerous_rule(rule, plan["prefix"])]
+	plans = build_bucket_setup_plan(profile, settings)["rules"]
+	checks = []
+	matched = {}
+	for plan in plans:
+		code = "LIFECYCLE" if plan["tag_value"] == "archive-delete" else "LIFECYCLE_KEEP"
+		rule = next((r for r in rules if _rule_matches(r, plan)), None)
+		matched[plan["tag_value"]] = rule
+		checks.append(_check(
+			code,
+			_("Archive-delete lifecycle") if code == "LIFECYCLE" else _("Archive-keep lifecycle"),
+			"Passed" if rule else "Warning",
+			_("Configured in OSS: {0}").format(_exact_rule_summary(rule))
+			if rule else _("Configure the OSS tag-filtered rule: {0}").format(plan["rule_id"]),
+			plan["tag_value"], _exact_rule_summary(rule),
+		))
+	if matched["archive-delete"] and matched["archive-keep"] and (
+		_transition_pairs(matched["archive-delete"]) != _transition_pairs(matched["archive-keep"])
+	):
+		checks.append(_check(
+			"LIFECYCLE_TRANSITIONS", _("Archive lifecycle consistency"), "Warning",
+			_("The two archive rules must have the same IA and Archive transitions."),
+		))
+	dangerous = [r.id or _("Unnamed rule") for r in rules if _is_dangerous_rule(r, plans[0]["prefix"])]
+	for policy in ("archive-delete", "archive-keep"):
+		duplicates = [
+			r for r in rules
+			if r.status == "Enabled" and (r.prefix or "") == plans[0]["prefix"]
+			and {t.key: t.value for t in (r.tags or [])} == {"retention": policy}
+		]
+		if len(duplicates) > 1:
+			dangerous.extend(r.id or _("Unnamed rule") for r in duplicates)
 	if dangerous:
-		checks.append(
-			_check(
-				"LIFECYCLE_SCOPE",
-				_("Lifecycle rule scope"),
-				"Warning",
-				_("Rules without the business-archive tag may affect online attachments: {0}").format(
-					", ".join(dangerous)
-				),
-			)
-		)
+		checks.append(_check(
+			"LIFECYCLE_SCOPE", _("Lifecycle rule scope"), "Warning",
+			_("Other lifecycle rules can affect protected attachments: {0}").format(", ".join(dangerous)),
+		))
 	return checks
+
+
+def _transition_pairs(rule) -> list[tuple[int, str]]:
+	return sorted(
+		(int(item.days or 0), _storage_class_value(item.storage_class))
+		for item in (rule.transitions or [])
+	)
 
 
 def _rule_matches(rule, plan: dict) -> bool:
 	if rule.status != "Enabled" or (rule.prefix or "") != plan["prefix"]:
 		return False
-	tags = {tag.key: tag.value for tag in (rule.tags or [])}
-	if tags != BUSINESS_ARCHIVE_TAG:
+	if {t.key: t.value for t in (rule.tags or [])} != {"retention": plan["tag_value"]}:
 		return False
-	transitions = sorted(
-		(item.days, _storage_class_value(item.storage_class)) for item in (rule.transitions or [])
-	)
-	expected = sorted((item["days"], item["storage_class"]) for item in plan["transitions"])
-	if transitions != expected:
+	transitions = _transition_pairs(rule)
+	if not (
+		len(transitions) == 2
+		and transitions[0][1] == "IA"
+		and transitions[1][1] == "Archive"
+		and 0 < transitions[0][0] < transitions[1][0]
+	):
 		return False
-	if plan["expiration_days"] is None:
+	if plan["tag_value"] == "archive-keep":
 		return rule.expiration is None
-	return bool(rule.expiration) and getattr(rule.expiration, "days", None) == plan["expiration_days"]
+	expiration = getattr(rule.expiration, "days", None) if rule.expiration else None
+	return bool(expiration and int(expiration) > transitions[-1][0])
 
 
 def _is_dangerous_rule(rule, target_prefix: str) -> bool:
 	if rule.status != "Enabled" or not _prefixes_overlap(rule.prefix or "", target_prefix):
 		return False
-	tags = {tag.key: tag.value for tag in (rule.tags or [])}
-	return tags.get("retention") != "business-archive" and bool(rule.transitions or rule.expiration)
+	tags = {t.key: t.value for t in (rule.tags or [])}
+	if tags == {"retention": "archive-keep"}:
+		return not _rule_matches(rule, {"prefix": target_prefix, "tag_value": "archive-keep"})
+	if tags == {"retention": "archive-delete"}:
+		return not _rule_matches(rule, {"prefix": target_prefix, "tag_value": "archive-delete"})
+	return bool(rule.transitions or rule.expiration)
 
 
 def _expected_transitions(settings) -> list[dict]:

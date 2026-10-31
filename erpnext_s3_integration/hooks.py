@@ -60,3 +60,8 @@ website_redirects = [
 		"target": r"/api/method/erpnext_s3_integration.api.get_file?key=\1",
 	}
 ]
+
+# Optional cross-app hook: business apps can request retagging without importing us.
+object_storage_retention_sync_handlers = [
+	"erpnext_s3_integration.object_storage.classification.refresh_document_retention"
+]

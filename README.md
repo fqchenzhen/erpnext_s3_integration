@@ -51,7 +51,7 @@ The app requires Frappe / ERPNext v16 and Python 3.14+.
 5. Click **Apply Recommended Jakarta Settings** on each profile. Production selects the Jakarta internal endpoint and ECS RAM Role; Development/Staging selects the public endpoint for isolated testing.
 6. Generate the two least-privilege RAM policies, create an ECS RAM Role, attach both policies, and bind the role to the ERPNext ECS instance.
 7. In Settings click **Save, Test and Enable**. The assistant saves safely, runs the current Full Test, enables the profile, links it, and enables the feature in the correct order.
-8. Unknown attachments remain `unclassified` and Standard. Optionally review the detailed rules and configure the Attachment Bucket lifecycle rule for `retention=business-archive`.
+8. Unknown attachments remain `unclassified` and Standard. Optionally review the detailed rules and configure the Attachment Bucket lifecycle rule for `retention=archive-delete`.
 9. Database backup is selected by default. Local public/private files-folder archives are separate options and exclude attachments already stored in the Attachment Bucket.
 10. Complete an attachment restore drill only if Archive Restore is enabled.
 
@@ -84,16 +84,23 @@ The detailed Chinese runbook is in [USER_GUIDE.md](USER_GUIDE.md).
 
 ## Attachment long-term cold storage
 
-The safe default for unmatched attachments is `unclassified`. Built-in or administrator rules deterministically mark eligible transactional attachments as `business-archive`. Create this rule manually in the Attachment Bucket, filtered by the exact object tag `retention=business-archive`:
+Unmatched attachments remain `unclassified` in Standard. Transaction attachments are tagged
+`retention=archive-delete` by default; a business retention resolver can raise a protected
+order's attachments to `retention=archive-keep`.
 
-- 30 days: IA
-- 90 days: Archive
-- Cold Archive: disabled
-- Deletion: disabled by default (`0`)
+Create **two** Attachment Bucket lifecycle rules in OSS Console, both limited to the exact
+`<profile.prefix>/attachments/` prefix and the indicated single object tag:
 
-Files tagged `permanent-hot`, `business-online`, or `unclassified` are not moved by this rule. Shared content uses the hottest policy across its File references. The app writes the tags and never creates or changes provider lifecycle rules.
+| Rule | Tag | IA | Archive | Expiration |
+| --- | --- | --- | --- | --- |
+| `erpnext-archive-delete` | `retention=archive-delete` | 30 days | 90 days | 365 days recommended; configurable in OSS |
+| `erpnext-archive-keep` | `retention=archive-keep` | 30 days | 90 days | Disabled |
 
-Alibaba Cloud OSS evaluates lifecycle age from the object's last modified time, so the configured day counts are not based on the ERPNext File creation timestamp.
+The application **only reads** these rules. Actual day counts belong to OSS; changing expiry
+from 365 to 730 needs no app deployment. Both rules must have the same IA and Archive
+transitions, and no overlapping prefix-wide expiration rule may affect retained attachments.
+Objects are aged by OSS modification time, not the business document's date.
+
 
 ## Default backup lifecycle
 

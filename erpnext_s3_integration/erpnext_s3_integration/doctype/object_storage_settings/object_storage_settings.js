@@ -390,7 +390,7 @@ function render_attachment_lifecycle(frm) {
 	const ia = Number(frm.doc.attachment_lifecycle_ia_days || 0);
 	const archive = Number(frm.doc.attachment_lifecycle_archive_days || 0);
 	const cold = Number(frm.doc.attachment_lifecycle_cold_archive_days || 0);
-	const remove = Number(frm.doc.attachment_lifecycle_delete_days || 0);
+	const remove = Number(frm.doc.attachment_lifecycle_delete_days || 365);
 	frm.get_field("attachment_lifecycle_intro").$wrapper.html(`
 		<div class="object-storage-subsection">
 			<div class="object-storage-heading">${escape_html(__("Long-term Attachment Storage"))}</div>
@@ -399,9 +399,9 @@ function render_attachment_lifecycle(frm) {
 				<div><strong>${escape_html(ia ? __("After {0} days", [ia]) : __("IA disabled"))}</strong><span>${escape_html(ia ? __("IA ZRS, immediate download") : __("Remain Standard"))}</span></div>
 				<div><strong>${escape_html(archive ? __("After {0} days", [archive]) : __("Archive disabled"))}</strong><span>${escape_html(archive ? __("Archive ZRS, restore before download") : __("Remain online"))}</span></div>
 				<div><strong>${escape_html(__("Cold Archive"))}</strong><span>${escape_html(cold ? __("After {0} days", [cold]) : __("Not used"))}</span></div>
-				<div><strong>${escape_html(__("Automatic deletion"))}</strong><span>${escape_html(remove ? __("After {0} days", [remove]) : __("Never"))}</span></div>
+				<div><strong>${escape_html(__("Suggested archive-delete expiration"))}</strong><span>${escape_html(remove ? __("After {0} days", [remove]) : __("Never"))}</span></div>
 			</div>
-			<div class="text-muted">${escape_html(__("Only objects tagged retention=business-archive use this OSS rule. Missing lifecycle rules do not block normal attachment storage."))}</div>
+			<div class="text-muted">${escape_html(__("OSS Console controls the actual days. archive-delete expires; archive-keep archives with no expiration. Check both rules before use."))}</div>
 		</div>`);
 	const wrapper = frm.get_field("attachment_lifecycle_actions_html").$wrapper;
 	if (!frm.doc.attachment_storage_profile) {
@@ -410,7 +410,7 @@ function render_attachment_lifecycle(frm) {
 	}
 	const archive_feature = frm.__object_storage_assistant?.features?.find((feature) => feature.key === "attachment_archive");
 	const archive_ready = archive_feature?.status === "Available";
-	const label = archive_ready ? __("Check Again") : __("Configure OSS Archive Rule");
+	const label = archive_ready ? __("Check Again") : __("Configure OSS Archive Rules");
 	wrapper.html(`<div class="object-storage-secondary-actions"><button class="btn btn-default btn-sm" data-lifecycle-action>${escape_html(label)}</button><button class="btn btn-link btn-sm" data-lifecycle-custom>${escape_html(__("Custom Lifecycle"))}</button></div>`);
 	wrapper.find("[data-lifecycle-action]").on("click", () => archive_ready ? verify_bucket(frm, frm.doc.attachment_storage_profile) : show_bucket_setup_dialog(frm, frm.doc.attachment_storage_profile));
 	wrapper.find("[data-lifecycle-custom]").on("click", () => expand_section(frm, "attachment_lifecycle_settings_section"));
@@ -493,12 +493,12 @@ async function verify_and_enable(frm, purpose, profile_name) {
 
 function show_enable_success(purpose, result) {
 	const checks = result.bucket_verification?.checks || [];
-	const lifecycle = checks.find((item) => item.code === "LIFECYCLE");
+	const lifecycle = checks.find((item) => ["LIFECYCLE", "LIFECYCLE_KEEP"].includes(item.code) && item.status !== "Passed");
 	const configured_summary = result.bucket_verification?.setup_plan?.summary;
 	const next_step = configured_summary
-		? __("Attachment upload and download are enabled. Next: create the configured lifecycle rule: {0}.", [configured_summary])
+		? __("Attachment storage is enabled. Configure both OSS lifecycle rules: {0}.", [configured_summary])
 		: __("Attachment upload and download are enabled. Next: review the configured lifecycle rule in Attachment Lifecycle settings.");
-	const remaining = lifecycle?.status !== "Passed" && purpose === "Attachments"
+	const remaining = lifecycle && purpose === "Attachments"
 		? `<div class="alert alert-warning">${escape_html(next_step)}</div>` : "";
 	frappe.msgprint({
 		title: purpose === "Attachments" ? __("Attachment Storage Is Ready") : __("Database Backup Storage Is Ready"),
@@ -535,7 +535,7 @@ async function verify_bucket(frm, profile_name) {
 }
 
 function show_bucket_result(result, profile_name) {
-	const priority = ["BUCKET_INFO_FAILED", "REGION", "PRIVATE_BUCKET", "BLOCK_PUBLIC_ACCESS", "REDUNDANCY", "LIFECYCLE_READ_FAILED", "LIFECYCLE", "LIFECYCLE_SCOPE"];
+	const priority = ["BUCKET_INFO_FAILED", "REGION", "PRIVATE_BUCKET", "BLOCK_PUBLIC_ACCESS", "REDUNDANCY", "LIFECYCLE_READ_FAILED", "LIFECYCLE", "LIFECYCLE_KEEP", "LIFECYCLE_TRANSITIONS", "LIFECYCLE_SCOPE"];
 	const issue = priority.map((code) => result.checks.find((item) => item.code === code && item.status !== "Passed")).find(Boolean);
 	const rows = result.checks.map((item) => `<li>${escape_html(item.title)}: ${escape_html(item.summary)}</li>`).join("");
 	const permission_actions = issue?.provider_code === "AccessDenied"
@@ -563,21 +563,22 @@ async function copy_ram_policy(profile_name) {
 async function show_bucket_setup_dialog(frm, profile_name) {
 	const { message: plan } = await frappe.call({
 		method: "erpnext_s3_integration.object_storage.bucket_setup.get_bucket_setup_plan",
-		type: "GET",
-		args: { profile_name },
+		type: "GET", args: { profile_name },
 	});
-	const transitions = plan.transitions.map((item) => `<li>${escape_html(__("After {0} days: {1}", [item.days, item.storage_class]))}</li>`).join("");
+	const rules = (plan.rules || []).map((rule) => {
+		const transitions = rule.transitions.map((item) => `${item.days}d ${item.storage_class}`).join(" → ");
+		const expiration = rule.expiration_days ? `${rule.expiration_days}d Delete (changeable in OSS)` : __("Never delete");
+		return `<li><strong>${escape_html(rule.rule_id)}</strong>: retention=${escape_html(rule.tag_value)}; ${escape_html(transitions)} → ${escape_html(expiration)}</li>`;
+	}).join("");
 	const dialog = new frappe.ui.Dialog({
-		title: __("Configure OSS Attachment Archive Rule"),
+		title: __("Configure OSS Attachment Archive Rules"),
 		fields: [{ fieldname: "instructions", fieldtype: "HTML", options: `<ol>
 			<li>${escape_html(__("Open the Attachment Bucket in the Alibaba Cloud OSS console."))}</li>
 			<li>${escape_html(__("Open Data Management > Lifecycle."))}</li>
-			<li>${escape_html(__("Create an enabled lifecycle rule with prefix: {0}", [plan.prefix || __("empty")]))}</li>
-			<li>${escape_html(__("Add tag condition: retention = business-archive"))}</li>
-			${transitions}<li>${escape_html(__("Do not configure expiration or Cold Archive."))}</li>
-		</ol><div class="alert alert-info">${escape_html(__("The app only reads this rule. It never changes OSS lifecycle settings."))}</div>` }],
-		primary_action_label: __("Open OSS and Configure"),
-		primary_action: () => open_url(plan.console_url),
+			<li>${escape_html(__("Use exact prefix: {0}", [plan.prefix || __("empty")]))}</li>
+			${rules}</ol>
+			<div class="alert alert-info">${escape_html(__("OSS Console owns lifecycle settings. Click Check Again to read current rules."))}</div>` }],
+		primary_action_label: __("Open OSS and Configure"), primary_action: () => open_url(plan.console_url),
 		secondary_action_label: __("I Finished, Check Again"),
 		secondary_action: () => { dialog.hide(); verify_bucket(frm, profile_name); },
 	});

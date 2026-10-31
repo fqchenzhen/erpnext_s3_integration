@@ -595,7 +595,7 @@ class TestClassification(UnitTestCase):
 
 	def test_precedence_is_manual_then_field_then_doctype_then_mime(self):
 		rules = [
-			_rule("MIME Type", "business-archive", mime_type="application/pdf", priority=1),
+			_rule("MIME Type", "archive-delete", mime_type="application/pdf", priority=1),
 			_rule("DocType", "business-online", reference_doctype="Sales Invoice", priority=1),
 			_rule(
 				"DocType and Field",
@@ -606,7 +606,7 @@ class TestClassification(UnitTestCase):
 			),
 		]
 		self.assertEqual(classify_file(self.file, rules).policy, "permanent-hot")
-		self.file.retention_override = "business-archive"
+		self.file.retention_override = "archive-delete"
 		self.assertEqual(classify_file(self.file, rules).source, "Manual File Override")
 
 	def test_unmatched_file_uses_configured_default(self):
@@ -615,7 +615,7 @@ class TestClassification(UnitTestCase):
 
 	def test_shared_object_uses_hottest_classification(self):
 		classifications = [
-			Classification("business-archive", "archive", "DocType"),
+			Classification("archive-delete", "archive", "DocType"),
 			Classification("permanent-hot", "legal", "Manual File Override"),
 			Classification("business-online", "document", "MIME Type"),
 		]
@@ -698,26 +698,9 @@ class TestSetupDefaults(UnitTestCase):
 			update_modified=False,
 		)
 
-	def test_historical_defaults_migrate_to_30_90_without_deletion(self):
-		from erpnext_s3_integration.setup import _recommended_attachment_lifecycle_update
-
-		for current in ((30, 365, 0, 0), (30, 90, 365, 0)):
-			with self.subTest(current=current):
-				self.assertEqual(
-					_recommended_attachment_lifecycle_update(current),
-					{
-						"attachment_lifecycle_ia_days": 30,
-						"attachment_lifecycle_archive_days": 90,
-						"attachment_lifecycle_cold_archive_days": 0,
-						"attachment_lifecycle_delete_days": 0,
-						"attachment_lifecycle_reviewed": 0,
-					},
-				)
-
-	def test_custom_180_day_lifecycle_is_not_overwritten(self):
-		from erpnext_s3_integration.setup import _recommended_attachment_lifecycle_update
-
-		self.assertIsNone(_recommended_attachment_lifecycle_update((30, 180, 0, 0)))
+	def test_recommended_archive_defaults(self):
+		from erpnext_s3_integration.setup import RECOMMENDED_ATTACHMENT_LIFECYCLE
+		self.assertEqual(RECOMMENDED_ATTACHMENT_LIFECYCLE, (30, 90, 0, 365))
 
 
 class TestSetupAssistantLifecycle(UnitTestCase):
@@ -798,10 +781,11 @@ class TestBucketSetup(UnitTestCase):
 				"BLOCK_PUBLIC_ACCESS": "Passed",
 				"REDUNDANCY": "Failed",
 				"LIFECYCLE": "Warning",
+				"LIFECYCLE_KEEP": "Warning",
 			},
 		)
 
-	def test_recommended_attachment_lifecycle_is_tag_scoped_and_never_deletes(self):
+	def test_recommended_attachment_lifecycle_has_two_archive_rules(self):
 		from erpnext_s3_integration.object_storage.bucket_setup import build_bucket_setup_plan
 
 		profile = frappe._dict(region="ap-southeast-5", bucket="attachments", prefix="")
@@ -813,7 +797,7 @@ class TestBucketSetup(UnitTestCase):
 		)
 		plan = build_bucket_setup_plan(profile, settings)
 		self.assertEqual(plan["prefix"], "attachments/")
-		self.assertEqual((plan["tag_key"], plan["tag_value"]), ("retention", "business-archive"))
+		self.assertEqual((plan["tag_key"], plan["tag_value"]), ("retention", "archive-delete"))
 		self.assertEqual(
 			plan["transitions"],
 			[
@@ -821,8 +805,8 @@ class TestBucketSetup(UnitTestCase):
 				{"days": 90, "storage_class": "Archive"},
 			],
 		)
-		self.assertEqual(plan["summary"], "30d IA → 90d Archive → Never delete")
-		self.assertIsNone(plan["expiration_days"])
+		self.assertEqual(plan["summary"], "30d IA → 90d Archive → 365d Delete; archive-keep: Never delete")
+		self.assertEqual(plan["expiration_days"], 365)
 
 	def test_custom_180_day_lifecycle_is_reflected_in_dynamic_summary(self):
 		from erpnext_s3_integration.object_storage.bucket_setup import build_bucket_setup_plan
@@ -835,7 +819,7 @@ class TestBucketSetup(UnitTestCase):
 			attachment_lifecycle_delete_days=0,
 		)
 		plan = build_bucket_setup_plan(profile, settings)
-		self.assertEqual(plan["summary"], "30d IA → 180d Archive → Never delete")
+		self.assertEqual(plan["summary"], "30d IA → 180d Archive → 365d Delete; archive-keep: Never delete")
 
 	def test_bucket_security_fingerprint_does_not_expire_when_lifecycle_days_change(self):
 		from erpnext_s3_integration.object_storage.bucket_setup import bucket_verification_fingerprint
@@ -864,7 +848,7 @@ class TestBucketSetup(UnitTestCase):
 		rule = oss.LifecycleRule(
 			prefix="attachments/",
 			status="Enabled",
-			tags=[oss.Tag(key="retention", value="business-archive")],
+			tags=[oss.Tag(key="retention", value="archive-keep")],
 			transitions=[
 				oss.LifecycleRuleTransition(days=30, storage_class=oss.StorageClassType.IA),
 				oss.LifecycleRuleTransition(days=90, storage_class=oss.StorageClassType.ARCHIVE),
@@ -877,6 +861,7 @@ class TestBucketSetup(UnitTestCase):
 				{"days": 90, "storage_class": "Archive"},
 			],
 			"expiration_days": None,
+			"tag_value": "archive-keep",
 		}
 		self.assertTrue(_rule_matches(rule, plan))
 
@@ -1459,3 +1444,59 @@ class TestBackupRetention(UnitTestCase):
 		now = frappe.utils.now_datetime()
 		self.assertEqual(_backup_health(now, 10 * 1024**3, 0)[0], "Warning")
 		self.assertEqual(_backup_health(now - datetime.timedelta(hours=37), 1024, 0)[0], "Critical")
+
+class TestProtectedArchivePolicies(UnitTestCase):
+	def test_shared_object_protection(self):
+		self.assertEqual(choose_hottest([
+			Classification("archive-delete", "order", "DocType"),
+			Classification("archive-keep", "issue", "Hook"),
+		]).policy, "archive-keep")
+		self.assertEqual(choose_hottest([
+			Classification("archive-delete", "order", "DocType"),
+			Classification("unclassified", "unknown", "Default"),
+		]).policy, "unclassified")
+
+	def test_delete_expiry_is_configured_by_oss(self):
+		from erpnext_s3_integration.object_storage.bucket_setup import _rule_matches
+		rule = frappe._dict(
+			status="Enabled", prefix="attachments/",
+			tags=[frappe._dict(key="retention", value="archive-delete")],
+			transitions=[
+				frappe._dict(days=30, storage_class="IA"),
+				frappe._dict(days=90, storage_class="Archive"),
+			],
+			expiration=frappe._dict(days=730),
+		)
+		self.assertTrue(_rule_matches(rule, {"prefix": "attachments/", "tag_value": "archive-delete"}))
+		rule.expiration = None
+		self.assertFalse(_rule_matches(rule, {"prefix": "attachments/", "tag_value": "archive-delete"}))
+
+	def test_business_resolver_is_optional_and_never_imports_business_app(self):
+		from erpnext_s3_integration.object_storage.classification import classify_file
+		file_doc = frappe._dict(
+			file_name="evidence.pdf", attached_to_doctype="Sales Order",
+			attached_to_name="SO-1", attached_to_field=None, retention_override=None,
+		)
+		with (
+			patch("erpnext_s3_integration.object_storage.classification.frappe.get_hooks", return_value=["business.order_policy"]),
+			patch("erpnext_s3_integration.object_storage.classification.frappe.get_attr", return_value=lambda ref: "archive-keep"),
+		):
+			self.assertEqual(
+				classify_file(file_doc, [_rule("DocType", "archive-delete", reference_doctype="Sales Order")]).policy,
+				"archive-keep",
+			)
+
+	def test_refresh_document_retention_failure_tolerance(self):
+		from erpnext_s3_integration.object_storage.classification import refresh_document_retention
+		with (
+			patch("erpnext_s3_integration.object_storage.classification.frappe.db.get_single_value", return_value=1),
+			patch("erpnext_s3_integration.object_storage.classification.frappe.get_all", return_value=[
+				frappe._dict(name="FILE-1", object_storage_profile="p", object_storage_key="key"),
+			]),
+			patch("erpnext_s3_integration.object_storage.classification.tag_file_object") as tag,
+			patch("erpnext_s3_integration.object_storage.classification.frappe.db.get_value", return_value="Passed"),
+		):
+			self.assertEqual(refresh_document_retention("Sales Order", "SO-1", True)["failed"], 0)
+			self.assertTrue(tag.call_args.kwargs["raise_on_error"])
+			refresh_document_retention("Sales Order", "SO-1", False)
+			self.assertFalse(tag.call_args.kwargs["raise_on_error"])

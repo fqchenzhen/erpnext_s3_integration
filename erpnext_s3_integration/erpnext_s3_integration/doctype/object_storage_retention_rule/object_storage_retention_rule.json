@@ -11,7 +11,7 @@
   {"depends_on":"eval:doc.scope=='DocType and Field'","fieldname":"reference_field","fieldtype":"Data","label":"Reference Field"},
   {"depends_on":"eval:doc.scope=='MIME Type'","description":"Supports exact values and wildcards such as image/*.","fieldname":"mime_type","fieldtype":"Data","label":"MIME Type"},
   {"depends_on":"eval:doc.scope=='File Extension'","description":"Use a value such as pdf or .pdf.","fieldname":"file_extension","fieldtype":"Data","label":"File Extension"},
-  {"fieldname":"retention_policy","fieldtype":"Select","in_list_view":1,"label":"Retention Policy","options":"permanent-hot\nbusiness-online\nbusiness-archive\nunclassified","reqd":1},
+  {"fieldname":"retention_policy","fieldtype":"Select","in_list_view":1,"label":"Retention Policy","options":"permanent-hot\nbusiness-online\narchive-keep\narchive-delete\nunclassified","reqd":1},
   {"description":"Use a non-sensitive machine label only; never enter customer names, IDs, or business content.","fieldname":"category","fieldtype":"Data","in_list_view":1,"label":"Category"},
   {"fieldname":"description","fieldtype":"Small Text","label":"Description"},
   {"default":"0","fieldname":"is_default","fieldtype":"Check","hidden":1,"label":"Built-in Rule","read_only":1},

@@ -25,15 +25,15 @@
 ## Classification and lifecycle
 
 - Precedence: manual File override, DocType + field, DocType, MIME/extension, default.
-- Policies: `permanent-hot`, `business-online`, `business-archive`, and `unclassified`.
+- Policies: `permanent-hot`, `business-online`, `archive-keep`, `archive-delete`, and `unclassified`.
 - Tags: retention, category, application, environment, and site.
 - No automatic provider lifecycle, ACL, versioning, or bucket-policy mutation.
 
 ## Attachment long-term cold storage
 
-- Safe unmatched default is `unclassified`; only deterministic rules or an authorized override assign `business-archive`.
-- Read-only Attachment Bucket lifecycle check for the rule filtered by `retention=business-archive`.
-- Default 30-day IA and 90-day Archive transitions; Cold Archive and deletion are disabled.
+- Safe unmatched default is `unclassified`; only deterministic rules or an authorized override assign `archive-delete`.
+- Read-only Attachment Bucket lifecycle checks for both `retention=archive-delete` and `retention=archive-keep`.
+- Default 30-day IA and 90-day Archive transitions, Cold Archive off. Only archive-delete expires (365-day recommendation, editable in OSS).
 - Attachment and backup lifecycle confirmations are independent and cannot be applied to the wrong bucket by the app.
 - Preview, background Recalculate, Unclassified list, and non-destructive Reset to Default Rules actions.
 
