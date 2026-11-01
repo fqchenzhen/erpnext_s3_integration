@@ -705,7 +705,7 @@ class TestSetupDefaults(UnitTestCase):
 
 class TestSetupAssistantLifecycle(UnitTestCase):
 	@patch("erpnext_s3_integration.object_storage.setup_assistant._profile")
-	def test_attention_message_uses_configured_archive_days(self, get_profile):
+	def test_attention_message_uses_fixed_archive_days(self, get_profile):
 		from erpnext_s3_integration.object_storage.bucket_setup import (
 			bucket_verification_fingerprint,
 		)
@@ -723,19 +723,17 @@ class TestSetupAssistantLifecycle(UnitTestCase):
 		)
 		profile.last_bucket_verification_fingerprint = bucket_verification_fingerprint(profile)
 		get_profile.return_value = profile
-		for archive_days in (90, 180):
-			with self.subTest(archive_days=archive_days):
-				settings = frappe._dict(
-					enable_attachment_storage=1,
-					attachment_storage_profile=profile.name,
-					attachment_lifecycle_reviewed=0,
-					attachment_lifecycle_ia_days=30,
-					attachment_lifecycle_archive_days=archive_days,
-					attachment_lifecycle_cold_archive_days=0,
-					attachment_lifecycle_delete_days=0,
-				)
-				feature = _attachment_archive(settings)
-				self.assertIn(f"{archive_days}d Archive", feature["summary"])
+		settings = frappe._dict(
+			enable_attachment_storage=1,
+			attachment_storage_profile=profile.name,
+			attachment_lifecycle_reviewed=0,
+			attachment_lifecycle_ia_days=20,
+			attachment_lifecycle_archive_days=60,
+			attachment_lifecycle_cold_archive_days=365,
+			attachment_lifecycle_delete_days=0,
+		)
+		feature = _attachment_archive(settings)
+		self.assertIn("30d IA → 90d Archive", feature["summary"])
 
 
 	@patch("erpnext_s3_integration.object_storage.setup_assistant._profile")
@@ -865,7 +863,7 @@ class TestBucketSetup(UnitTestCase):
 		self.assertEqual(plan["summary"], "30d IA → 90d Archive → 365d Delete; archive-keep: Never delete")
 		self.assertEqual(plan["expiration_days"], 365)
 
-	def test_custom_180_day_lifecycle_is_reflected_in_dynamic_summary(self):
+	def test_attachment_lifecycle_plan_uses_fixed_transitions(self):
 		from erpnext_s3_integration.object_storage.bucket_setup import build_bucket_setup_plan
 
 		profile = frappe._dict(region="ap-southeast-5", bucket="attachments", prefix="")
@@ -876,7 +874,57 @@ class TestBucketSetup(UnitTestCase):
 			attachment_lifecycle_delete_days=0,
 		)
 		plan = build_bucket_setup_plan(profile, settings)
-		self.assertEqual(plan["summary"], "30d IA → 180d Archive → 365d Delete; archive-keep: Never delete")
+		self.assertEqual(plan["summary"], "30d IA → 90d Archive → 365d Delete; archive-keep: Never delete")
+		self.assertEqual(
+			plan["transitions"],
+			[
+				{"days": 30, "storage_class": "IA"},
+				{"days": 90, "storage_class": "Archive"},
+			],
+		)
+
+	def test_bucket_lifecycle_rejects_matching_but_wrong_transition_days(self):
+		from erpnext_s3_integration.object_storage.bucket_setup import _lifecycle_checks
+
+		rules = [
+			frappe._dict(
+				id="wrong-delete",
+				status="Enabled",
+				prefix="attachments/",
+				tags=[frappe._dict(key="retention", value="archive-delete")],
+				transitions=[
+					frappe._dict(days=20, storage_class="IA"),
+					frappe._dict(days=60, storage_class="Archive"),
+				],
+				expiration=frappe._dict(days=365),
+			),
+			frappe._dict(
+				id="wrong-keep",
+				status="Enabled",
+				prefix="attachments/",
+				tags=[frappe._dict(key="retention", value="archive-keep")],
+				transitions=[
+					frappe._dict(days=20, storage_class="IA"),
+					frappe._dict(days=60, storage_class="Archive"),
+				],
+				expiration=None,
+			),
+		]
+		backend = MagicMock()
+		backend.client.get_bucket_lifecycle.return_value = frappe._dict(
+			lifecycle_configuration=frappe._dict(rules=rules)
+		)
+		profile = frappe._dict(bucket="attachments", prefix="")
+		settings = frappe._dict(
+			attachment_lifecycle_ia_days=30,
+			attachment_lifecycle_archive_days=90,
+		)
+
+		checks = _lifecycle_checks(backend, profile, settings)
+		statuses = {item["code"]: item["status"] for item in checks}
+
+		self.assertEqual(statuses["LIFECYCLE"], "Warning")
+		self.assertEqual(statuses["LIFECYCLE_KEEP"], "Warning")
 
 	def test_bucket_security_fingerprint_does_not_expire_when_lifecycle_days_change(self):
 		from erpnext_s3_integration.object_storage.bucket_setup import bucket_verification_fingerprint

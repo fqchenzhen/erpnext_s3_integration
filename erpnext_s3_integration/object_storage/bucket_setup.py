@@ -11,6 +11,7 @@ from erpnext_s3_integration.object_storage.errors import classify_storage_error
 
 ARCHIVE_DELETE_ID = "erpnext-archive-delete"
 ARCHIVE_KEEP_ID = "erpnext-archive-keep"
+ATTACHMENT_LIFECYCLE_TRANSITIONS = ((30, "IA"), (90, "Archive"))
 
 
 @frappe.whitelist(methods=["GET"])
@@ -31,7 +32,7 @@ def verify_bucket_configuration(profile_name: str) -> dict:
 
 def build_bucket_setup_plan(profile, settings) -> dict:
 	prefix = attachment_object_prefix(profile)
-	transitions = _expected_transitions(settings)
+	transitions = _expected_transitions()
 	delete_rule = {
 		"rule_id": ARCHIVE_DELETE_ID, "prefix": prefix,
 		"tag_key": "retention", "tag_value": "archive-delete",
@@ -249,12 +250,11 @@ def _rule_matches(rule, plan: dict) -> bool:
 	if {t.key: t.value for t in (rule.tags or [])} != {"retention": plan["tag_value"]}:
 		return False
 	transitions = _transition_pairs(rule)
-	if not (
-		len(transitions) == 2
-		and transitions[0][1] == "IA"
-		and transitions[1][1] == "Archive"
-		and 0 < transitions[0][0] < transitions[1][0]
-	):
+	expected_transitions = sorted(
+		(int(item["days"]), _storage_class_value(item["storage_class"]))
+		for item in plan.get("transitions", _expected_transitions())
+	)
+	if transitions != expected_transitions:
 		return False
 	if plan["tag_value"] == "archive-keep":
 		return rule.expiration is None
@@ -273,22 +273,11 @@ def _is_dangerous_rule(rule, target_prefix: str) -> bool:
 	return bool(rule.transitions or rule.expiration)
 
 
-def _expected_transitions(settings) -> list[dict]:
-	configured = (
-		("IA", _positive_int(settings.attachment_lifecycle_ia_days)),
-		("Archive", _positive_int(settings.attachment_lifecycle_archive_days)),
-		("ColdArchive", _positive_int(settings.attachment_lifecycle_cold_archive_days)),
-	)
+def _expected_transitions() -> list[dict]:
 	return [
 		{"days": days, "storage_class": storage_class}
-		for storage_class, days in configured
-		if days is not None
+		for days, storage_class in ATTACHMENT_LIFECYCLE_TRANSITIONS
 	]
-
-
-def _positive_int(value) -> int | None:
-	value = int(value or 0)
-	return value if value > 0 else None
 
 
 def _lifecycle_summary(transitions: list[dict], expiration_days: int | None = None) -> str:
