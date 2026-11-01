@@ -26,6 +26,28 @@ def build_setup_assistant(settings) -> dict:
 		"total": len(features),
 		"next_action": next((feature["action"] for feature in features if feature.get("action")), None),
 		"status": "Available" if completed == len(features) else "Needs Attention",
+		"attachment_lifecycle": _attachment_lifecycle_verification(settings),
+	}
+
+
+def _attachment_lifecycle_verification(settings) -> dict | None:
+	"""Expose the last *actual* OSS checks, never the recommended setup plan."""
+	if not settings.attachment_storage_profile:
+		return None
+	profile = _profile(settings.attachment_storage_profile, "Attachments")
+	if not profile or profile.provider != "Alibaba Cloud OSS":
+		return None
+	current = profile.get("last_bucket_verification_fingerprint") == bucket_verification_fingerprint(
+		profile, settings
+	)
+	return {
+		"profile": profile.name,
+		"checked_at": (
+			str(profile.get("last_bucket_verified_at"))
+			if current and profile.get("last_bucket_verified_at")
+			else None
+		),
+		"checks": _verification_checks(profile) if current else [],
 	}
 
 
@@ -147,11 +169,14 @@ def _attachment_archive(settings) -> dict:
 		and keep and keep.get("status") == "Passed"
 		and not dangerous
 	):
+		verified_summary = "; ".join(
+			item.get("actual") or _("Unknown") for item in (lifecycle, keep)
+		)
 		return _feature(
 			"attachment_archive",
 			_("Attachment Archive"),
 			"Available",
-			_("Both archive rules passed the last OSS lifecycle check: {0}.").format(configured_summary),
+			_("Both archive rules passed the last OSS lifecycle check: {0}.").format(verified_summary),
 			{"type": "verify_bucket", "profile_name": profile.name, "label": _("Check Again")},
 			profile,
 		)

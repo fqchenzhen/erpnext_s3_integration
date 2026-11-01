@@ -33,10 +33,6 @@ frappe.ui.form.on("Object Storage Settings", {
 	enable_backup_storage(frm) {
 		render_backup_status(frm);
 	},
-	attachment_lifecycle_ia_days: render_attachment_policy,
-	attachment_lifecycle_archive_days: render_attachment_policy,
-	attachment_lifecycle_cold_archive_days: render_attachment_policy,
-	attachment_lifecycle_delete_days: render_attachment_policy,
 });
 
 function render_settings_actions(frm) {
@@ -198,7 +194,7 @@ async function render_setup_assistant(frm) {
 	});
 	if (!message || !frm.get_field("setup_progress_html")) return;
 	frm.__object_storage_assistant = message;
-	render_attachment_lifecycle(frm);
+	render_attachment_policy(frm);
 	const attention = message.features.filter((feature) => feature.status === "Needs Attention" || feature.status === "Check Failed" || feature.status === "Not Configured").length;
 	const rows = message.features.map((feature, index) => assistant_row(feature, index)).join("");
 	const next_action = message.next_action;
@@ -347,7 +343,7 @@ function render_attachment_action(frm) {
 }
 
 function render_classification(frm) {
-	const lifecycle = attachment_lifecycle_summary(frm.doc);
+	const lifecycle = attachment_lifecycle_summary(frm);
 	frm.get_field("classification_help").$wrapper.html(`
 		<div class="object-storage-subsection">
 			<div class="object-storage-heading">${escape_html(__("Attachment Classification"))}</div>
@@ -375,45 +371,48 @@ function render_attachment_policy(frm) {
 	render_attachment_lifecycle(frm);
 }
 
-function attachment_lifecycle_summary(settings) {
-	const transitions = [];
-	const ia = Number(settings.attachment_lifecycle_ia_days || 0);
-	const archive = Number(settings.attachment_lifecycle_archive_days || 0);
-	const cold = Number(settings.attachment_lifecycle_cold_archive_days || 0);
-	if (ia) transitions.push(__("IA after {0} days", [ia]));
-	if (archive) transitions.push(__("Archive after {0} days", [archive]));
-	if (cold) transitions.push(__("Cold Archive after {0} days", [cold]));
-	return transitions.join("; ") || __("No archive transitions configured");
+function verified_lifecycle_check(frm, code) {
+	const details = frm.__object_storage_assistant?.attachment_lifecycle;
+	if (!details || details.profile !== frm.doc.attachment_storage_profile) return null;
+	return (details.checks || []).find((check) => check.code === code && check.status === "Passed") || null;
+}
+
+function attachment_lifecycle_summary(frm) {
+	return verified_lifecycle_check(frm, "LIFECYCLE")?.actual || __("Not Verified");
 }
 
 function render_attachment_lifecycle(frm) {
-	const ia = Number(frm.doc.attachment_lifecycle_ia_days || 0);
-	const archive = Number(frm.doc.attachment_lifecycle_archive_days || 0);
-	const cold = Number(frm.doc.attachment_lifecycle_cold_archive_days || 0);
-	const remove = Number(frm.doc.attachment_lifecycle_delete_days || 365);
+	const snapshot = frm.__object_storage_assistant?.attachment_lifecycle;
+	const current = snapshot?.profile === frm.doc.attachment_storage_profile;
+	const checks = current ? (snapshot.checks || []) : [];
+	const delete_rule = verified_lifecycle_check(frm, "LIFECYCLE");
+	const keep_rule = verified_lifecycle_check(frm, "LIFECYCLE_KEEP");
+	const problem = checks.some((item) => item.status !== "Passed");
+	const checked_at = current && snapshot.checked_at ? snapshot.checked_at : null;
+	const state = checked_at
+		? (problem || !delete_rule || !keep_rule ? __("Needs Attention") : __("Passed"))
+		: __("Not Verified");
+	const summary = (check) => check?.actual || __("Not Verified");
 	frm.get_field("attachment_lifecycle_intro").$wrapper.html(`
 		<div class="object-storage-subsection">
 			<div class="object-storage-heading">${escape_html(__("Long-term Attachment Storage"))}</div>
-			<div class="object-storage-timeline">
-				<div><strong>${escape_html(__("Recent"))}</strong><span>${escape_html(__("Standard ZRS"))}</span></div>
-				<div><strong>${escape_html(ia ? __("After {0} days", [ia]) : __("IA disabled"))}</strong><span>${escape_html(ia ? __("IA ZRS, immediate download") : __("Remain Standard"))}</span></div>
-				<div><strong>${escape_html(archive ? __("After {0} days", [archive]) : __("Archive disabled"))}</strong><span>${escape_html(archive ? __("Archive ZRS, restore before download") : __("Remain online"))}</span></div>
-				<div><strong>${escape_html(__("Cold Archive"))}</strong><span>${escape_html(cold ? __("After {0} days", [cold]) : __("Not used"))}</span></div>
-				<div><strong>${escape_html(__("Suggested archive-delete expiration"))}</strong><span>${escape_html(remove ? __("After {0} days", [remove]) : __("Never"))}</span></div>
-			</div>
-			<div class="text-muted">${escape_html(__("OSS Console controls the actual days. archive-delete expires; archive-keep archives with no expiration. Check both rules before use."))}</div>
+			<table class="table table-bordered table-sm object-storage-policy-table"><tbody>
+				<tr><td><strong>archive-delete</strong></td><td>${escape_html(summary(delete_rule))}</td></tr>
+				<tr><td><strong>archive-keep</strong></td><td>${escape_html(summary(keep_rule))}</td></tr>
+			</tbody></table>
+			<div class="text-muted">${escape_html(state)}${checked_at ? ` · ${escape_html(checked_at)}` : ""}</div>
 		</div>`);
 	const wrapper = frm.get_field("attachment_lifecycle_actions_html").$wrapper;
 	if (!frm.doc.attachment_storage_profile) {
 		wrapper.html(`<div class="text-muted">${escape_html(__("Configure attachment storage before checking the OSS lifecycle rule."))}</div>`);
 		return;
 	}
-	const archive_feature = frm.__object_storage_assistant?.features?.find((feature) => feature.key === "attachment_archive");
-	const archive_ready = archive_feature?.status === "Available";
-	const label = archive_ready ? __("Check Again") : __("Configure OSS Archive Rules");
-	wrapper.html(`<div class="object-storage-secondary-actions"><button class="btn btn-default btn-sm" data-lifecycle-action>${escape_html(label)}</button><button class="btn btn-link btn-sm" data-lifecycle-custom>${escape_html(__("Custom Lifecycle"))}</button></div>`);
-	wrapper.find("[data-lifecycle-action]").on("click", () => archive_ready ? verify_bucket(frm, frm.doc.attachment_storage_profile) : show_bucket_setup_dialog(frm, frm.doc.attachment_storage_profile));
-	wrapper.find("[data-lifecycle-custom]").on("click", () => expand_section(frm, "attachment_lifecycle_settings_section"));
+	wrapper.html(`<div class="object-storage-secondary-actions">
+		<button class="btn btn-default btn-sm" data-lifecycle-verify>${escape_html(__("Check Again"))}</button>
+		<button class="btn btn-default btn-sm" data-lifecycle-console>${escape_html(__("Open OSS Console"))}</button>
+	</div>`);
+	wrapper.find("[data-lifecycle-verify]").on("click", () => verify_bucket(frm, frm.doc.attachment_storage_profile));
+	wrapper.find("[data-lifecycle-console]").on("click", () => open_url("https://oss.console.aliyun.com/"));
 }
 
 async function render_backup_status(frm) {

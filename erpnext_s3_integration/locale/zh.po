@@ -2659,3 +2659,6 @@ msgstr "管理存储配置"
 
 msgid "Apply the recommended attachment lifecycle and backup retention settings? This will update the current configuration."
 msgstr "确定应用推荐的附件生命周期和备份保留设置吗？此操作将更新当前配置。"
+
+msgid "Not Verified"
+msgstr "未核验"

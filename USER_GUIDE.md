@@ -228,3 +228,5 @@ Backups 页面动态显示本地备份组上限、OSS 成功日期数量、最�
 - Backup Lifecycle 默认为关闭；如启用，只作用于 Backup Bucket 的备份 prefix，不影响 Attachment Bucket。
 - 归档请求完成 Requested / Restoring / Ready / Expired 与失败重试。
 - Bucket 始终 Private + Block Public Access，无预签名直链、CDN 或浏览器直传。
+
+**附件 Lifecycle 页面（当前设计）**：仅展示上次经 OSS 验证的 `archive-delete` 和 `archive-keep` 实际配置及检查时间，提供“Check Again”和“Open OSS Console”；未核验时显示 `Not Verified`。旧建议天数字段仅用于生成控制台配置说明，不再显示为无法编辑的输入框。备份 Bucket Lifecycle 配置保持不变。

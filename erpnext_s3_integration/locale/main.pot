@@ -2553,3 +2553,6 @@ msgstr ""
 msgid "{0} runtime settings changed ({1}). Run the Full Read/Write Test again."
 msgstr ""
 
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js
+msgid "Not Verified"
+msgstr ""

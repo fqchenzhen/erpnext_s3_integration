@@ -738,6 +738,63 @@ class TestSetupAssistantLifecycle(UnitTestCase):
 				self.assertIn(f"{archive_days}d Archive", feature["summary"])
 
 
+	@patch("erpnext_s3_integration.object_storage.setup_assistant._profile")
+	def test_lifecycle_snapshot_reads_verified_provider_rules(self, get_profile):
+		import json
+
+		from erpnext_s3_integration.object_storage.bucket_setup import (
+			bucket_verification_fingerprint,
+		)
+		from erpnext_s3_integration.object_storage.setup_assistant import (
+			_attachment_lifecycle_verification,
+		)
+
+		profile = frappe._dict(
+			name="Attachments",
+			provider="Alibaba Cloud OSS",
+			purpose="Attachments",
+			environment="Production",
+			region="ap-southeast-5",
+			endpoint_url="https://oss-ap-southeast-5-internal.aliyuncs.com",
+			bucket="attachments",
+			prefix="",
+			last_bucket_verified_at="2026-11-01 10:00:00",
+			last_bucket_verification_details=json.dumps(
+				[
+					{"code": "LIFECYCLE", "status": "Passed", "actual": "30d IA → 90d Archive → 730d Delete"},
+					{"code": "LIFECYCLE_KEEP", "status": "Passed", "actual": "30d IA → 90d Archive → Never delete"},
+				]
+			),
+		)
+		profile.last_bucket_verification_fingerprint = bucket_verification_fingerprint(profile)
+		get_profile.return_value = profile
+		settings = frappe._dict(attachment_storage_profile="Attachments")
+		snapshot = _attachment_lifecycle_verification(settings)
+		self.assertEqual(snapshot["profile"], "Attachments")
+		self.assertEqual(snapshot["checks"][0]["actual"], "30d IA → 90d Archive → 730d Delete")
+		self.assertEqual(snapshot["checked_at"], "2026-11-01 10:00:00")
+		from erpnext_s3_integration.object_storage.setup_assistant import _attachment_archive
+
+		settings.update({
+			"enable_attachment_storage": 1,
+			"attachment_lifecycle_reviewed": 1,
+			"attachment_lifecycle_ia_days": 30,
+			"attachment_lifecycle_archive_days": 90,
+			"attachment_lifecycle_cold_archive_days": 0,
+			"attachment_lifecycle_delete_days": 365,
+		})
+		feature = _attachment_archive(settings)
+		self.assertEqual(feature["status"], "Available")
+		self.assertIn("730d Delete", feature["summary"])
+		self.assertNotIn("365d Delete", feature["summary"])
+
+
+		profile.last_bucket_verification_fingerprint = "different"
+		stale = _attachment_lifecycle_verification(settings)
+		self.assertIsNone(stale["checked_at"])
+		self.assertEqual(stale["checks"], [])
+
+
 class TestBucketSetup(UnitTestCase):
 	@patch("erpnext_s3_integration.object_storage.bucket_setup.AlibabaOSSBackend")
 	def test_production_bucket_requires_zrs_but_missing_lifecycle_is_only_a_warning(self, backend_class):

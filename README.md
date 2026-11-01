@@ -127,6 +127,14 @@ bench --site <site> run-tests --app erpnext_s3_integration
 
 The Cypress Desk test is at `erpnext_s3_integration/cypress/integration/object_storage_setup.js` and is run through the bench/Frappe Cypress environment.
 
+### Lifecycle settings summary (OSS is authoritative)
+
+The Attachment Lifecycle tab shows **the last-verified actual OSS rule summaries**
+and check time, plus **Check Again** and **Open OSS Console**. Without a valid
+verification it displays `Not Verified`, never the recommended days as actual
+OSS state. The legacy suggested values are retained internally only for
+console setup instructions. Backup Lifecycle settings are unaffected.
+
 ## License
 
 MIT
