@@ -127,6 +127,16 @@ bench --site <site> run-tests --app erpnext_s3_integration
 
 The Cypress Desk test is at `erpnext_s3_integration/cypress/integration/object_storage_setup.js` and is run through the bench/Frappe Cypress environment.
 
+### Attachment classification overview
+
+The Settings classification summary shows the five retention policies:
+`permanent-hot`, `business-online`, `archive-keep`, `archive-delete`,
+and `unclassified`. `archive-keep` describes protected attachment
+exceptions supplied by any business app through the existing retention hook,
+not a hard-coded Golden Sales Order requirement. Actual archive times come
+from the most recent verified OSS rule snapshot; unverified rules are labeled
+`Not Verified`.
+
 ### Lifecycle settings summary (OSS is authoritative)
 
 The Attachment Lifecycle tab shows **the last-verified actual OSS rule summaries**

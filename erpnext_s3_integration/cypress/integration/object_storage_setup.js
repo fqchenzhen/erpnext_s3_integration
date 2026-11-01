@@ -20,6 +20,8 @@ context("Object Storage Setup Assistant", () => {
 		cy.findByText("Attachment Classification");
 		cy.findByText("Long-term Attachment Storage");
 		cy.findByText("Unmatched attachments");
+		cy.get('[data-fieldname="classification_help"]').should("contain.text", "archive-keep");
+		cy.get('[data-fieldname="classification_help"]').should("contain.text", "archive-delete");
 		cy.findByRole("button", { name: "Guided" }).should("not.exist");
 		cy.findByRole("button", { name: "Advanced" }).should("not.exist");
 		cy.get("[data-fieldname=retention_rules]").should("not.be.visible");

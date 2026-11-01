@@ -118,6 +118,12 @@ AccessKey 模式仅用于隔离的开发环境。Access Key ID 与 Secret 作为
 
 ## 七、附件、分类与长期冷存储
 
+**分类摘要**：在 Attachment Classification 展示五种策略：
+`permanent-hot`、`business-online`、`archive-keep`、`archive-delete`、
+`unclassified`。`archive-keep` 是通用业务保留例外，不依赖某个特定 SO 字段。
+归档时间取上次有效 OSS 校验快照，未核验时不把推荐天数当作实际配置。
+
+
 附件长期冷存储与数据库/文件备份是两套完全独立的生命周期：附件规则只在 **Attachment Bucket** 生效，备份规则只在 **Backup Bucket** 生效。
 
 这里的“附件长期存储”不是把 `Backup` 文件夹再复制一份，也不是生成第二份附件备份；它是让 Attachment Bucket 中同一个对象在时间满足条件后，从 Standard 转换为 IA，再转换为 Archive。File 记录和 `/s3/{key}` 地址不变，进入 Archive 后通过 Object Restore Request 恢复临时可读副本。

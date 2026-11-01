@@ -343,16 +343,18 @@ function render_attachment_action(frm) {
 }
 
 function render_classification(frm) {
-	const lifecycle = attachment_lifecycle_summary(frm);
+	const delete_lifecycle = attachment_lifecycle_summary(frm);
+	const keep_lifecycle = verified_lifecycle_check(frm, "LIFECYCLE_KEEP")?.actual || __("Not Verified");
 	frm.get_field("classification_help").$wrapper.html(`
 		<div class="object-storage-subsection">
 			<div class="object-storage-heading">${escape_html(__("Attachment Classification"))}</div>
 			<div class="text-muted">${escape_html(__("Classification assigns retention tags. It never moves a file to another bucket."))}</div>
 			<table class="table table-bordered table-sm object-storage-policy-table"><tbody>
-				<tr><td>${escape_html(__("Item main images, logos, and avatars"))}</td><td>${escape_html(__("Always Standard"))}</td></tr>
-				<tr><td>${escape_html(__("Item and BOM technical documents"))}</td><td>${escape_html(__("Keep online"))}</td></tr>
-				<tr><td>${escape_html(__("Orders, invoices, receipts, Stock Entries, and quality attachments"))}</td><td>${escape_html(lifecycle)}</td></tr>
-				<tr><td>${escape_html(__("Unmatched attachments"))}</td><td>${escape_html(__("Keep Standard"))}</td></tr>
+				<tr><td>${escape_html(__("Item main images, logos, and avatars"))}</td><td><strong>permanent-hot</strong> · ${escape_html(__("Always Standard"))}</td></tr>
+				<tr><td>${escape_html(__("Item and BOM technical documents"))}</td><td><strong>business-online</strong> · ${escape_html(__("Keep online"))}</td></tr>
+				<tr><td>${escape_html(__("Protected attachments"))}</td><td><strong>archive-keep</strong> · ${escape_html(keep_lifecycle)}</td></tr>
+				<tr><td>${escape_html(__("Ordinary transaction attachments"))}</td><td><strong>archive-delete</strong> · ${escape_html(delete_lifecycle)}</td></tr>
+				<tr><td>${escape_html(__("Unmatched attachments"))}</td><td><strong>unclassified</strong> · ${escape_html(__("Keep Standard"))}</td></tr>
 			</tbody></table>
 		</div>`);
 	const actions = frm.get_field("classification_actions_html").$wrapper;

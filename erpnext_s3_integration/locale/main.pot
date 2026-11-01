@@ -2556,3 +2556,11 @@ msgstr ""
 #: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js
 msgid "Not Verified"
 msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js
+msgid "Ordinary transaction attachments"
+msgstr ""
+
+#: erpnext_s3_integration/erpnext_s3_integration/doctype/object_storage_settings/object_storage_settings.js
+msgid "Protected attachments"
+msgstr ""

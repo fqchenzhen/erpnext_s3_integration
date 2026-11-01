@@ -2662,3 +2662,9 @@ msgstr "确定应用推荐的附件生命周期和备份保留设置吗？此操
 
 msgid "Not Verified"
 msgstr "未核验"
+
+msgid "Ordinary transaction attachments"
+msgstr "普通交易单据附件"
+
+msgid "Protected attachments"
+msgstr "受保护的附件"
